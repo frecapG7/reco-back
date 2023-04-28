@@ -2,14 +2,22 @@
 const express = require('express');
 const router = express.Router();
 
+const Request = require('../model/request');
 
-router.get('', (req, res) => {
-    res.send('Hello World!');
+
+router.get('', async (req, res) => {
+    const requests = await Request.find();
+    res.json(requests);
 }
 );
 
-router.get('/:id', (req, res) => {
- res.send(`${req.params.id} is the id you specified`);
+router.get('/:id', async (req, res) => {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+        res.status(404).json({ message: 'Request not found' });
+    }
+    res.json(request);
+
 });
 
 router.post('', (req, res) => {
@@ -24,7 +32,7 @@ router.put('/', (req, res) => {
 
 router.delete('/:id', (req, res) => {
     res.send('DELETE request to the homepage');
-}   
+}
 );
 
 
