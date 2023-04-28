@@ -1,0 +1,8 @@
+{
+    "db": {
+        "uri": "mongodb://localhost:27017/",
+        "schema": "test",
+        "username": "johnGalt",
+        "password": "atlasShrugged"
+    }
+}
