@@ -1,8 +1,8 @@
 {
     "db": {
         "uri": "mongodb://localhost:27017/",
-        "schema": "test",
+        "schema": "cluster0.pd21cjw.mongodb.net/?retryWrites=true&w=majority",
         "username": "johnGalt",
-        "password": "atlasShrugged"
+        "password": "hysMAM6UDw5BzkvOF0uC"
     }
 }
