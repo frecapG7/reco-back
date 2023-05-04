@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 
 
-const RequestSchem = new mongoose.Schema({
+const RequestSchema = new mongoose.Schema({
     requestType: {
         type: String,
         required: true,
@@ -32,4 +32,4 @@ const RequestSchem = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Request', RequestSchem);
+module.exports = mongoose.model('Request', RequestSchema);

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 
-const Request = require('../model/request');
+const Request = require('../model/Request');
 
 
 router.get('', async (req, res) => {
@@ -12,21 +12,59 @@ router.get('', async (req, res) => {
 );
 
 router.get('/:id', async (req, res) => {
-    const request = await Request.findById(req.params.id);
-    if (!request) {
-        res.status(404).json({ message: 'Request not found' });
+    try {
+        const request = await Request.findById(req.params.id);
+        if (!request) {
+            res.status(404).json({ message: 'Request not found' });
+        } else {
+            res.json(request);
+
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error getting request' });
     }
-    res.json(request);
 
 });
 
-router.post('', (req, res) => {
-    res.send('POST request to the homepage');
-}
-);
+router.post('', async (req, res) => {
 
-router.put('/', (req, res) => {
-    res.send('PUT request to the homepage');
+    try {
+        console.log(req.body);
+        const newRequest = new Request({
+            requestType: req.body.requestType,
+            description: req.body.description,
+            duration: req.body.duration,
+            status: 'OPEN',
+            author: '5e8cfaa7c9e7ce2e3c9b1b0b'
+        });
+        const savedRequest = await newRequest.save();
+        res.json(savedRequest);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error saving request' });
+    }
+});
+
+router.put('/', async (req, res) => {
+    try {
+        const savedRequest = await Request.findOneAndUpdate({ _id: req.body.id },
+            {
+                requestType: req.body.requestType,
+                description: req.body.description,
+                duration: req.body.duration,
+            },
+            { new: true });
+
+        if (!savedRequest) {
+            res.status(404).json({ message: 'Request not found' });
+        } else {
+            res.json(savedRequest);
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error updating request' });
+    }
 }
 );
 

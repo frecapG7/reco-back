@@ -1,18 +1,16 @@
 
 
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 
-const request = require('./routes/request');
 
+const routes = require('./routes/routes');
 const mongoose = require('./db');
 
 
-app.use('/requests', request);
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-}
-);
+app.use(bodyParser.json());
+app.use('/', routes);
 
 
 app.listen(3000, () => {
