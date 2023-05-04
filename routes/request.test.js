@@ -10,13 +10,13 @@ const Request = require('../model/Request');
 
 
 const express = require('express');
-const bodyParser = require('body-parser');s
+const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
 app.use('/requests', requestRoutes);
 
-describe('GET /request', () => {
+describe('GET /requests', () => {
 
     it('should return all requests', async () => {
         sinon.stub(Request, 'find').resolves([
@@ -50,7 +50,7 @@ describe('GET /request', () => {
 });
 
 
-describe('GET /request/:id', () => {
+describe('GET /requests/:id', () => {
     it('should return 404', async () => {
         const stub = sinon.stub(Request, 'findById').resolves(null);
 
@@ -132,7 +132,7 @@ describe('POST /request', () => {
 describe('PUT /request', () => {
 
     it('should return 500', async () => {
-            
+
         const stub = sinon.stub(Request, 'findOneAndUpdate').throws(new Error('Fake error from sinon'));
 
         const response = await supertest(app).put('/requests')
@@ -148,26 +148,26 @@ describe('PUT /request', () => {
         stub.restore();
 
 
-});
+    });
 
 
     it('should return 404', async () => {
-            
-            const stub = sinon.stub(Request, 'findOneAndUpdate').resolves(null);
-    
-            const response = await supertest(app).put('/requests')
-                .send({
-                    id: 1,
-                    requestType: 'BOOK',
-                    description: 'SciFi recommended book',
-                    duration: 2,
-                });
-    
-            expect(response.status).toBe(404);
-    
-            stub.restore();
-    
-    
+
+        const stub = sinon.stub(Request, 'findOneAndUpdate').resolves(null);
+
+        const response = await supertest(app).put('/requests')
+            .send({
+                id: 1,
+                requestType: 'BOOK',
+                description: 'SciFi recommended book',
+                duration: 2,
+            });
+
+        expect(response.status).toBe(404);
+
+        stub.restore();
+
+
     });
 
 
@@ -181,7 +181,7 @@ describe('PUT /request', () => {
                 status: 'PENDING',
             }
         );
-    
+
         const response = await supertest(app).put('/requests')
             .send({
                 id: 1,
@@ -194,8 +194,56 @@ describe('PUT /request', () => {
 
 
         stub.restore();
-    
+
     });
 
 
+});
+
+
+describe('DELETE /requests/:id', () => {
+
+    it('should return 404', async () => {
+        const stub = sinon
+            .stub(Request, 'findByIdAndDelete')
+            .resolves(null);
+
+        const response = await supertest(app).delete('/requests/2');
+
+        expect(response.status).toBe(404);
+        stub.restore();
+
+    });
+
+
+    it('should return 500', async () => {
+        const stub = sinon
+            .stub(Request, 'findByIdAndDelete')
+            .throws(new Error('Fake error from sinon'));
+
+        const response = await supertest(app).delete('/requests/2');
+
+        expect(response.status).toBe(500);
+
+        stub.restore();
+    });
+
+
+    it('should return 200', async () => {
+        const stub = sinon
+            .stub(Request, 'findByIdAndDelete')
+            .resolves({
+                id: 1,
+                requestType: 'BOOK',
+                description: 'SciFi recommended book',
+                duration: 2,
+                status: 'PENDING',
+            });
+
+        const response = await supertest(app).delete('/requests/2');
+
+        expect(response.status).toBe(200);
+        stub.restore();
+
+    });
 });

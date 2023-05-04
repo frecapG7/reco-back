@@ -15,14 +15,18 @@ router.get('/:id', async (req, res) => {
     try {
         const request = await Request.findById(req.params.id);
         if (!request) {
-            res.status(404).json({ message: 'Request not found' });
+            res
+                .status(404)
+                .json({ message: 'Request not found' });
         } else {
             res.json(request);
 
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Error getting request' });
+        res
+            .status(500)
+            .json({ message: 'Error getting request' });
     }
 
 });
@@ -42,13 +46,15 @@ router.post('', async (req, res) => {
         res.json(savedRequest);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Error saving request' });
+        res
+            .status(500)
+            .json({ message: 'Error saving request' });
     }
 });
 
 router.put('/', async (req, res) => {
     try {
-        const savedRequest = await Request.findOneAndUpdate({ _id: req.body.id },
+        const savedRequest = await Request.findOneAndUpdate({ _id: req.body._id },
             {
                 requestType: req.body.requestType,
                 description: req.body.description,
@@ -57,19 +63,36 @@ router.put('/', async (req, res) => {
             { new: true });
 
         if (!savedRequest) {
-            res.status(404).json({ message: 'Request not found' });
+            res
+                .status(404)
+                .json({ message: 'Request not found' });
         } else {
             res.json(savedRequest);
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Error updating request' });
+        res
+            .status(500)
+            .json({ message: 'Error updating request' });
     }
 }
 );
 
-router.delete('/:id', (req, res) => {
-    res.send('DELETE request to the homepage');
+router.delete('/:id', async (req, res) => {
+    try {
+        const request = await Request.findByIdAndDelete(req.params.id)
+        if (!request) {
+            res
+                .status(404)
+                .json({ message: `Cannot find request with id ${req.params.id}` });
+        }
+        res.status(200);
+    } catch (err) {
+        console.log(err);
+        res
+            .status(500)
+            .json({ message: 'Internal server error' });
+    }
 }
 );
 
