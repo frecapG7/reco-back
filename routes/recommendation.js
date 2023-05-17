@@ -12,7 +12,7 @@ router.get('', async (req, res) => {
         if (!request) {
             res
                 .status(404)
-                .json({ message: 'Request not found' });
+                .json({ message: `Cannot find request with id ${req.params.requestId}` });
             return;
         }
         const recommendations = await Recommendation.find({ request_id: req.params.requestId });
@@ -20,7 +20,7 @@ router.get('', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500)
-            .json({ message: 'Error getting recommendations' });
+            .json({ message: 'Internal server error' });
     }
 });
 
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
         if (!recommendation) {
             res
                 .status(404)
-                .json({ message: 'Recommendation not found' });
+                .json({ message: `Cannot find recommendation with id ${req.params.id}` });
         } else {
             res.json(recommendation);
 
@@ -40,7 +40,7 @@ router.get('/:id', async (req, res) => {
         console.error(err);
         res
             .status(500)
-            .json({ message: 'Error getting recommendation' });
+            .json({ message: 'Internal server error' });
     }
 
 });
@@ -51,7 +51,7 @@ router.post('/', async (req, res) => {
         if (!request) {
             res
                 .status(404)
-                .json({ message: 'Request not found' });
+                .json({ message: `Cannot find request with id ${req.params.requestId}` });
             return;
         }
         const newRecommendation = new Recommendation({
@@ -92,6 +92,26 @@ router.put('/', async (req, res) => {
             .json({ message: 'Error updating recommendation' });
     }
 });
+
+
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const deletedRecommendation = await Recommendation.findByIdAndDelete(req.params.id);
+        if (!deletedRecommendation) {
+            res.status(404)
+                .json({ message: 'Recommendation not found' });
+        } else {
+            res.status(200);
+        }
+    } catch (err) {
+        console.error(err);
+        res
+            .status(500)
+            .json({ message: 'Internal server error' });
+    }
+});
+
 
 
 module.exports = router;

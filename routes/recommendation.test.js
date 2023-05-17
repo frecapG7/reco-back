@@ -48,7 +48,7 @@ describe('GET /requests/:requestId/recommendations', () => {
         expect(response.status).toBe(200);
         console.log(response.body);
 
-        sinon.assert.calledWith(Recommendation.find, { request_id: 1 });
+        sinon.assert.calledWith(Recommendation.find, { request_id: '1' });
 
 
         stubRequest.restore();
@@ -58,7 +58,20 @@ describe('GET /requests/:requestId/recommendations', () => {
 });
 
 
-describe('GET /recommendations/:id', () => {
+describe('GET /request/:requestId/recommendations/:id', () => {
+
+
+    it('should return a missing recommendation', async () => {
+        const findById = sinon.stub(Recommendation, 'findById').resolves(null);
+
+        const response = await supertest(app).get('/requests/1/recommendations/1');
+
+        expect(response.status).toBe(404);
+        console.log(response.body)
+
+        findById.restore();
+
+    });
 
     it('should return a recommendation', async () => {
         sinon.stub(Recommendation, 'findById').resolves(
@@ -71,7 +84,7 @@ describe('GET /recommendations/:id', () => {
                 field3: 'value3',
             });
 
-        const response = await supertest(app).get('/recommendations/1');
+        const response = await supertest(app).get('/requests/1/recommendations/1');
         expect(response.status).toBe(200);
         console.log(response.body);
 
@@ -80,3 +93,55 @@ describe('GET /recommendations/:id', () => {
     );
 
 });
+
+
+
+describe('POST /requests/:requestId/recommendations', () => {
+
+    it('should return a missing request', async () => {
+        const findRequest = sinon.stub(Request, 'findById').resolves(null);
+
+
+
+        const response = await supertest(app).post('/requests/1/recommendations').send({
+            user_id: 1,
+            field1: 'value1',
+            field2: 'value2',
+            field3: 'value3',
+        });
+
+        expect(response.status).toBe(404);
+        console.log(response.body);
+
+        findRequest.restore();
+    });
+    it('should return created recommendation', async () => {
+        const request = { _id: 1 };
+        const findRequest = sinon.stub(Request, 'findById').resolves(request);
+
+
+        const saveStub = sinon.stub(Recommendation.prototype, 'save').resolves({
+            id: 1,
+            request_id: 1,
+            user_id: 1,
+            field1: 'value1',
+            field2: 'value2',
+            field3: 'value3',
+        });
+
+        const response = await supertest(app).post('/requests/1/recommendations').send({
+            user_id: 1,
+            field1: 'value1',
+            field2: 'value2',
+            field3: 'value3',
+        });
+
+        expect(response.status).toBe(200);
+        console.log(response.body);
+
+        findRequest.restore();
+    });
+
+
+});
+
