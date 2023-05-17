@@ -85,8 +85,9 @@ router.delete('/:id', async (req, res) => {
             res
                 .status(404)
                 .json({ message: `Cannot find request with id ${req.params.id}` });
+        } else {
+            res.status(200);
         }
-        res.status(200);
     } catch (err) {
         console.log(err);
         res
