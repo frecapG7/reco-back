@@ -14,8 +14,15 @@ router.post('/requests', async (req, res) => {
         const pageNumber = parseInt(req.query.pageNumber) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
 
+        const filter = {
+            ...(req.body.requestType && { requestType: req.body.requestType }),
+            ...(req.body.duration && { duration: req.body.duration }),
+            ...(req.body.author && { author: req.body.author }),
+        };
+
+        
         const result = await Request.aggregate([
-            { $match: { requestType: req.body.requestType } },
+            { $match: filter },
             {
                 $facet: {
                     paginatedResults: [

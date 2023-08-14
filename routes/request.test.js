@@ -43,6 +43,8 @@ describe('GET /requests', () => {
 
         const response = await supertest(app)
             .get('/requests');
+
+            
         expect(response.status).toBe(200);
         console.log(response.body);
     });

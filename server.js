@@ -3,11 +3,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-
+const cors = require('cors');
 
 const routes = require('./routes/routes');
 const mongoose = require('./db');
 
+
+// By default allow all origins
+app.use(cors());
 
 app.use(bodyParser.json());
 app.use('/', routes);

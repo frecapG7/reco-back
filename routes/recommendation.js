@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
         }
         const newRecommendation = new Recommendation({
             request_id: req.params.requestId,
-            user_id: req.body.user_id,
+            user_id: '5e8cfaa7c9e7ce2e3c9b1b0b',
             field1: req.body.field1,
             field2: req.body.field2,
             field3: req.body.field3,
