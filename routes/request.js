@@ -34,7 +34,6 @@ router.get('/:id', async (req, res) => {
 router.post('', async (req, res) => {
 
     try {
-        console.log(req.body);
         const newRequest = new Request({
             requestType: req.body.requestType,
             description: req.body.description,
