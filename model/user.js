@@ -39,6 +39,7 @@ UserSchema.methods.validPassword = function(password) {
 // Method to build JSON response
 UserSchema.methods.toJSON = function() {
     return {
+        id: this._id,
         name: this.name,
         email: this.email,
         created: this.created,

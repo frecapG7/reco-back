@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const Request = require('../model/Request');
+const { authenticateToken } = require('../validator/auth');
 
 
 router.get('', async (req, res) => {
@@ -31,7 +32,7 @@ router.get('/:id', async (req, res) => {
 
 });
 
-router.post('', async (req, res) => {
+router.post('', authenticateToken, async (req, res) => {
 
     try {
         const newRequest = new Request({
@@ -39,7 +40,7 @@ router.post('', async (req, res) => {
             description: req.body.description,
             duration: req.body.duration,
             status: 'OPEN',
-            author: '5e8cfaa7c9e7ce2e3c9b1b0b'
+            author: req.user.id,
         });
         const savedRequest = await newRequest.save();
         res.json(savedRequest);

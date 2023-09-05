@@ -77,3 +77,28 @@ describe('POST /users', () => {
 
     });
 });
+
+
+
+
+describe('PUT /users/:id', () => {
+
+
+    it('should return forbiden on invalid user id', async () => {
+        
+    
+    });
+
+
+    it('should return updated user', async () => {
+        const mockUser = new User({
+            _id: 1,
+            email: 'test',
+            name: 'test',
+        });
+        
+    });
+
+
+
+});
