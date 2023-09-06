@@ -17,9 +17,11 @@ router.get('/me', authenticateToken, async (req, res) => {
         const status = req.query.status || 'OPEN';
 
         const filter = {
-            author: req.user.id,
+            author: req.userId,
             status: status,
         }
+
+
 
         const result = await Request.aggregate([
             { $match: filter },
@@ -37,7 +39,7 @@ router.get('/me', authenticateToken, async (req, res) => {
             }
         ]);
 
-        return res.json(result[0].paginatedResults.map(request => request.toJSON()));
+        return res.json(result[0].paginatedResults);
 
     } catch (err) {
         console.error(err);
@@ -57,7 +59,7 @@ router.get('/:id', async (req, res) => {
                 .status(404)
                 .json({ message: 'Request not found' });
         } else {
-            res.json(request.toJSON());
+            res.json(request);
 
         }
     } catch (err) {
@@ -77,10 +79,10 @@ router.post('', authenticateToken, async (req, res) => {
             description: req.body.description,
             duration: req.body.duration,
             status: 'OPEN',
-            author: req.user.id,
+            author: req.userId,
         });
         const savedRequest = await newRequest.save();
-        res.json(savedRequest.toJSON());
+        res.json(savedRequest);
     } catch (err) {
         console.error(err);
         res
@@ -94,7 +96,7 @@ router.put('/', authenticateToken, async (req, res) => {
         const savedRequest = await Request.findOneAndUpdate(
             {
                 _id: req.body._id,
-                author: req.user.id
+                author: req.userId
             },
             {
                 requestType: req.body.requestType,
@@ -108,7 +110,7 @@ router.put('/', authenticateToken, async (req, res) => {
                 .status(404)
                 .json({ message: 'Request not found' });
         } else {
-            res.json(savedRequest.toJSON());
+            res.json(savedRequest);
         }
     } catch (err) {
         console.error(err);
@@ -123,7 +125,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const request = await Request.findOneAndDelete({
             _id: req.params.id,
-            author: req.user.id
+            author: req.userId
         });
         if (!request) {
             res

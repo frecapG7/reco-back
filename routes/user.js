@@ -74,7 +74,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.put('/id', authenticateToken, async (req, res) => {
     try {
 
-        if (req.user.id !== req.params.id)
+        if (req.userId !== req.params.id)
             return res
                 .status(403)
                 .json({ message: 'Forbidden access' });
@@ -102,6 +102,7 @@ router.put('/id', authenticateToken, async (req, res) => {
 
 
 });
+
 
 
 module.exports = router;

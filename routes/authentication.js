@@ -50,8 +50,7 @@ router.post('/', async (req, res) => {
 
 
 const generateAccessToken = (user) => {
-    console.log(config.TOKEN_SECRET);
-    return jwt.sign(user.toJSON(), config.TOKEN_SECRET, { expiresIn: '1800s' });
+    return jwt.sign({ id: user._id}, config.TOKEN_SECRET, { expiresIn: '1800s' });
 }
 
 

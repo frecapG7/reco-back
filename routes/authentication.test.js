@@ -72,6 +72,7 @@ describe('POST /login', () => {
                 { name: 'test' }
             ]
         }).resolves({
+            _id: '5e8cfaa7c9e7ce2e3c9b1b0b',
             validPassword: sinon.stub().returns(true),
             toJSON: sinon.stub().returns({
                 name: 'test'
@@ -81,6 +82,7 @@ describe('POST /login', () => {
         const response = await supertest(app)
             .post('/auth')
             .send({ name: 'test', password: 'test' });
+
 
         expect(response.status).toBe(200);
         // expect(response.body)

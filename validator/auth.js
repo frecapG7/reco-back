@@ -1,6 +1,7 @@
 
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const mongoose = require('mongoose');
 
 
 
@@ -12,9 +13,9 @@ const authenticateToken = (req, res, next) => {
 
     if (token == null) return res.sendStatus(401);
 
-    jwt.verify(token, config.TOKEN_SECRET, (err, user) => {
+    jwt.verify(token, config.TOKEN_SECRET, (err, decodedToken) => {
         if (err) return res.sendStatus(403);
-        req.user = user;
+        req.userId = new mongoose.Types.ObjectId(decodedToken.id);
         next();
     });
 }

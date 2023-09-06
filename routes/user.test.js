@@ -7,6 +7,7 @@ const supertest = require('supertest');
 
 const userRoutes = require('./user');
 const User = require('../model/User');
+const authenticateToken = require('../validator/auth');
 
 
 const express = require('express');
@@ -85,8 +86,8 @@ describe('PUT /users/:id', () => {
 
 
     it('should return forbiden on invalid user id', async () => {
-        
-    
+
+
     });
 
 
@@ -96,8 +97,25 @@ describe('PUT /users/:id', () => {
             email: 'test',
             name: 'test',
         });
-        
+
+
+        sinon.stub(authenticateToken)
+
+
+        const response = await supertest(app)
+            .put('/users/1')
+            .send({
+                email: 'test',
+                name: 'test',
+            });
+
+        expext(response.status).toBe(200);
+
     });
+
+
+
+
 
 
 
