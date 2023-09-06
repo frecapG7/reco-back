@@ -5,10 +5,47 @@ const router = express.Router();
 const Request = require('../model/Request');
 const { authenticateToken } = require('../validator/auth');
 
+/**
+ * GET /requests created by logged user
+ */
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
 
-router.get('', async (req, res) => {
-    const requests = await Request.find();
-    res.json(requests);
+        const pageNumber = parseInt(req.query.pageNumber) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+
+        const status = req.query.status || 'OPEN';
+
+        const filter = {
+            author: req.user.id,
+            status: status,
+        }
+
+        const result = await Request.aggregate([
+            { $match: filter },
+            {
+                $facet: {
+                    paginatedResults: [
+                        { $skip: (pageNumber - 1) * pageSize },
+                        { $limit: pageSize }
+                    ],
+                    totalCount: [
+                        { $count: 'count' }
+                    ]
+
+                }
+            }
+        ]);
+
+        return res.json(result[0].paginatedResults.map(request => request.toJSON()));
+
+    } catch (err) {
+        console.error(err);
+        res
+            .status(500)
+            .json({ message: 'Internal server error' });
+    }
+
 }
 );
 
@@ -20,7 +57,7 @@ router.get('/:id', async (req, res) => {
                 .status(404)
                 .json({ message: 'Request not found' });
         } else {
-            res.json(request);
+            res.json(request.toJSON());
 
         }
     } catch (err) {
@@ -43,7 +80,7 @@ router.post('', authenticateToken, async (req, res) => {
             author: req.user.id,
         });
         const savedRequest = await newRequest.save();
-        res.json(savedRequest);
+        res.json(savedRequest.toJSON());
     } catch (err) {
         console.error(err);
         res
@@ -52,9 +89,13 @@ router.post('', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/', async (req, res) => {
+router.put('/', authenticateToken, async (req, res) => {
     try {
-        const savedRequest = await Request.findOneAndUpdate({ _id: req.body._id },
+        const savedRequest = await Request.findOneAndUpdate(
+            {
+                _id: req.body._id,
+                author: req.user.id
+            },
             {
                 requestType: req.body.requestType,
                 description: req.body.description,
@@ -67,7 +108,7 @@ router.put('/', async (req, res) => {
                 .status(404)
                 .json({ message: 'Request not found' });
         } else {
-            res.json(savedRequest);
+            res.json(savedRequest.toJSON());
         }
     } catch (err) {
         console.error(err);
@@ -78,9 +119,12 @@ router.put('/', async (req, res) => {
 }
 );
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const request = await Request.findByIdAndDelete(req.params.id)
+        const request = await Request.findOneAndDelete({
+            _id: req.params.id,
+            author: req.user.id
+        });
         if (!request) {
             res
                 .status(404)

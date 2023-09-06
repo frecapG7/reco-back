@@ -46,7 +46,6 @@ describe('GET /requests', () => {
 
             
         expect(response.status).toBe(200);
-        console.log(response.body);
     });
 
 });
