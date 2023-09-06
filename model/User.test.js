@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const User = require('./User');
 
 
@@ -14,15 +15,13 @@ describe('User method.toJSON', () => {
         });
 
         const userJSON = user.toJSON();
-        console.log(userJSON);
 
-        expect(userJSON).toEqual({
-            //id: '64f6db09096d83b20116e62f',
-            name: 'John',
-            email: 'johndoe@exemple.fr',
-            created: expect.any(Date),
-        });
-});
+        expect(userJSON).to.have.property('id');
+        expect(userJSON).to.have.property('name').to.equal('John');
+        expect(userJSON).to.have.property('email').to.equal('johndoe@exemple.fr');
+        expect(userJSON).to.have.property('created').to.be.a('date');
+
+    });
 
 
 

@@ -32,4 +32,15 @@ const RequestSchema = new mongoose.Schema({
     }
 });
 
+RequestSchema.methods.toJSON = function () {
+    return {
+        id: this._id,
+        requestType: this.requestType,
+        description: this.description,
+        duration: this.duration,
+        status: this.status,
+    }
+};
+
+
 module.exports = mongoose.model('Request', RequestSchema);
