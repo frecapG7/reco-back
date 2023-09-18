@@ -7,6 +7,7 @@ const User = require('../model/User');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const { expect } = require('chai');
 const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
@@ -39,8 +40,8 @@ describe('POST /login', () => {
             .post('/auth')
             .send({ name: 'test', password: 'test' });
 
-        expect(response.status).toBe(401);
-        expect(response.body).toEqual({ message: 'Authentication failed. User not found.' });
+        expect(response.status).equal(401);
+        expect(response.body).equal({ message: 'Authentication failed. User not found.' });
 
     });
 
@@ -59,8 +60,8 @@ describe('POST /login', () => {
             .post('/auth')
             .send({ name: 'test', password: 'test' });
 
-        expect(response.status).toBe(401);
-        expect(response.body).toEqual({ message: 'Authentication failed. Wrong password.' });
+        expect(response.status).equal(401);
+        expect(response.body).equal({ message: 'Authentication failed. Wrong password.' });
 
     });
 
@@ -84,7 +85,11 @@ describe('POST /login', () => {
             .send({ name: 'test', password: 'test' });
 
 
-        expect(response.status).toBe(200);
+        expect(response.status).equal(200);
+        expect(response.body).to.have.property('access_token');
+        expect(response.body).to.have.property('id');
+        expect(response.body).to.have.property('username');
+        expect(response.body.username).toEqual('test');
         // expect(response.body)
         //     .toEqual("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidGVzdCIsImlhdCI6MTY5Mzg0NTMwNSwiZXhwIjoxNjkzODQ3MTA1fQ.CHATksVcjRSbZSc_Pl18g6KMzYdYdRnhvQ6p0h7mNXM");
 

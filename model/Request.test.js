@@ -9,7 +9,7 @@ describe('Request method.toJSON', () => {
             _id: '64f6db09096d83b20116e62f',
             requestType: 'BOOK',
             description: 'SciFi recommended book',
-            duration: 2,
+            duration: '2D',
             status: 'PENDING',
         });
 
@@ -18,7 +18,7 @@ describe('Request method.toJSON', () => {
         expect(requestJSON).to.have.property('id');
         expect(requestJSON).to.have.property('requestType').to.equal('BOOK');
         expect(requestJSON).to.have.property('description').to.equal('SciFi recommended book');
-        expect(requestJSON).to.have.property('duration').to.equal(2);
+        expect(requestJSON).to.have.property('duration').to.equal('2D');
         expect(requestJSON).to.have.property('status').to.equal('PENDING');
 
 

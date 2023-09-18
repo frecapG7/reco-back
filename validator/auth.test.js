@@ -19,7 +19,9 @@ describe('VALIDATE authenticateToken', () => {
     });
     it('Should return a 403 status code', async () => {
 
-        authenticateToken({ headers: { authorization: 'Bearer 123' } },
+        authenticateToken({ headers: 
+            { Cookie: 'access_token=123',  authorization: 'Bearer 123' },
+        },
             {
                 sendStatus: (code) => {
                     expect(code).to.equal(403);
@@ -30,7 +32,8 @@ describe('VALIDATE authenticateToken', () => {
 
         let req = {
             headers: {
-                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlOGNmYWE3YzllN2NlMmUzYzliMWIwYiIsImlhdCI6MTY5NDAxNDY5NywiZXhwIjoxNjk0MDE2NDk3fQ.P4576JagCuh5rkN2G9wrd3jTY493jlHnxVG4aJ6ecXw'
+                Cookie: 'access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlOGNmYWE3YzllN2NlMmUzYzliMWIwYiIsImlhdCI6MTY5NDQ0NDE4MSwiZXhwIjoxNjk0NDQ1OTgxfQ.i-I9xSbMmWbAi6k2Bfem2Ri4E1pEQSiXRiiZyjARAtk',
+                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlOGNmYWE3YzllN2NlMmUzYzliMWIwYiIsImlhdCI6MTY5NDQ0NDE4MSwiZXhwIjoxNjk0NDQ1OTgxfQ.i-I9xSbMmWbAi6k2Bfem2Ri4E1pEQSiXRiiZyjARAtk'
             }
         };
 
@@ -38,7 +41,7 @@ describe('VALIDATE authenticateToken', () => {
             {},
             () => {
                 console.log('next called');
-                expect(req.token.id).to.equal('5e8cfaa7c9e7ce2e3c9b1b0b');
+                expect(req.userId).to.equal('5e8cfaa7c9e7ce2e3c9b1b0b');
             });
     });
 });
