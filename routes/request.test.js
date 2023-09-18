@@ -24,7 +24,7 @@ describe('GET /requests', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
                 status: 'PENDING',
                 author: '5e8cfaa7c9e7ce2e3c9b1b0b',
                 created_at: '2020-04-07T20:25:35.000Z'
@@ -33,7 +33,7 @@ describe('GET /requests', () => {
                 id: 2,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
                 status: 'PENDING',
                 author: '5e8cfaa7c9e7ce2e3c9b1b0b',
                 created_at: '2020-04-07T20:25:35.000Z'
@@ -67,7 +67,7 @@ describe('GET /requests/:id', () => {
             id: 1,
             requestType: 'BOOK',
             description: 'SciFi recommended book',
-            duration: 2,
+            duration: '2D',
             status: 'PENDING',
         });
 
@@ -93,7 +93,7 @@ describe('POST /request', () => {
             .send({
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
             });
 
         expect(response.status).toBe(500);
@@ -110,7 +110,7 @@ describe('POST /request', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
                 status: 'PENDING',
             });
 
@@ -118,7 +118,7 @@ describe('POST /request', () => {
             .send({
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
             });
 
         expect(response.status).toBe(200);
@@ -141,7 +141,7 @@ describe('PUT /request', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
             });
 
         expect(response.status).toBe(500);
@@ -161,7 +161,7 @@ describe('PUT /request', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
             });
 
         expect(response.status).toBe(404);
@@ -178,7 +178,7 @@ describe('PUT /request', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
                 status: 'PENDING',
             }
         );
@@ -188,7 +188,7 @@ describe('PUT /request', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
             });
 
         expect(response.status).toBe(200);
@@ -237,7 +237,7 @@ describe('DELETE /requests/:id', () => {
                 id: 1,
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-                duration: 2,
+                duration: '2D',
                 status: 'PENDING',
             });
 

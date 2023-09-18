@@ -30,12 +30,14 @@ router.post('/', async (req, res) => {
                 .json({ message: 'Authentication failed. Wrong password.' });
 
         const token = generateAccessToken(user);
-        console.debug(token);
-        //TODO: protect field from user model from json
         return res
             .status(200)
-            .json({access_token: token});
-        //.json(user);
+            .cookie('access_token', token, { httpOnly: true, secure: true, sameSite: 'none' })
+            .json({
+                access_token: token,
+                id: user._id,
+                username: user.name
+            });
 
 
     } catch (err) {
