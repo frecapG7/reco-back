@@ -10,10 +10,24 @@ const mongoose = require('./db');
 
 
 // By default allow all origins
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3001',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'Accept',
+        'Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Credentials',
+        'Access-Control-Allow-Origin'],
+    credentials: true
+}));
 
 app.use(bodyParser.json());
 app.use('/', routes);
+
+
 
 
 app.listen(3000, () => {

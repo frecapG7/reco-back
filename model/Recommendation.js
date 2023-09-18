@@ -31,4 +31,17 @@ const RecommendationSchema = new mongoose.Schema({
     }
 });
 
+RecommendationSchema.methods.toJSON = function () {
+    return {
+        id: this._id,
+        request_id: this.request_id,
+        user_id: this.user_id,
+        field1: this.field1,
+        field2: this.field2,
+        field3: this.field3,
+        created_at: this.created_at,
+    }
+};
+
+
 module.exports = mongoose.model('Recommendation', RecommendationSchema);

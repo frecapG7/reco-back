@@ -4,6 +4,7 @@ const router = express.Router({ mergeParams: true });
 
 const Request = require('../model/Request');
 const Recommendation = require('../model/Recommendation');
+const { authenticateToken } = require('../validator/auth');
 
 router.get('', async (req, res) => {
     try {
@@ -45,7 +46,7 @@ router.get('/:id', async (req, res) => {
 
 });
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     try {
         const request = await Request.findById(req.params.requestId);
         if (!request) {
@@ -56,7 +57,7 @@ router.post('/', async (req, res) => {
         }
         const newRecommendation = new Recommendation({
             request_id: req.params.requestId,
-            user_id: '5e8cfaa7c9e7ce2e3c9b1b0b',
+            user_id: req.userId,
             field1: req.body.field1,
             field2: req.body.field2,
             field3: req.body.field3,
@@ -73,7 +74,11 @@ router.post('/', async (req, res) => {
 
 router.put('/', async (req, res) => {
     try {
-        const savedRecommendation = await Recommendation.findByIdAndUpdate({ _id: req.body._id },
+        const savedRecommendation = await Recommendation.findByIdAndUpdate(
+            {
+                _id: req.body.id,
+                user_id: req.userId
+            },
             {
                 field1: req.body.field1,
                 field2: req.body.field2,
