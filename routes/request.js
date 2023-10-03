@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const Request = require('../model/Request');
+const RequestService = require('../service/RequestService');
 const { authenticateToken } = require('../validator/auth');
 
 /**
@@ -21,25 +22,9 @@ router.get('/me', authenticateToken, async (req, res) => {
             status: status,
         }
 
+        const results = await RequestService.search(filter, pageSize, pageNumber);
 
-
-        const result = await Request.aggregate([
-            { $match: filter },
-            {
-                $facet: {
-                    paginatedResults: [
-                        { $skip: (pageNumber - 1) * pageSize },
-                        { $limit: pageSize }
-                    ],
-                    totalCount: [
-                        { $count: 'count' }
-                    ]
-
-                }
-            }
-        ]);
-
-        return res.json(result[0].paginatedResults);
+        return res.json(results);
 
     } catch (err) {
         console.error(err);
