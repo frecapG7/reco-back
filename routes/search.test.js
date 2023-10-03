@@ -21,7 +21,7 @@ app.use('/search', search);
 
 
 
-describe('POST /requests', () => {
+describe('Search requests', () => {
 
     let requestStub;
 
@@ -68,10 +68,10 @@ describe('POST /requests', () => {
             {
                 "results": [
                     {
-                        _id: 1,
+                        id: 1,
                     },
                     {
-                        _id: 2
+                        id: 2
                     }
                 ],
                 "totalCount": 2,
@@ -116,10 +116,10 @@ describe('POST /requests', () => {
             {
                 "results": [
                     {
-                        _id: 1,
+                        id: 1,
                     },
                     {
-                        _id: 2
+                        id: 2
                     }
                 ],
                 "totalCount": 2,

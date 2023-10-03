@@ -28,6 +28,10 @@ const RecommendationSchema = new mongoose.Schema({
     created_at: {
         type: Date,
         default: Date.now,
+    },
+    seen: {
+        type: Boolean,
+        default: false,
     }
 });
 
