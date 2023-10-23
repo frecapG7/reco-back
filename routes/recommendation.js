@@ -5,10 +5,10 @@ const router = express.Router({ mergeParams: true });
 const Request = require('../model/Request');
 const Recommendation = require('../model/Recommendation');
 const { authenticateToken } = require('../validator/auth');
+const recommendationService = require('../service/recommendationService');
 
 router.get('', async (req, res) => {
     try {
-        console.log(req.params.requestId);
         const request = await Request.findById(req.params.requestId);
         if (!request) {
             res
@@ -16,8 +16,9 @@ router.get('', async (req, res) => {
                 .json({ message: `Cannot find request with id ${req.params.requestId}` });
             return;
         }
-        const recommendations = await Recommendation.find({ request_id: req.params.requestId });
-        res.json(recommendations);
+        const result = await recommendationService.getRecommendations(request, req.userId);
+        res.status(200)
+            .json(result);
     } catch (err) {
         console.error(err);
         res.status(500)
@@ -115,6 +116,34 @@ router.delete('/:id', async (req, res) => {
             .status(500)
             .json({ message: 'Internal server error' });
     }
+});
+
+// POST like
+router.post("/:id/like", authenticateToken, async (req, res) => {
+    try {
+        const recommendation = await recommendationService.likeRecommendation(req.params.id, req.userId);
+        res.status(200)
+            .json(recommendation);
+    } catch (err) {
+        console.error(err);
+        res
+            .status(err.statusCode || 500)
+            .json({ message: err?.message || 'Internal server error' });
+    }
+});
+// DELETE like
+router.delete("/:id/like", authenticateToken, async (req, res) => {
+    try {
+        const recommendation = await recommendationService.unlikeRecommendation(req.params.id, req.userId);
+        res.status(200)
+            .json(recommendation);
+    } catch (err) {
+        console.error(err);
+        res
+            .status(err?.statusCode || 500)
+            .json({ message: err?.message || 'Internal server error' });
+    }
+
 });
 
 

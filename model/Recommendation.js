@@ -32,7 +32,11 @@ const RecommendationSchema = new mongoose.Schema({
     seen: {
         type: Boolean,
         default: false,
-    }
+    },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }]
 });
 
 RecommendationSchema.methods.toJSON = function () {
