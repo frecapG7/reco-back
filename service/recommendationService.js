@@ -17,6 +17,11 @@ const toDTO = (recommendation, userId) => {
     }
 }
 
+async function getRecommendations(request, userId) {
+    console.log(request._id);
+    const recommendations = await Recommendation.find({ request_id: request._id });
+    return recommendations.map(recommendation => toDTO(recommendation, userId));
+}
 
 // Function to like a recommendation
 async function likeRecommendation(recommendationId, userId) {
@@ -45,6 +50,7 @@ async function unlikeRecommendation(recommendationId, userId) {
 
 
 module.exports = {
+    getRecommendations,
     likeRecommendation,
     unlikeRecommendation,
 }

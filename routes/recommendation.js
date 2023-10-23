@@ -16,8 +16,9 @@ router.get('', async (req, res) => {
                 .json({ message: `Cannot find request with id ${req.params.requestId}` });
             return;
         }
-        const recommendations = await Recommendation.find({ request_id: req.params.requestId });
-        res.json(recommendations);
+        const result = await recommendationService.getRecommendations(request, req.userId);
+        res.status(200)
+            .json(result);
     } catch (err) {
         console.error(err);
         res.status(500)
@@ -131,7 +132,7 @@ router.post("/:id/like", authenticateToken, async (req, res) => {
     }
 });
 // DELETE like
-router.delete(":id/like", authenticateToken, async (req, res) => {
+router.delete("/:id/like", authenticateToken, async (req, res) => {
     try {
         const recommendation = await recommendationService.unlikeRecommendation(req.params.id, req.userId);
         res.status(200)
