@@ -1,4 +1,3 @@
-const { expect } = require("chai");
 const { authenticateToken } = require("./auth");
 
 
@@ -11,7 +10,7 @@ describe('VALIDATE authenticateToken', () => {
 
         authenticateToken({ headers: {} }, {
             sendStatus: (code) => {
-                expect(code).to.equal(401);
+                expect(code).toEqual(401);
             }
         }, () => { });
 
@@ -24,24 +23,23 @@ describe('VALIDATE authenticateToken', () => {
         },
             {
                 sendStatus: (code) => {
-                    expect(code).to.equal(403);
+                    expect(code).toEqual(403);
                 }
             }, () => { });
     });
+    
     it('Should call next', async () => {
 
         let req = {
             headers: {
-                Cookie: 'access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlOGNmYWE3YzllN2NlMmUzYzliMWIwYiIsImlhdCI6MTY5NDQ0NDE4MSwiZXhwIjoxNjk0NDQ1OTgxfQ.i-I9xSbMmWbAi6k2Bfem2Ri4E1pEQSiXRiiZyjARAtk',
-                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVlOGNmYWE3YzllN2NlMmUzYzliMWIwYiIsImlhdCI6MTY5NDQ0NDE4MSwiZXhwIjoxNjk0NDQ1OTgxfQ.i-I9xSbMmWbAi6k2Bfem2Ri4E1pEQSiXRiiZyjARAtk'
+                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNjUzYmM0Y2JlZDdhNTA2ZmI3NWZjNjAzIiwiaWF0IjoxNjk4NDE1ODE5LCJleHAiOjE2OTg0MTc2MTl9.ukx_0ZLj1y-eSfzDltrAnbJgHb23-MLIMNpqkeaIzck'
             }
         };
 
         authenticateToken(req,
             {},
             () => {
-                console.log('next called');
-                expect(req.userId).to.equal('5e8cfaa7c9e7ce2e3c9b1b0b');
+                expect(req.userId).toEqual('653bc4cbed7a506fb75fc603');
             });
     });
 });

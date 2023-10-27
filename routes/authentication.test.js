@@ -7,7 +7,6 @@ const User = require('../model/User');
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const { expect } = require('chai');
 const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
@@ -40,8 +39,8 @@ describe('POST /login', () => {
             .post('/auth')
             .send({ name: 'test', password: 'test' });
 
-        expect(response.status).equal(401);
-        expect(response.body).equal({ message: 'Authentication failed. User not found.' });
+        expect(response.status).toEqual(401);
+        expect(response.body.message).toEqual('Authentication failed.');
 
     });
 
@@ -60,38 +59,35 @@ describe('POST /login', () => {
             .post('/auth')
             .send({ name: 'test', password: 'test' });
 
-        expect(response.status).equal(401);
-        expect(response.body).equal({ message: 'Authentication failed. Wrong password.' });
+        expect(response.status).toEqual(401);
+        expect(response.body.message).toEqual('Authentication failed.');
 
     });
 
     it('Should return an authenticated user', async () => {
+
+        const user = new User({
+            name: 'test',
+        });
+        sinon.stub(user, 'validPassword').returns(true);
 
         userStub.withArgs({
             $or: [
                 { email: 'test' },
                 { name: 'test' }
             ]
-        }).resolves({
-            _id: '5e8cfaa7c9e7ce2e3c9b1b0b',
-            validPassword: sinon.stub().returns(true),
-            toJSON: sinon.stub().returns({
-                name: 'test'
-            })
-        });
+        }).resolves(user);
 
         const response = await supertest(app)
             .post('/auth')
             .send({ name: 'test', password: 'test' });
 
+        console.debug(response.body.access_token);
 
-        expect(response.status).equal(200);
-        expect(response.body).to.have.property('access_token');
-        expect(response.body).to.have.property('id');
-        expect(response.body).to.have.property('username');
+        expect(response.status).toEqual(200);
         expect(response.body.username).toEqual('test');
-        // expect(response.body)
-        //     .toEqual("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoidGVzdCIsImlhdCI6MTY5Mzg0NTMwNSwiZXhwIjoxNjkzODQ3MTA1fQ.CHATksVcjRSbZSc_Pl18g6KMzYdYdRnhvQ6p0h7mNXM");
+        expect(response.body.id).toEqual(`${user._id}`);
+        expect(response.body.access_token).toBeDefined();
 
     });
 

@@ -15,11 +15,14 @@ const authenticateToken = (req, res, next) => {
     if (token == null) return res.sendStatus(401);
 
     jwt.verify(token, config.TOKEN_SECRET, (err, decodedToken) => {
+        console.debug(decodedToken);
+
         if (err){
             console.error(err);
             return res.sendStatus(403);
         } 
-        req.userId = new mongoose.Types.ObjectId(decodedToken.id);
+        // req.userId = new mongoose.Types.ObjectId(decodedToken.id);
+        req.userId = decodedToken.data;
         next();
     });
 }

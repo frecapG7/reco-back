@@ -21,13 +21,13 @@ router.post('/', async (req, res) => {
         if (!user)
             return res
                 .status(401)
-                .json({ message: 'Authentication failed. User not found.' });
+                .json({ message: 'Authentication failed.' });
 
         // Verify password is correct
         if (!user.validPassword(req.body.password))
             return res
                 .status(401)
-                .json({ message: 'Authentication failed. Wrong password.' });
+                .json({ message: 'Authentication failed.' });
 
         const token = generateAccessToken(user);
         return res
@@ -52,7 +52,10 @@ router.post('/', async (req, res) => {
 
 
 const generateAccessToken = (user) => {
-    return jwt.sign({ id: user._id}, config.TOKEN_SECRET, { expiresIn: '1800s' });
+    const payload = user._id;
+    return jwt.sign({data: payload},
+        config.TOKEN_SECRET,
+        { expiresIn: '1800s' });
 }
 
 
