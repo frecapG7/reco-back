@@ -1,43 +1,48 @@
 
-const Cart = require('../model/Cart');
+const { Cart, CartItem } = require('../model/Cart');
 const { NotFoundError } = require("../errors/error");
+const { ObjectId } = require('mongodb');
 
 
-async function getCart(userId, page, pageSize) {
+
+
+const getCart = async (userId, page, pageSize) => {
+    // 1 - Find cart
     const cart = await Cart.findOne({ user_id: userId });
-    const resultSet = cart?.items
-            .slice(page * pageSize, (page + 1) * pageSize);
 
-    return {
-        items: resultSet,
-        total: cart?.items.length,
-    };
+    // 2 - If no cart return empty array
+    if (!cart)
+        return {
+            items: []
+        };
+
+    console.debug(`Cart: ${JSON.stringify(cart)}`);
+    return cart;
 }
 
-async function addItemToCart(userId, item) {
+const addItemToCart = async (userId, item) => {
     // 1 - Find cart based on userId or create new one
     let cart = await Cart.findOne({ user_id: userId });
     if (!cart) {
         cart = new Cart({
             user_id: userId,
-            items: [],
         });
-        // await cart.save();
+        cart = await cart.save();
     }
 
+
     // 2 - Add item to cart
-    cart.items.push(new ({
+    cart.items.push(new CartItem({
         field1: item.field1,
         field2: item.field2,
         field3: item.field3,
-        requestType: item.requestType,
+        type: item.requestType,
     }));
-    await cart.save();
-    return cart;
+    return await cart.save();
 }
 
 
-async function deleteItemFromCart(userId, itemId) {
+const deleteItemFromCart = async (userId, itemId) => {
 
     // 1 - Find cart based on userId or thrown error
     const cart = await Cart.findOne({ user_id: userId });
@@ -45,16 +50,42 @@ async function deleteItemFromCart(userId, itemId) {
     if (!cart)
         throw new NotFoundError(`Cannot find cart with user id ${userId}`);
 
-    console.debug(cart);
-    // 2 - Remove item from cart
-    cart.items = cart.items?.filter(item => item.id !== itemId);
-    await cart.save();
+    // 2 - Find index of item to remove
+    const index = cart.items?.findIndex(item => item._id.equals(itemId));
+    if (index !== -1) {
+        // 3 - a Remove item based on index
+        cart.items.splice(index, 1);
+        // 3 -b Return saved cart
+        return await cart.save();
+    }
+
+    // 4 - Return same cart
+    return cart;
+}
+
+const markItemAsRead = async (userId, itemId) => {
+    // 1 - Find cart based on userId or thrown error
+    const cart = await Cart.findOne({ user_id: userId });
+    if (!cart)
+        throw new NotFoundError(`Cannot find cart with user id ${userId}`);
+    // 2 - Find index of item to edit
+    const index = cart.items?.findIndex(item => item._id.equals(itemId));
+    if (index !== -1) {
+        // 3 - a Edit item based on index
+        cart.items[index].status = 'READ';
+        // 3 -b Return saved cart
+        return await cart.save();
+    }
+
+    // 4 - Return same cart
     return cart;
 
 }
 
+
 module.exports = {
     getCart,
     addItemToCart,
-    deleteItemFromCart
+    deleteItemFromCart,
+    markItemAsRead
 }

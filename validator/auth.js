@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 
 
 
+//TODO: move to middleware
 const authenticateToken = (req, res, next) => {
 
 

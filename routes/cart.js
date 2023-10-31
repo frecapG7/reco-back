@@ -11,10 +11,10 @@ const cartService = require('../service/cartService');
 /**
  * Get all items in cart of a user based on request param user id
  */
-router.get('', async (req, res, next) => {
+router.get('', authenticateToken, async (req, res, next) => {
     try {
-        const cart = cartService.getCart(req.params.userId, 1, 10);
-        res.json(cart);
+        const result = await cartService.getCart(req.params.userId, 1, 10);
+        return res.json(result);
     } catch (err) {
         next(err);
     }
@@ -53,6 +53,22 @@ router.delete('/:itemId', authenticateToken, async (req, res, next) => {
 });
 
 
+
+/**
+ * Mark an item as read
+ */
+router.put('/:itemId/mark-read', authenticateToken, async (req, res, next) => {
+    try {
+        if (req.params.userId !== req.userId)
+            throw new ForbiddenError('You cannot delete item from other user cart');
+
+        const cart = await cartService.markItemAsRead(req.userId, req.params.itemId);
+        res.json(cart);
+    } catch (err) {
+        next(err);
+    }
+
+});
 
 module.exports = router;
 
