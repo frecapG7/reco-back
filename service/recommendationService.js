@@ -18,7 +18,6 @@ const toDTO = (recommendation, userId) => {
 }
 
 async function getRecommendations(request, userId) {
-    console.log(request._id);
     const recommendations = await Recommendation.find({ request_id: request._id });
     return recommendations.map(recommendation => toDTO(recommendation, userId));
 }

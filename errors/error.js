@@ -8,6 +8,13 @@ class NotFoundError extends Error {
     }
 }
 
+class ForbiddenError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ForbiddenError';
+        this.statusCode = 403;
+    }
+}
 
 class InternalServerError extends Error {
     constructor(message) {
@@ -17,7 +24,9 @@ class InternalServerError extends Error {
     }
 }
 
+
 module.exports = {
     NotFoundError,
+    ForbiddenError,
     InternalServerError,
 }

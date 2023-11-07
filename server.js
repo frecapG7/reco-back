@@ -7,6 +7,7 @@ const cors = require('cors');
 
 const routes = require('./routes/routes');
 const mongoose = require('./db');
+const handleError = require('./middleware/errorMiddleware');
 
 
 // By default allow all origins
@@ -24,6 +25,7 @@ app.use(cors({
     credentials: true
 }));
 
+// app.use(handleError)
 app.use(bodyParser.json());
 app.use('/', routes);
 
