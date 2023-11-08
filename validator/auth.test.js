@@ -1,45 +1,53 @@
 const { authenticateToken } = require("./auth");
-
-
-
+const sinon = require('sinon');
+const authService = require('../service/authService');
 
 describe('VALIDATE authenticateToken', () => {
 
+    let mockRequest;
+    let mockResponse;
+    let nextFunction = jest.fn();
+    let verifyTokenStub;
+
+    beforeEach(() => {
+        mockRequest = {};
+        mockResponse = {
+            sendStatus: jest.fn(),
+            json: jest.fn()
+        };
+        verifyTokenStub = sinon.stub(authService, 'verifyToken');
+    });
+
+    afterEach(() => {
+        verifyTokenStub.restore();
+    });
 
     it('Should return a 401 status code', async () => {
-
-        authenticateToken({ headers: {} }, {
-            sendStatus: (code) => {
-                expect(code).toEqual(401);
-            }
-        }, () => { });
-
-
+        const result = await authenticateToken(mockRequest, mockResponse, nextFunction);
+        expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
     });
-    it('Should return a 403 status code', async () => {
 
-        authenticateToken({ headers: 
-            { Cookie: 'access_token=123',  authorization: 'Bearer 123' },
-        },
-            {
-                sendStatus: (code) => {
-                    expect(code).toEqual(403);
-                }
-            }, () => { });
+    it('Should return a 403 status code', async () => {
+       //Build mock request with token in header
+        mockRequest = {
+            headers: {authorization: 'Bearer 123'}
+        };
+        verifyTokenStub.returns(null);
+
+        const result = await authenticateToken(mockRequest, mockResponse, nextFunction);
+        expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
     
     it('Should call next', async () => {
-
-        let req = {
-            headers: {
-                authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNjUzYmM0Y2JlZDdhNTA2ZmI3NWZjNjAzIiwiaWF0IjoxNjk4NDE1ODE5LCJleHAiOjE2OTg0MTc2MTl9.ukx_0ZLj1y-eSfzDltrAnbJgHb23-MLIMNpqkeaIzck'
-            }
+        mockRequest = {
+            headers: {authorization: 'Bearer 123'}
         };
+        const decodedToken = '653bc4cbed7a506fb75fc603';
+        verifyTokenStub.returns(decodedToken);
 
-        authenticateToken(req,
-            {},
-            () => {
-                expect(req.userId).toEqual('653bc4cbed7a506fb75fc603');
-            });
+        const result = await authenticateToken(mockRequest, mockResponse, nextFunction);
+
+        expect(mockRequest.userId).toEqual(decodedToken);
+        expect(nextFunction).toHaveBeenCalled();
     });
 });

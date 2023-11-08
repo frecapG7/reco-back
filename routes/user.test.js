@@ -3,8 +3,6 @@
 const sinon = require('sinon');
 const supertest = require('supertest');
 
-
-
 const userRoutes = require('./user');
 const User = require('../model/User');
 const authenticateToken = require('../validator/auth');
@@ -84,6 +82,12 @@ describe('POST /users', () => {
 
 describe('PUT /users/:id', () => {
 
+    let authenticateTokenStub;
+
+
+    beforeEach(() => {
+        authenticateTokenStub = sinon.stub(authenticateToken, 'authenticateToken');
+    });
 
     it('should return forbiden on invalid user id', async () => {
 
