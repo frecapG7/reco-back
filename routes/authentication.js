@@ -2,9 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../model/User');
+const authService = require('../service/authService');
 
 const jwt = require('jsonwebtoken');
-const config = require('../config');
 
 
 router.post('/', async (req, res) => {
@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
                 .status(401)
                 .json({ message: 'Authentication failed.' });
 
-        const token = generateAccessToken(user);
+        const token = authService.generateToken(user);
         return res
             .status(200)
             .cookie('access_token', token, { httpOnly: true, secure: true, sameSite: 'none' })
@@ -50,13 +50,6 @@ router.post('/', async (req, res) => {
 
 
 
-
-const generateAccessToken = (user) => {
-    const payload = user._id;
-    return jwt.sign({data: payload},
-        config.TOKEN_SECRET,
-        { expiresIn: '1800s' });
-}
 
 
 
