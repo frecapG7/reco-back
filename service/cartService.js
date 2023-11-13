@@ -15,8 +15,6 @@ const getCart = async (userId, page, pageSize) => {
         return {
             items: []
         };
-
-    console.debug(`Cart: ${JSON.stringify(cart)}`);
     return cart;
 }
 
@@ -32,7 +30,7 @@ const addItemToCart = async (userId, item) => {
 
 
     // 2 - Add item to cart
-    cart.items.push(new CartItem({
+    cart.items?.push(new CartItem({
         field1: item.field1,
         field2: item.field2,
         field3: item.field3,

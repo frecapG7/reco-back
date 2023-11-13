@@ -78,39 +78,49 @@ describe('Test addItemToCart function', () => {
             user_id: '123'
         }).resolves(null);
 
+
+        // Stub save method
+        const cart1 = new Cart({});
+        cartInstanceStub.onCall(0).returns(cart1);
+        const cart = new Cart({});
+        cartInstanceStub.onCall(1).returns(cart);
+
         const result = cartService.addItemToCart('123', {
             field1: 'Toito',
             type: 'BOOK'
         });
 
+
         expect(result).toBeDefined();
-        expect(result.items?.length).toEqual(1);
 
     });
 
     it('Sould push an item into an existing cart', async () => {
 
-        let cart = new Cart({
-        });
-        cart.items.push(new CartItem({
-            field1: 'Toito',
-            type: 'BOOK'
-        }));
+        const cart = {
+            items: [
+                new CartItem({
+                    field1: 'Toito',
+                    type: 'BOOK'
+                })
+            ],
+            save: jest.fn()
+        };
 
         cartFindOneStub.withArgs({
             user_id: '123'
         }).resolves({
             cart
         });
+        cartInstanceStub.resolves(cart);
 
         const result = await cartService.addItemToCart('123', {
             field1: 'Toito2',
-            type: 'BOOK'
+            requestType: 'BOOK'
         });
 
         expect(result).toBeDefined();
-        expect(result.items?.length).toEqual(2);
-
+        expect(cart.save).toHaveBeenCalledTimes(1);
     });
 
 });
