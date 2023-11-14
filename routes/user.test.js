@@ -5,7 +5,8 @@ const supertest = require('supertest');
 
 const userRoutes = require('./user');
 const User = require('../model/User');
-const authenticateToken = require('../validator/auth');
+const auth = require('../validator/auth');
+const userService = require('../service/userService');
 
 
 const express = require('express');
@@ -77,6 +78,44 @@ describe('POST /users', () => {
     });
 });
 
+
+describe('GET /users/:id', () => {
+
+    let authenticateTokenStub;
+    let userServiceStub;
+
+    beforeEach(() => {
+        authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
+            // Mock authentication logic
+            req.userId = 1;
+            next();
+        });
+        userServiceStub = sinon.stub(userService, 'getUser');
+    });
+    afterEach(() => {
+        authenticateTokenStub.restore();
+        userServiceStub.restore();
+    });
+
+    it('should return user', async () => {
+
+
+        userServiceStub.resolves(new User({
+            email: 'test',
+            name: 'test',
+        }));
+
+        const response = await supertest(app)
+            .get('/users/1');
+
+        expect(response.status).toBe(200);
+
+    });
+
+
+
+
+});
 
 
 

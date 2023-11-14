@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const Request = require('../model/Request');
-const RequestService = require('../service/RequestService');
+const requestService = require('../service/requestService');
 const { authenticateToken } = require('../validator/auth');
 
 /**
@@ -22,7 +22,7 @@ router.get('/me', authenticateToken, async (req, res) => {
             status: status,
         }
 
-        const results = await RequestService.search(filter, pageSize, pageNumber);
+        const results = await requestService.search(filter, pageSize, pageNumber);
 
         return res.json(results);
 
@@ -36,94 +36,41 @@ router.get('/me', authenticateToken, async (req, res) => {
 }
 );
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
     try {
-        const request = await Request.findById(req.params.id);
-        if (!request) {
-            res
-                .status(404)
-                .json({ message: 'Request not found' });
-        } else {
-            res.json(request);
-
-        }
+        const request = await requestService.getRequest(req.params.id);
+        res.json
     } catch (err) {
-        console.error(err);
-        res
-            .status(500)
-            .json({ message: 'Error getting request' });
+        next(err);
     }
 
 });
 
-router.post('', authenticateToken, async (req, res) => {
+router.post('', authenticateToken, async (req, res, next) => {
 
     try {
-        const newRequest = new Request({
-            requestType: req.body.requestType,
-            description: req.body.description,
-            duration: req.body.duration,
-            status: 'OPEN',
-            author: req.userId,
-        });
-        const savedRequest = await newRequest.save();
-        res.json(savedRequest);
+        const request = await requestService.createRequest(req.body, req.userId);
+        res.json(request);
     } catch (err) {
-        console.error(err);
-        res
-            .status(500)
-            .json({ message: 'Error saving request' });
+        next(err);
     }
 });
 
-router.put('/', authenticateToken, async (req, res) => {
+router.put('/', authenticateToken, async (req, res, next) => {
     try {
-        const savedRequest = await Request.findOneAndUpdate(
-            {
-                _id: req.body._id,
-                author: req.userId
-            },
-            {
-                requestType: req.body.requestType,
-                description: req.body.description,
-                duration: req.body.duration,
-            },
-            { new: true });
-
-        if (!savedRequest) {
-            res
-                .status(404)
-                .json({ message: 'Request not found' });
-        } else {
-            res.json(savedRequest);
-        }
+        const savedRequest = requestService.updateRequest(req.params.id, req.body, req.userId);
     } catch (err) {
-        console.error(err);
-        res
-            .status(500)
-            .json({ message: 'Error updating request' });
+        next(err);
     }
 }
 );
 
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const request = await Request.findOneAndDelete({
-            _id: req.params.id,
-            author: req.userId
-        });
-        if (!request) {
-            res
-                .status(404)
-                .json({ message: `Cannot find request with id ${req.params.id}` });
-        } else {
-            res.status(200);
-        }
+        const request = requestService.deleteRequest(req.params.id, req.userId);
+        res.status(204).send();
     } catch (err) {
-        console.log(err);
-        res
-            .status(500)
-            .json({ message: 'Internal server error' });
+        next(err);
     }
 }
 );

@@ -3,7 +3,8 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../model/User');
-const { authenticateToken } = require('../validator/auth');
+// const { authenticateToken } = require('../validator/auth');
+const auth = require('../validator/auth');
 const userService = require('../service/userService');
 const { ForbiddenError } = require('../errors/error');
 
@@ -50,22 +51,13 @@ router.post('', async (req, res) => {
 /**
  * GET /user to get user by id
  */
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', auth.authenticateToken, async (req, res, next) => {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            res
-                .status(404)
-                .json({ message: 'User not found' });
-        } else {
-            res.json(user);
-
-        }
+        const user = await userService.getUser(req.params.id);
+        return res.json(user);
     } catch (err) {
         console.error(err);
-        res
-            .status(500)
-            .json({ message: 'Error getting user' });
+        next(err);
     }
 });
 
@@ -73,7 +65,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 /**
  * PUT /user to update user
  */
-router.put('/:id', authenticateToken, async (req, res, next) => {
+router.put('/:id', auth.authenticateToken, async (req, res, next) => {
     try {
 
         if (req.userId !== req.params.id)

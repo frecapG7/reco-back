@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 
-const RequestService = require('../service/RequestService');
+const requestService = require('../service/requestService');
 
 router.post('/requests', async (req, res) => {
 

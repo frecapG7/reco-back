@@ -25,9 +25,9 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(handleError)
 app.use(bodyParser.json());
 app.use('/', routes);
+app.use(handleError)
 
 
 
