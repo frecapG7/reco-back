@@ -4,6 +4,13 @@ const { NotFoundError } = require('../errors/error');
 const { ObjectId } = require('mongodb');
 
 
+/**
+ * Asynchronous function to get a request by its ID.
+ * 
+ * @async
+ * @function getRequest
+ * @param {string} id - The ID of the request.
+ */
 const getRequest = async (id) => {
 
     const request = await Request.findById(id);
@@ -12,6 +19,15 @@ const getRequest = async (id) => {
     return request;
 }
 
+
+/**
+ *  Asynchronous function to create a request.
+ *  
+ * @async
+ * @function createRequest
+ * @param {Object} data - The data of the request.
+ * @param {string} userId - The ID of the user.
+ */
 const createRequest = async (data, userId) => {
 
 
@@ -26,6 +42,15 @@ const createRequest = async (data, userId) => {
 
 }
 
+/**
+ * Asynchronous function to update a request.
+ *  
+ * @async
+ * @function updateRequest
+ * @param {string} id - The ID of the request.
+ * @param {Object} data - The data of the request.
+ * @param {string} userId - The ID of the user.
+ */
 const updateRequest = async (id, data, userId) => {
     const savedRequest = await Request.findOneAndUpdate(
         {
@@ -45,6 +70,14 @@ const updateRequest = async (id, data, userId) => {
     return savedRequest;
 }
 
+/**
+ * Asynchronous function to delete a request.
+ * 
+ * @async
+ * @function deleteRequest
+ * @param {string} id - The ID of the request.
+ * @param {string} userId - The ID of the user.
+ */
 const deleteRequest = async (id, userId) => {
     const request = await Request.findOneAndDelete({
         _id: String(id),
@@ -57,7 +90,7 @@ const deleteRequest = async (id, userId) => {
 
 
 
-
+// TODO
 const search = async (filters, pageSize, pageNumber) => {
 
     const totalResults = await Request.countDocuments(filters);
