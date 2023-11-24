@@ -3,7 +3,6 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../model/User');
-// const { authenticateToken } = require('../validator/auth');
 const auth = require('../validator/auth');
 const userService = require('../service/userService');
 const { ForbiddenError } = require('../errors/error');
@@ -70,13 +69,9 @@ router.put('/:id', auth.authenticateToken, async (req, res, next) => {
 
         if (req.userId !== req.params.id)
             throw new ForbiddenError('You cannot update other user');
-
         const user = await userService.updateUser(req.params.id, req.body);
         return res.json(user);
-
-
     } catch (err) {
-        console.error(err);
         next(err);
     }
 

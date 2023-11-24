@@ -39,7 +39,7 @@ router.get('/me', authenticateToken, async (req, res) => {
 router.get('/:id', async (req, res, next) => {
     try {
         const request = await requestService.getRequest(req.params.id);
-        res.json
+        res.status(200).json(request);
     } catch (err) {
         next(err);
     }
@@ -50,15 +50,19 @@ router.post('', authenticateToken, async (req, res, next) => {
 
     try {
         const request = await requestService.createRequest(req.body, req.userId);
-        res.json(request);
+        res.status(201)
+            .json(request);
     } catch (err) {
         next(err);
     }
 });
 
-router.put('/', authenticateToken, async (req, res, next) => {
+router.put('/:id', authenticateToken, async (req, res, next) => {
     try {
         const savedRequest = requestService.updateRequest(req.params.id, req.body, req.userId);
+        res
+            .status(204)
+            .json(savedRequest);
     } catch (err) {
         next(err);
     }

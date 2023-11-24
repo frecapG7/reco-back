@@ -1,9 +1,6 @@
-
-
 const sinon = require('sinon');
 const supertest = require('supertest');
 
-const userRoutes = require('./user');
 const User = require('../model/User');
 const auth = require('../validator/auth');
 const userService = require('../service/userService');
@@ -12,9 +9,21 @@ const userService = require('../service/userService');
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
+const handleError = require('../middleware/errorMiddleware');
 app.use(bodyParser.json());
 app.use(express.json());
+
+// Mock authenticateToken
+// Order must prevail
+const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
+    // Mock authentication logic
+    req.userId = String(1);
+    next();
+});
+const userRoutes = require('./user');
+
 app.use('/users', userRoutes);
+app.use(handleError);
 
 
 describe('POST /users', () => {
@@ -81,15 +90,9 @@ describe('POST /users', () => {
 
 describe('GET /users/:id', () => {
 
-    let authenticateTokenStub;
     let userServiceStub;
 
     beforeEach(() => {
-        authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
-            // Mock authentication logic
-            req.userId = 1;
-            next();
-        });
         userServiceStub = sinon.stub(userService, 'getUser');
     });
     afterEach(() => {
@@ -98,8 +101,6 @@ describe('GET /users/:id', () => {
     });
 
     it('should return user', async () => {
-
-
         userServiceStub.resolves(new User({
             email: 'test',
             name: 'test',
@@ -111,39 +112,39 @@ describe('GET /users/:id', () => {
         expect(response.status).toBe(200);
 
     });
-
-
-
-
 });
-
-
 
 describe('PUT /users/:id', () => {
 
-    let authenticateTokenStub;
+    let userServiceStub;;
 
 
     beforeEach(() => {
-        authenticateTokenStub = sinon.stub(authenticateToken, 'authenticateToken');
+        userServiceStub = sinon.stub(userService, 'updateUser');
+    });
+    afterEach(() => {
+        userServiceStub.restore();
     });
 
     it('should return forbiden on invalid user id', async () => {
+        
+        const response = await supertest(app)
+            .put('/users/2')
+            .send({
+                email: 'test',
+                name: 'test',
+            });
 
+        expect(response.status).toBe(403);
 
     });
 
 
     it('should return updated user', async () => {
-        const mockUser = new User({
-            _id: 1,
-            email: 'test',
-            name: 'test',
+            
+        userServiceStub.resolves({
+            id: 1
         });
-
-
-        sinon.stub(authenticateToken)
-
 
         const response = await supertest(app)
             .put('/users/1')
@@ -152,14 +153,10 @@ describe('PUT /users/:id', () => {
                 name: 'test',
             });
 
-        expext(response.status).toBe(200);
+        expect(response.status).toBe(200);
+        expect(response.body.id).toEqual(1);
 
     });
-
-
-
-
-
 
 
 });
