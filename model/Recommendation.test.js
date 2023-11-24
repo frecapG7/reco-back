@@ -1,5 +1,4 @@
 const Recommendation = require('./Recommendation');
-const { expect } = require('chai');
 
 describe('Recommendation method.toJSON', () => {
 
@@ -17,13 +16,13 @@ describe('Recommendation method.toJSON', () => {
 
         const recommendationJSON = recommendation.toJSON();
 
-        expect(recommendationJSON).to.have.property('id');
-        console.log(recommendationJSON.user_id);
-        expect(recommendationJSON).to.have.property('user_id').to.equal('64f6db09096d83b20116e62f');
-        expect(recommendationJSON).to.have.property('field1').to.equal('field1');
-        expect(recommendationJSON).to.have.property('field2').to.equal('field2');
-        expect(recommendationJSON).to.have.property('field3').to.equal('field3');
-        expect(recommendationJSON).to.have.property('created_at').to.be('Date');
+        expect(recommendationJSON.id).toBeDefined();
+        expect(recommendationJSON.user_id.equals('64f6db09096d83b20116e62f')).toEqual(true);
+        expect(recommendationJSON.request_id.equals('64f6db09096d83b20116e62f')).toEqual(true);
+        expect(recommendationJSON.field1).toEqual('field1');
+        expect(recommendationJSON.field2).toEqual('field2');
+        expect(recommendationJSON.field3).toEqual('field3');
+        expect(recommendationJSON.created_at).toBeDefined();
 
     })
 

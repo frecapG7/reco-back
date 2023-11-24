@@ -3,6 +3,13 @@ const User = require('../model/User');
 
 
 
+const getUser = async (id) => {
+    const user = await User.findById(id);
+    if (!user)
+        throw new NotFoundError('User not found');
+    return user;
+
+}
 
 const updateUser = async (id, data) => {
 
@@ -22,5 +29,6 @@ const updateUser = async (id, data) => {
 
 
 module.exports = {
+    getUser,
     updateUser,
 }

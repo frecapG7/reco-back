@@ -4,6 +4,40 @@ const userService = require('./userService');
 const { NotFoundError } = require('../errors/error');
 
 
+describe('Test getUser', () => {
+
+    let userFindByIdStub;
+
+    beforeEach(() => {
+        userFindByIdStub = sinon.stub(User, 'findById');
+    });
+    afterEach(() => {
+        userFindByIdStub.restore();
+    });
+    
+
+
+    it('Should throw a not found error', async () => {
+        userFindByIdStub.resolves(null);
+    
+        await expect(userService.getUser('123'))
+            .rejects
+            .toThrow(NotFoundError);
+    });
+
+
+    it('Should return user', async () => {
+        
+        const expected = new User();
+        userFindByIdStub.resolves(expected);
+
+        const result = await userService.getUser('123');
+        expect(userFindByIdStub.calledWith('123')).toEqual(true);
+        expect(result).toEqual(expected);
+
+    });
+
+});
 
 describe('Test updateUser', () => {
 
