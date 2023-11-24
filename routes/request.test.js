@@ -172,3 +172,57 @@ describe('DELETE /requests/:id', () => {
 
     });
 });
+
+
+describe('GET /requests', () => {
+
+    let requestServiceStub;
+    beforeEach(() => {
+        requestServiceStub = sinon.stub(requestService, 'search');
+    });
+    afterEach(() => {
+        requestServiceStub.restore();
+    });
+
+    it('should return 200 with no params', async () => {
+
+        requestServiceStub
+            .withArgs({}, 10, 1)
+            .resolves({
+                results: [],
+                total: 0,
+            });
+
+        const response = await supertest(app).get('/requests');
+
+        expect(response.status).toEqual(200);
+        expect(response.body.results).toEqual([]);
+        expect(response.body.total).toEqual(0);
+
+    });
+
+    it('should return 200 with params', async () => {
+
+        requestServiceStub
+            .withArgs({
+                requestType: 'BOOK',
+                status: 'OPEN',
+                author: '123',
+            }, 10, 1)
+            .resolves({
+                results: [],
+                total: 0,
+            });
+
+
+        const response = await supertest(app)
+            .get('/requests?type=BOOK&status=OPEN&me=true');
+
+        expect(response.status).toEqual(200);
+        expect(response.body.results).toEqual([]);
+        expect(response.body.total).toEqual(0);
+    });
+
+
+});
+

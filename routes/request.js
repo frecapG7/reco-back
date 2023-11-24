@@ -36,6 +36,9 @@ router.get('/me', authenticateToken, async (req, res) => {
 }
 );
 
+/**
+ * GET /requests/:id
+ */
 router.get('/:id', async (req, res, next) => {
     try {
         const request = await requestService.getRequest(req.params.id);
@@ -46,6 +49,10 @@ router.get('/:id', async (req, res, next) => {
 
 });
 
+
+/**
+ * POST /requests
+ */
 router.post('', authenticateToken, async (req, res, next) => {
 
     try {
@@ -57,6 +64,9 @@ router.post('', authenticateToken, async (req, res, next) => {
     }
 });
 
+/**
+ * PUT /requests/:id
+ */
 router.put('/:id', authenticateToken, async (req, res, next) => {
     try {
         const savedRequest = requestService.updateRequest(req.params.id, req.body, req.userId);
@@ -69,6 +79,9 @@ router.put('/:id', authenticateToken, async (req, res, next) => {
 }
 );
 
+/**
+ * DELETE /requests/:id
+ */
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const request = requestService.deleteRequest(req.params.id, req.userId);
@@ -78,6 +91,42 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 }
 );
+
+
+/**
+ * 
+ */
+router.get('', authenticateToken, async (req, res, next) => {
+
+    try{
+        const pageNumber = parseInt(req.query.pageNumber) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const type = req.query.type || null;
+        const status = req.query.status || null;
+        const me = Boolean(req.query.me) || false;
+
+
+        const filter = {
+            ...(type && { requestType: type }),
+            ...(status && { status: status }),
+            ...(me && { author: req.userId }),
+        }
+
+        const results = await requestService.search(filter, pageSize, pageNumber);
+        return res.json(results);
+
+    }catch(err){
+        next(err);
+    }
+    
+
+
+
+    
+
+
+
+});
 
 
 module.exports = router;
