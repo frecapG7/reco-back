@@ -39,7 +39,6 @@ router.post('', async (req, res) => {
 
 
     } catch (err) {
-        console.log(err);
         res
             .status(500)
             .json({ message: 'Error creating user' });
@@ -52,10 +51,10 @@ router.post('', async (req, res) => {
  */
 router.get('/:id', auth.authenticateToken, async (req, res, next) => {
     try {
+        req.log.info('call API');
         const user = await userService.getUser(req.params.id);
         return res.json(user);
     } catch (err) {
-        console.error(err);
         next(err);
     }
 });

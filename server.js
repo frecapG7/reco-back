@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
-
+const pino = require('./logger');
 const routes = require('./routes/routes');
 const mongoose = require('./db');
 const handleError = require('./middleware/errorMiddleware');
@@ -24,6 +24,8 @@ app.use(cors({
         'Access-Control-Allow-Origin'],
     credentials: true
 }));
+
+app.use(pino);
 
 app.use(bodyParser.json());
 app.use('/', routes);
