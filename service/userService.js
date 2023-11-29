@@ -1,4 +1,4 @@
-const { NotFoundError } = require('../errors/error');
+const { NotFoundError, ForbiddenError } = require('../errors/error');
 const User = require('../model/User');
 
 
@@ -11,9 +11,27 @@ const getUser = async (id) => {
 
 }
 
+const createUser = async (data) => {
+
+    const existingUser = await User.findOne({
+        $or: [
+            { email: data.email },
+            { name: data.name }
+        ]
+    });
+    if (existingUser)
+        throw new ForbiddenError('User already exists');
+
+    const newUser = new User({
+        name: data.name,
+        email: data.email,
+    });
+    newUser.setPassword(data.password);
+    const savedUser = await newUser.save();
+    return savedUser;
+}
+
 const updateUser = async (id, data) => {
-
-
     const updatedUser = await User.findByIdAndUpdate(id,
         {
             name: data.name,
@@ -30,5 +48,6 @@ const updateUser = async (id, data) => {
 
 module.exports = {
     getUser,
+    createUser,
     updateUser,
 }

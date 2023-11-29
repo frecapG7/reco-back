@@ -13,35 +13,14 @@ const { ForbiddenError } = require('../errors/error');
 /**
  * POST /user to create new user
  */
-router.post('', async (req, res) => {
+router.post('', async (req, res, next) => {
     try {
-        const existingUser = await User.findOne({
-            $or: [
-                { email: req.body.email },
-                { name: req.body.name }
-            ]
-        });
-
-        if (existingUser)
-            return res
-                .status(409)
-                .json({ message: 'User already exists' });
-
-        const newUser = new User({
-            name: req.body.name,
-            email: req.body.email,
-        });
-        newUser.setPassword(req.body.password);
-        const savedUser = await newUser.save();
+        const savedUser = await userService.createUser(req.body);
         return res
-            .status(200)
-            .json(savedUser.toJSON());
-
-
+            .status(201)
+            .json(savedUser);
     } catch (err) {
-        res
-            .status(500)
-            .json({ message: 'Error creating user' });
+        next(err);    
     }
 });
 
@@ -51,7 +30,7 @@ router.post('', async (req, res) => {
  */
 router.get('/:id', auth.authenticateToken, async (req, res, next) => {
     try {
-        req.log.info('call API');
+        req.log?.info('call API');
         const user = await userService.getUser(req.params.id);
         return res.json(user);
     } catch (err) {

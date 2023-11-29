@@ -29,8 +29,6 @@ const getRequest = async (id) => {
  * @param {string} userId - The ID of the user.
  */
 const createRequest = async (data, userId) => {
-
-
     const request = new Request({
         requestType: data.requestType,
         description: data.description,
@@ -90,7 +88,13 @@ const deleteRequest = async (id, userId) => {
 
 
 
-// TODO
+/**
+ * Asynchronous function to search requests.
+ * @param {*} filters 
+ * @param {*} pageSize 
+ * @param {*} pageNumber 
+ * @returns 
+ */
 const search = async (filters, pageSize, pageNumber) => {
 
     const totalResults = await Request.countDocuments(filters);

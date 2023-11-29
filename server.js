@@ -25,7 +25,7 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(pino);
+// app.use(pino);
 
 app.use(bodyParser.json());
 app.use('/', routes);

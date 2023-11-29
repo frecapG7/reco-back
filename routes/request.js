@@ -6,35 +6,7 @@ const Request = require('../model/Request');
 const requestService = require('../service/requestService');
 const { authenticateToken } = require('../validator/auth');
 
-/**
- * GET /requests created by logged user
- */
-router.get('/me', authenticateToken, async (req, res) => {
-    try {
 
-        const pageNumber = parseInt(req.query.pageNumber) || 1;
-        const pageSize = parseInt(req.query.pageSize) || 10;
-
-        const status = req.query.status || 'OPEN';
-
-        const filter = {
-            author: req.userId,
-            status: status,
-        }
-
-        const results = await requestService.search(filter, pageSize, pageNumber);
-
-        return res.json(results);
-
-    } catch (err) {
-        console.error(err);
-        res
-            .status(500)
-            .json({ message: 'Internal server error' });
-    }
-
-}
-);
 
 /**
  * GET /requests/:id

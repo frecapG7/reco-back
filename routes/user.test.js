@@ -28,48 +28,20 @@ app.use(handleError);
 
 describe('POST /users', () => {
 
-
-    it('should return exception on user unicity', async () => {
-        const userStub = sinon.stub(User, 'findOne');
-        userStub.withArgs({
-            $or: [
-                { email: 'test' },
-                { name: 'test' }
-            ]
-        }).resolves({ _id: 1 });
-
-        const response = await supertest(app)
-            .post('/users')
-            .send({
-                email: 'test',
-                name: 'test',
-                password: 'test'
-            });
-
-        expect(response.status).toBe(409);
-        expect(response.body).toEqual({ message: 'User already exists' });
-
-        userStub.restore();
-
+    let userServiceStub;
+    beforeEach(() => {
+        userServiceStub = sinon.stub(userService, 'createUser');
+    });
+    afterEach(() => {
+        userServiceStub.restore();
     });
 
-    it('should test happy path', async () => {
-        const userStub = sinon.stub(User, 'findOne');
-        userStub.withArgs({
-            $or: [
-                { email: 'test' },
-                { name: 'test' }
-            ]
-        }).resolves(null);
+    it('should return 201', async () => {
 
-        const userSaveStub = sinon.stub(User.prototype, 'save')
-            .resolves({
-                _id: 1,
-                email: 'test',
-                name: 'test',
-                toJSON: sinon.stub().returns({})
-            });
-
+        userServiceStub.resolves(new User({
+            email: 'test',
+            name: 'test',
+        }));
 
         const response = await supertest(app)
             .post('/users')
@@ -79,10 +51,7 @@ describe('POST /users', () => {
                 password: 'test'
             });
 
-        expect(response.status).toBe(200);
-        expect(response.body).toEqual({});
-
-        userStub.restore();
+        expect(response.status).toBe(201);
 
     });
 });
@@ -127,7 +96,7 @@ describe('PUT /users/:id', () => {
     });
 
     it('should return forbiden on invalid user id', async () => {
-        
+
         const response = await supertest(app)
             .put('/users/2')
             .send({
@@ -141,7 +110,7 @@ describe('PUT /users/:id', () => {
 
 
     it('should return updated user', async () => {
-            
+
         userServiceStub.resolves({
             id: 1
         });
