@@ -1,14 +1,22 @@
 
 const authService = require('./authService');
 const User = require('../model/User');
+const {ForbiddenError} = require('../errors/error'); 
 
 
 describe('Test token generation/verification', () => {
 
 
-    it('Should generate a valid token', () => {
+    it('Should throw an error if token is invalid', async () => {
+        await expect(authService.verifyToken('invalid token'))
+            .rejects
+            .toThrow(ForbiddenError);
+    });
+
+
+    it('Should generate a valid token', async () => {
         const user = new User();
-        const token = authService.generateToken(user);
+        const token = await authService.generateToken(user);
 
         expect(token).toBeDefined();
 
@@ -18,4 +26,4 @@ describe('Test token generation/verification', () => {
     });
 
 
-}) ;
+});

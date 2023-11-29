@@ -1,7 +1,8 @@
 
 
 const handleError = (err, req, res, next) => {
-    req.log.error(err);
+    req.log?.error(err);
+    console.error(err);
     if (err.statusCode) {
         res.status(err.statusCode).json({ message: err.message });
     } else {
