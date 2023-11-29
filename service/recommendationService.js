@@ -50,9 +50,9 @@ const createRecommendation = async (requestId, userId, data) => {
     const newRecommendation = new Recommendation({
         request_id: String(requestId),
         user_id: String(userId),
-        field1: data.field1,
-        field2: data.field2,
-        field3: data.fiel3d3,
+        field1: String(data.field1),
+        field2: String(data.field2),
+        field3: String(data.field3),
     });
     const savedRecommendation = await newRecommendation.save();
     return savedRecommendation;
@@ -60,16 +60,16 @@ const createRecommendation = async (requestId, userId, data) => {
 
 
 const updateRecommendation = async (requestId, recommendationId, userId, data) => {
-    const recommendation = Recommendation.findOneAndUpdate(
+    const recommendation = await Recommendation.findOneAndUpdate(
         {
             _id: String(recommendationId),
             user_id: String(userId),
             request_id: String(requestId),
         },
         {
-            field1: data.field1,
-            field2: data.field2,
-            field3: data.field3,
+            field1: String(data.field1),
+            field2: String(data.field2),
+            field3: String(data.field3),
         },
         { new: true });
     if (!recommendation)
@@ -78,7 +78,7 @@ const updateRecommendation = async (requestId, recommendationId, userId, data) =
 };
 
 const deletedRecommendation = async (requestId, recommendationId, userId) => {
-    const recommendation = Recommendation.findOneAndDelete(
+    const recommendation = await Recommendation.findOneAndDelete(
         {
             _id: String(recommendationId),
             user_id: String(userId),

@@ -97,16 +97,7 @@ describe('Test addItemToCart function', () => {
 
     it('Sould push an item into an existing cart', async () => {
 
-        const cart = {
-            items: [
-                new CartItem({
-                    field1: 'Toito',
-                    type: 'BOOK'
-                })
-            ],
-            save: jest.fn()
-        };
-
+       const cart = new Cart({});
         cartFindOneStub.withArgs({
             user_id: '123'
         }).resolves({
@@ -120,7 +111,8 @@ describe('Test addItemToCart function', () => {
         });
 
         expect(result).toBeDefined();
-        expect(cart.save).toHaveBeenCalledTimes(1);
+        sinon.assert.calledWith(cartInstanceStub, cart);
+
     });
 
 });
