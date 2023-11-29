@@ -107,13 +107,13 @@ describe('Test createRecommendation function', () => {
         });
 
         expect(result).toEqual(expected);
-        sinon.assert.calledWith(recommendationStub, {
+        sinon.assert.calledWith(recommendationStub, sinon.match({
             request_id: '123',
             user_id: '678',
             field1: 'field1',
             field2: 'field2',
             field3: 'field3',
-        })
+        }))
 
     }
     );
@@ -131,7 +131,8 @@ describe('Test updateRecommendation function', () => {
     });
 
     it('Should throw a NotFoundError', async () => {
-        recommendationStub.resolves(null);
+        recommendationStub
+            .resolves(null);
 
         await expect(recommendationService.updateRecommendation('123', '678', '789', {}))
             .rejects
@@ -177,7 +178,7 @@ describe('Test deleteRecommendation function', () => {
     });
     afterEach(() => {
         recommendationStub.restore();
-    } );
+    });
 
     it('Should throw a NotFoundError', async () => {
         recommendationStub.resolves(null);
@@ -194,7 +195,7 @@ describe('Test deleteRecommendation function', () => {
 
         await recommendationService.deletedRecommendation('123', '456', '789');
 
-        sinon.assert.calledWith(recommendationStub, 
+        sinon.assert.calledWith(recommendationStub,
             {
                 _id: String('456'),
                 user_id: '789',

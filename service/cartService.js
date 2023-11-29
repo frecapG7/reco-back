@@ -25,7 +25,6 @@ const addItemToCart = async (userId, item) => {
         cart = new Cart({
             user_id: userId,
         });
-        cart = await cart.save();
     }
 
 
@@ -36,7 +35,8 @@ const addItemToCart = async (userId, item) => {
         field3: item.field3,
         type: item.requestType,
     }));
-    return await cart.save();
+    const savedCart =  await cart.save();
+    return savedCart;
 }
 
 
