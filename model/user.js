@@ -14,6 +14,20 @@ const UserSchema = new mongoose.Schema({
     },
     hash: String,
     salt: String,
+    settings: {
+        lang: {
+            type: String,
+            default: 'en',
+        },
+        theme: {
+            type: String,
+            default: 'light',
+        },
+        notifications: {
+            type: Boolean,
+            default: true,
+        },
+    },
     created: {
         type: Date,
         default: Date.now,
