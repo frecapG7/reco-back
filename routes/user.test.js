@@ -4,6 +4,7 @@ const supertest = require('supertest');
 const User = require('../model/User');
 const auth = require('../validator/auth');
 const userService = require('../service/userService');
+const userSettingsService = require('../service/userSettingsService');
 
 
 const express = require('express');
@@ -85,7 +86,7 @@ describe('GET /users/:id', () => {
 
 describe('PUT /users/:id', () => {
 
-    let userServiceStub;;
+    let userServiceStub;
 
 
     beforeEach(() => {
@@ -129,3 +130,126 @@ describe('PUT /users/:id', () => {
 
 
 });
+
+
+describe('GET /users/:id/settings', () => {
+
+    let userSettingsServiceStub;
+
+    beforeEach(() => {
+        userSettingsServiceStub = sinon.stub(userSettingsService, 'getSettings');
+    });
+    afterEach(() => {
+        userSettingsServiceStub.restore();
+    });
+
+    it('retun forbidden on invalid user id', async () => {
+        const response = await supertest(app)
+            .get('/users/123/settings');
+
+        expect(response.status).toBe(403);
+
+    });
+
+    it('should return user settings', async () => {
+        userSettingsServiceStub.resolves({
+            lang: 'en',
+            theme: 'light',
+            notifications: true,
+        });
+
+        const response = await supertest(app)
+            .get('/users/1/settings');
+
+        expect(response.status).toBe(200);
+        expect(response.body.lang).toEqual('en');
+        expect(response.body.theme).toEqual('light');
+        expect(response.body.notifications).toEqual(true);
+
+
+    });
+
+});
+
+describe('PATCH /users/:id/settings', () => {
+
+    let userSettingsServiceStub;
+
+    beforeEach(() => {
+        userSettingsServiceStub = sinon.stub(userSettingsService, 'updateSettings');
+    });
+    afterEach(() => {
+        userSettingsServiceStub.restore();
+    });
+
+    it('Shoud return forbidden on invalid user id', async () => {
+        const response = await supertest(app)
+            .patch('/users/123/settings')
+            .send({
+                lang: 'en',
+                theme: 'light',
+                notifications: true,
+            });
+
+        expect(response.status).toBe(403);
+
+    });
+
+    it('Should return updated settings', async () => {
+        userSettingsServiceStub.resolves({
+            lang: 'en',
+            theme: 'light',
+            notifications: true,
+        });
+
+        const response = await supertest(app)
+            .patch('/users/1/settings')
+            .send({
+                lang: 'en',
+                theme: 'light',
+                notifications: true,
+            });
+
+        expect(response.status).toBe(200);
+
+    });
+
+});
+
+describe('DELETE /users/:id/settings', () => {
+
+    let userSettingsServiceStub;
+
+    beforeEach(() => {
+        userSettingsServiceStub = sinon.stub(userSettingsService, 'resetSettings');
+    });
+    afterEach(() => {
+        userSettingsServiceStub.restore();
+    });
+
+    it('Shoud return forbidden on invalid user id', async () => {
+        const response = await supertest(app)
+            .delete('/users/123/settings')
+            .send();
+
+        expect(response.status).toBe(403);
+
+    });
+
+    it('Should return updated settings', async () => {
+        userSettingsServiceStub.resolves({
+            lang: 'en',
+            theme: 'light',
+            notifications: true,
+        });
+
+        const response = await supertest(app)
+            .delete('/users/1/settings')
+            .send();
+
+        expect(response.status).toBe(200);
+
+    });
+
+});
+

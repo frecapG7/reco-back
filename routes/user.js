@@ -5,6 +5,7 @@ const router = express.Router();
 const User = require('../model/User');
 const auth = require('../validator/auth');
 const userService = require('../service/userService');
+const userSettingsService = require('../service/userSettingsService');
 const { ForbiddenError } = require('../errors/error');
 
 
@@ -20,7 +21,7 @@ router.post('', async (req, res, next) => {
             .status(201)
             .json(savedUser);
     } catch (err) {
-        next(err);    
+        next(err);
     }
 });
 
@@ -55,6 +56,54 @@ router.put('/:id', auth.authenticateToken, async (req, res, next) => {
 
 
 });
+
+
+/** SETTINGS ROUTES */
+
+router.get('/:id/settings', auth.authenticateToken, async (req, res, next) => {
+
+    try {
+        if (req.userId !== req.params.id)
+            throw new ForbiddenError('You cannot get other user settings');
+
+        const settings = await userSettingsService.getSettings(req.params.id);
+
+        return res.json(settings);
+    } catch (err) {
+        next(err);
+    }
+});
+
+
+router.patch('/:id/settings', auth.authenticateToken, async (req, res, next) => {
+
+    try {
+        if (req.userId !== req.params.id)
+            throw new ForbiddenError('You cannot update other user settings');
+
+        const settings = await userSettingsService.updateSettings(req.params.id, req.body);
+
+        return res.json(settings);
+    } catch (err) {
+        next(err);
+    }
+});
+
+
+router.delete('/:id/settings', auth.authenticateToken, async (req, res, next) => {
+
+    try {
+        if (req.userId !== req.params.id)
+            throw new ForbiddenError('You cannot reset other user settings');
+
+        const settings = await userSettingsService.resetSettings(req.params.id);
+
+        return res.json(settings);
+    } catch (err) {
+        next(err);
+    }
+});
+
 
 
 
