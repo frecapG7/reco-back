@@ -1,5 +1,6 @@
 const sinon = require('sinon');
 const User = require('../model/User');
+const constants = require('../constants');
 
 
 const userSettingsService = require('./userSettingsService');
@@ -95,6 +96,43 @@ describe('Test updateUserSettings', () => {
         expect(result.lang).toEqual('fr');
         expect(result.theme).toEqual('dark');
         expect(result.notifications).toEqual(false);
+    });
+});
+describe('Test resetUserSettings', () => {
+
+    let userStub;
+    beforeEach(() => {
+        userStub = sinon.stub(User, 'findByIdAndUpdate');
+    });
+    afterEach(() => {
+        userStub.restore();
+    });
+
+    it('Should throw a not found error', async () => {
+
+        userStub.resolves(null);
+
+        await expect(userSettingsService.resetSettings('123', {}))
+            .rejects
+            .toThrow(NotFoundError);
+    });
+    it('Should reset settings', async () => {
+
+        userStub.resolves({
+            _id: '123',
+            settings: constants.defaultSettings,
+        });
+
+        const result = await userSettingsService.resetSettings('123');
+
+
+        sinon.assert.calledWith(userStub, '123', {
+            settings: constants.defaultSettings,
+        }, { new: true });
+
+        expect(result.lang).toEqual('en');
+        expect(result.theme).toEqual('light');
+        expect(result.notifications).toEqual(true);
     });
 });
 

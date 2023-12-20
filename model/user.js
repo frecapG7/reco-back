@@ -2,6 +2,8 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
+const constants = require('../constants');
+
 
 const UserSchema = new mongoose.Schema({
     name: {
@@ -17,15 +19,15 @@ const UserSchema = new mongoose.Schema({
     settings: {
         lang: {
             type: String,
-            default: 'en',
+            default: constants.defaultSettings.lang,
         },
         theme: {
             type: String,
-            default: 'light',
+            default: constants.defaultSettings.theme,
         },
         notifications: {
             type: Boolean,
-            default: true,
+            default: constants.defaultSettings.notifications,
         },
     },
     created: {
@@ -35,7 +37,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Method to set salt and hash password for user
-UserSchema.methods.setPassword = function(password) {
+UserSchema.methods.setPassword = function (password) {
     // Creating a unique salt
     this.salt = crypto.randomBytes(16).toString('hex');
 
@@ -44,14 +46,14 @@ UserSchema.methods.setPassword = function(password) {
 }
 
 // Method to validate password
-UserSchema.methods.validPassword = function(password) {
+UserSchema.methods.validPassword = function (password) {
     var hash = crypto.pbkdf2Sync(password, this.salt, 100, 64, 'sha512').toString('hex');
     return this.hash === hash;
 
 }
 
 // Method to build JSON response
-UserSchema.methods.toJSON = function() {
+UserSchema.methods.toJSON = function () {
     return {
         id: this._id,
         name: this.name,

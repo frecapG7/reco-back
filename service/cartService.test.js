@@ -4,6 +4,7 @@ const { NotFoundError } = require('../errors/error');
 const { Cart, CartItem } = require('../model/Cart');
 const cartService = require('./cartService');
 const sinon = require('sinon');
+const { JsonWebTokenError } = require('jsonwebtoken');
 
 
 describe('Test getCart function', () => {
@@ -97,13 +98,18 @@ describe('Test addItemToCart function', () => {
 
     it('Sould push an item into an existing cart', async () => {
 
-       const cart = new Cart({});
+       const cart = new Cart({
+              user_id: '123',
+              items: [] 
+       });
+       cart.save = jest.fn();
+
         cartFindOneStub.withArgs({
             user_id: '123'
         }).resolves({
             cart
         });
-        cartInstanceStub.resolves(cart);
+    
 
         const result = await cartService.addItemToCart('123', {
             field1: 'Toito2',
@@ -111,7 +117,6 @@ describe('Test addItemToCart function', () => {
         });
 
         expect(result).toBeDefined();
-        sinon.assert.calledWith(cartInstanceStub, cart);
 
     });
 

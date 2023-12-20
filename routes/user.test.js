@@ -216,3 +216,40 @@ describe('PATCH /users/:id/settings', () => {
 
 });
 
+describe('DELETE /users/:id/settings', () => {
+
+    let userSettingsServiceStub;
+
+    beforeEach(() => {
+        userSettingsServiceStub = sinon.stub(userSettingsService, 'resetSettings');
+    });
+    afterEach(() => {
+        userSettingsServiceStub.restore();
+    });
+
+    it('Shoud return forbidden on invalid user id', async () => {
+        const response = await supertest(app)
+            .delete('/users/123/settings')
+            .send();
+
+        expect(response.status).toBe(403);
+
+    });
+
+    it('Should return updated settings', async () => {
+        userSettingsServiceStub.resolves({
+            lang: 'en',
+            theme: 'light',
+            notifications: true,
+        });
+
+        const response = await supertest(app)
+            .delete('/users/1/settings')
+            .send();
+
+        expect(response.status).toBe(200);
+
+    });
+
+});
+
