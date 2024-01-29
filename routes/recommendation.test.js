@@ -16,6 +16,7 @@ const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((r
     req.userId = String(123);
     next();
 });
+
 const recommendation = require('./recommendation');
 const app = express();
 app.use(bodyParser.json());

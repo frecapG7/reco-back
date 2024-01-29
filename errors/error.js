@@ -16,6 +16,14 @@ class ForbiddenError extends Error {
     }
 }
 
+class InvalidCreditError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'InvalidCreditError';
+        this.statusCode = 400;
+    }
+}
+
 class InternalServerError extends Error {
     constructor(message) {
         super(message);
@@ -25,8 +33,10 @@ class InternalServerError extends Error {
 }
 
 
+
 module.exports = {
     NotFoundError,
     ForbiddenError,
+    InvalidCreditError,
     InternalServerError,
 }

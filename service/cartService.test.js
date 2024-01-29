@@ -4,7 +4,6 @@ const { NotFoundError } = require('../errors/error');
 const { Cart, CartItem } = require('../model/Cart');
 const cartService = require('./cartService');
 const sinon = require('sinon');
-const { JsonWebTokenError } = require('jsonwebtoken');
 
 
 describe('Test getCart function', () => {

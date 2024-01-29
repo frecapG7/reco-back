@@ -30,6 +30,10 @@ const UserSchema = new mongoose.Schema({
             default: constants.defaultSettings.notifications,
         },
     },
+    credit: {
+        type: Number,
+        default: 0
+    },
     created: {
         type: Date,
         default: Date.now,

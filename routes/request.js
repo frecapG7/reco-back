@@ -2,7 +2,6 @@
 const express = require('express');
 const router = express.Router();
 
-const Request = require('../model/Request');
 const requestService = require('../service/requestService');
 const { authenticateToken } = require('../validator/auth');
 
