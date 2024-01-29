@@ -1,7 +1,9 @@
 // Assuming you have a database connection and a 'recommendations' collection
 const Recommendation = require('../model/Recommendation');
 const Request = require('../model/Request');
-const { NotFoundError } = require("../errors/error");
+const { NotFoundError, ForbiddenError } = require("../errors/error");
+const creditService = require('./creditService');
+const mongoose = require('mongoose');
 
 const toDTO = (recommendation, userId) => {
     console.debug(JSON.stringify(recommendation));
@@ -43,19 +45,43 @@ const getRecommendation = async (recommendationId) => {
  */
 const createRecommendation = async (requestId, userId, data) => {
 
-    const exist = await Request.exists({ _id: String(requestId) });
-    if (!exist)
+    const request = await Request.findById(requestId);
+    if (!request)
         throw new NotFoundError('Request not found');
+    if(request.author_id == userId)
+        throw new ForbiddenError('User cannot create a recommendation for his own request');
 
-    const newRecommendation = new Recommendation({
-        request_id: String(requestId),
-        user_id: String(userId),
-        field1: String(data.field1),
-        field2: String(data.field2),
-        field3: String(data.field3),
-    });
-    const savedRecommendation = await newRecommendation.save();
-    return savedRecommendation;
+
+    let session;
+    try {
+        session = await mongoose.startSession();
+
+        await session.startTransaction();
+
+        await creditService.removeCredit(5, userId);
+
+        const newRecommendation = new Recommendation({
+            request_id: String(requestId),
+            user_id: String(userId),
+            field1: String(data.field1),
+            field2: String(data.field2),
+            field3: String(data.field3),
+        });
+        const savedRecommendation = await newRecommendation.save();
+
+        await session.commitTransaction();
+
+        return savedRecommendation;
+
+    } catch (err) {
+        if (session)
+            await session.abortTransaction();
+        throw err;
+    } finally {
+        if (session)
+            await session.endSession();
+    }
+
 }
 
 
@@ -77,7 +103,7 @@ const updateRecommendation = async (requestId, recommendationId, userId, data) =
     return recommendation;
 };
 
-const deletedRecommendation = async (requestId, recommendationId, userId) => {
+const deleteRecommendation = async (requestId, recommendationId, userId) => {
     const recommendation = await Recommendation.findOneAndDelete(
         {
             _id: String(recommendationId),
@@ -94,29 +120,92 @@ const deletedRecommendation = async (requestId, recommendationId, userId) => {
 
 // Function to like a recommendation
 const likeRecommendation = async (recommendationId, userId) => {
-    const result = await Recommendation.findOneAndUpdate(
-        { _id: String(recommendationId) },
-        { $addToSet: { likes: String(userId) } },
-        { new: true }
-    );
-    // If no result thown not found error
-    if (!result)
-        throw new NotFoundError('Recommendation not found');
 
-    return toDTO(result, userId);
+    // 1.a Check if recommendation exists
+    const recommendation = await Recommendation.findById(recommendationId);
+    if (!recommendation)
+        throw new NotFoundError('Recommendation not found');
+    // 1.b Check if user has already liked the recommendation
+    if (recommendation.likes.includes(userId))
+        throw new ForbiddenError('User has already liked this recommendation');
+    // 1.c Check if user is not recommendation's author
+    if (String(recommendation.user_id) == userId)
+        throw new ForbiddenError('User cannot like his own recommendation');
+
+    // 2. Find request
+    const request = await Request.findById(recommendation.request_id);
+    if (!request)
+        throw new NotFoundError('Request not found');
+
+    // 2. Start transaction
+    let session;
+    try {
+
+        session = await mongoose.startSession();
+        await session.startTransaction();
+
+        // 3. Add credit
+        // If the user is the author of the recommendation's request, give 5 credit
+       
+        if (String(request.author_id) == userId)
+            await creditService.addCredit(5, recommendation.user_id, { session });
+        // Otherwise, give 1 credit
+        else
+            await creditService.addCredit(1, recommendation.user_id, { session });
+
+        // 4. Add like
+        recommendation.likes.push(userId);
+
+        // 5. Commit transaction
+        await session.commitTransaction();
+
+        //6. Return result
+        return await recommendation.save();
+
+    } catch (err) {
+        if (session)
+            session.abortTransaction();
+        throw err;
+    } finally {
+        if (session)
+            session.endSession();
+    }
+
 }
 
 // Function to unlike a recommendation
 const unlikeRecommendation = async (recommendationId, userId) => {
-    const result = await Recommendation.findOneAndUpdate(
-        { _id: String(recommendationId) },
-        { $pull: { likes: userId } },
-        { new: true }
-    );
-    // If no result thown not found error
-    if (!result)
+
+    // 1. Find recommendation
+    const recommendation = await Recommendation.findById(recommendationId);
+    if (!recommendation)
         throw new NotFoundError('Recommendation not found');
-    return toDTO(result, userId);
+
+    let session;
+
+    // Start transaction
+    try {
+
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        //2. Remove like
+        recommendation.likes.pull(userId);
+        //3. Remove credit
+        await creditService.removeCredit(1, recommendation.user_id, { session });
+
+        //4. Commit transaction
+        await session.commitTransaction();
+        //5. Return result
+        return await recommendation.save();
+    } catch (err) {
+        if (session)
+            session.abortTransaction();
+        throw err;
+    } finally {
+        if (session)
+            session.endSession();
+    }
 }
 
 
@@ -125,7 +214,7 @@ module.exports = {
     getRecommendation,
     createRecommendation,
     updateRecommendation,
-    deletedRecommendation,
+    deletedRecommendation: deleteRecommendation,
     likeRecommendation,
     unlikeRecommendation,
 }
