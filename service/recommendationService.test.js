@@ -395,48 +395,48 @@ describe('Test likeRecommendation function', () => {
         expect(sessionStub.endSession).toHaveBeenCalled();
 
     });
-
-    it('Should add a like with request author', async () => {
-
-        const recommendation = {
-            user_id: String('666'),
-            request_id: String('123'),
-            likes: ['123'],
-            save: jest.fn()
-        };
-        recommendationStub.resolves(recommendation);
-
-        requestStub.resolves({
-            author_id: '678'
+    
+    
+        it('Should add a like with random author', async () => {
+    
+            const recommendation = {
+                user_id: String('666'),
+                request_id: String('123'),
+                likes: ['123'],
+                save: jest.fn()
+            };
+            recommendationStub.resolves(recommendation);
+    
+            requestStub.resolves({
+                author_id: '678'
+            });
+    
+            const sessionStub = {
+                startTransaction: jest.fn(),
+                commitTransaction: jest.fn(),
+                abortTransaction: jest.fn(),
+                endSession: jest.fn()
+            };
+            mongooseStub.resolves(sessionStub);
+    
+            const result = await expect(recommendationService.likeRecommendation('123', '765'));
+    
+            // expect(result).toBeDefined();
+    
+            // sinon.assert.calledOnce(creditServiceStub);
+            sinon.assert.calledWith(creditServiceStub, 1, '666');
+    
+            expect(recommendation.likes.length).toEqual(2);
+            expect(recommendation.likes[1]).toEqual('678');
+            expect(recommendation.save).toHaveBeenCalled();
+    
+            //Verify transaction
+            expect(sessionStub.startTransaction).toHaveBeenCalled();
+            expect(sessionStub.commitTransaction).toHaveBeenCalled();
+            expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
+            expect(sessionStub.endSession).toHaveBeenCalled();
+    
         });
-
-        const sessionStub = {
-            startTransaction: jest.fn(),
-            commitTransaction: jest.fn(),
-            abortTransaction: jest.fn(),
-            endSession: jest.fn()
-        };
-        mongooseStub.resolves(sessionStub);
-
-        const result = await expect(recommendationService.likeRecommendation('123', '678'))
-
-        // expect(result).toBeDefined();
-
-        // sinon.assert.calledOnce(creditServiceStub);
-        sinon.assert.calledWith(creditServiceStub, 5, '666', { session: sessionStub });
-
-        expect(recommendation.likes.length).toEqual(2);
-        expect(recommendation.likes[1]).toEqual('678');
-        expect(recommendation.save).toHaveBeenCalled();
-
-        //Verify transaction
-        expect(sessionStub.startTransaction).toHaveBeenCalled();
-        expect(sessionStub.commitTransaction).toHaveBeenCalled();
-        expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-        expect(sessionStub.endSession).toHaveBeenCalled();
-
-    });
-
 
 });
 

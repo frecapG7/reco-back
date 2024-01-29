@@ -2,7 +2,6 @@ const Request = require('../model/Request');
 const sinon = require('sinon');
 const requestService = require('./requestService');
 const { NotFoundError } = require('../errors/error');
-const { ObjectId } = require('mongodb');
 
 
 describe('Test getRequest', () => {

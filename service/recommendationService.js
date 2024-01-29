@@ -146,13 +146,8 @@ const likeRecommendation = async (recommendationId, userId) => {
 
         // 3. Add credit
         // If the user is the author of the recommendation's request, give 5 credit
-       
-        if (String(request.author_id) == userId)
-            await creditService.addCredit(5, recommendation.user_id, { session });
-        // Otherwise, give 1 credit
-        else
-            await creditService.addCredit(1, recommendation.user_id, { session });
-
+        const credit = String(request.author_id) === userId ? 5 : 1;
+        await creditService.addCredit(credit, recommendation.user_id);
         // 4. Add like
         recommendation.likes.push(userId);
 
