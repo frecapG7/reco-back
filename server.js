@@ -41,7 +41,7 @@ const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', () => {
     console.log('Connected to MongoDB...');
-    app.listen(3000, () => {
+    app.listen(process.env.PORT, '0.0.0.0', () => {
         console.log('Example app listening on port 3000!');
     }
     );
