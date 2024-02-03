@@ -1,6 +1,6 @@
-const { NotFoundError } = require("../errors/error");
-const User = require("../model/User");
-const constants = require("../constants");
+const { NotFoundError } = require("../../errors/error");
+const User = require("../../model/User");
+const constants = require("../../constants");
 
 
 const toDto = (settings) => ({

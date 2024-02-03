@@ -1,10 +1,10 @@
 const sinon = require('sinon');
-const User = require('../model/User');
-const constants = require('../constants');
+const User = require('../../model/User');
+const constants = require('../../constants');
 
 
 const userSettingsService = require('./userSettingsService');
-const { NotFoundError } = require('../errors/error');
+const { NotFoundError } = require('../../errors/error');
 
 
 describe('Test getUserSettings', () => {

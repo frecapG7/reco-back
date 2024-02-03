@@ -3,8 +3,8 @@ const supertest = require('supertest');
 
 const User = require('../model/User');
 const auth = require('../validator/auth');
-const userService = require('../service/userService');
-const userSettingsService = require('../service/userSettingsService');
+const userService = require('../service/user/userService');
+const userSettingsService = require('../service/user/userSettingsService');
 
 
 const express = require('express');
@@ -45,7 +45,7 @@ describe('POST /users', () => {
         }));
 
         const response = await supertest(app)
-            .post('/users')
+            .post('/users?token=123')
             .send({
                 email: 'test',
                 name: 'test',
@@ -54,6 +54,11 @@ describe('POST /users', () => {
 
         expect(response.status).toBe(201);
 
+        sinon.assert.calledWith(userServiceStub, {
+            email: 'test',
+            name: 'test',
+            password: 'test'
+        }, String('123'));
     });
 });
 

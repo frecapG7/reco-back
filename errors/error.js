@@ -33,10 +33,22 @@ class InternalServerError extends Error {
 }
 
 
+class AlreadyUsedException extends Error {
+    constructor(message){
+        super(message);
+        this.name = 'AlreadyUsedException',
+        this.statusCode = 409
+    }
+
+
+}
+
+
 
 module.exports = {
     NotFoundError,
     ForbiddenError,
     InvalidCreditError,
     InternalServerError,
+    AlreadyUsedException
 }

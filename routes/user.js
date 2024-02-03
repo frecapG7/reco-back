@@ -4,8 +4,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../model/User');
 const auth = require('../validator/auth');
-const userService = require('../service/userService');
-const userSettingsService = require('../service/userSettingsService');
+const userService = require('../service/user/userService');
+const userSettingsService = require('../service/user/userSettingsService');
 const { ForbiddenError } = require('../errors/error');
 
 
@@ -16,7 +16,7 @@ const { ForbiddenError } = require('../errors/error');
  */
 router.post('', async (req, res, next) => {
     try {
-        const savedUser = await userService.createUser(req.body);
+        const savedUser = await userService.createUser(req.body, req.query?.token);
         return res
             .status(201)
             .json(savedUser);
