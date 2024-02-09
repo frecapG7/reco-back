@@ -1,4 +1,4 @@
-// Assuming you have a database connection and a 'recommendations' collection
+
 const Recommendation = require('../model/Recommendation');
 const Request = require('../model/Request');
 const { NotFoundError, ForbiddenError } = require("../errors/error");
@@ -56,7 +56,7 @@ const createRecommendation = async (requestId, userId, data) => {
     try {
         session = await mongoose.startSession();
 
-        await session.startTransaction();
+        session.startTransaction();
 
         await creditService.removeCredit(5, userId);
 
