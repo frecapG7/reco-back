@@ -1,8 +1,8 @@
-const Token = require('../../model/User');
+const Token = require('../../model/Token');
 
 
 const getToken = async (value) => {
-    const token = await Token.findOne({value: value});
+    const token = await Token.findOne({value: String(value)});
     return token;
 }
 
