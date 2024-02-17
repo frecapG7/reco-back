@@ -1,6 +1,6 @@
-const Request = require('../model/Request');
-const Recommendation = require('../model/Recommendation');
-const { NotFoundError } = require('../errors/error');
+const Request = require('../../model/Request');
+const Recommendation = require('../../model/Recommendation');
+const { NotFoundError } = require('../../errors/error');
 const { ObjectId } = require('mongodb');
 
 
@@ -26,15 +26,13 @@ const getRequest = async (id) => {
  * @async
  * @function createRequest
  * @param {Object} data - The data of the request.
- * @param {string} userId - The ID of the user.
+ * @param {Object} user - The authenticated user.
  */
-const createRequest = async (data, userId) => {
+const createRequest = async (data, user) => {
     const request = new Request({
         requestType: data.requestType,
         description: data.description,
-        duration: data.duration,
-        status: 'OPEN',
-        author: new ObjectId(userId),
+        author: user._id
     });
     return await request.save();
 
@@ -47,13 +45,13 @@ const createRequest = async (data, userId) => {
  * @function updateRequest
  * @param {string} id - The ID of the request.
  * @param {Object} data - The data of the request.
- * @param {string} userId - The ID of the user.
+ * @param {Object} user - The authenticated user.
  */
-const updateRequest = async (id, data, userId) => {
+const updateRequest = async (id, data, user) => {
     const savedRequest = await Request.findOneAndUpdate(
         {
             _id: String(id),
-            author: String(userId),
+            author: user._id,
         },
         {
             requestType: data.requestType,
@@ -74,12 +72,12 @@ const updateRequest = async (id, data, userId) => {
  * @async
  * @function deleteRequest
  * @param {string} id - The ID of the request.
- * @param {string} userId - The ID of the user.
+ * @param {Object} user - The authenticated user.
  */
-const deleteRequest = async (id, userId) => {
+const deleteRequest = async (id, user) => {
     const request = await Request.findOneAndDelete({
         _id: String(id),
-        author: String(userId)
+        author: user._id
     });
     if (!request)
         throw new NotFoundError('Request not found');

@@ -14,10 +14,11 @@ const validation = require('./validation');
 const oauth = require('./oauth2');
 
 
+
 const passport = require('../auth');
 
 
-router.use('/requests', request)
+router.use('/requests', passport.authenticate('bearer', {session: false}), request)
 router.use('/requests/:requestId/recommendations', recommendation);
 
 

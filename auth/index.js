@@ -45,7 +45,7 @@ passport.deserializeUser((id, done) => {
 passport.use(new BearerStrategy(
     async (accessToken, done) => {
         try {
-            const user = await authService.validateAccessToken(verifyToken(accessToken));
+            const user = await authService.validateAccessToken(verifyJWT(accessToken));
             return done(null, user);
         } catch (err) {
             return done(err);

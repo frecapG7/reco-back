@@ -1,7 +1,7 @@
-const Request = require('../model/Request');
+const Request = require('../../model/Request');
 const sinon = require('sinon');
 const requestService = require('./requestService');
-const { NotFoundError } = require('../errors/error');
+const { NotFoundError } = require('../../errors/error');
 
 
 describe('Test getRequest', () => {
@@ -48,23 +48,19 @@ describe('Test createRequest', () => {
 
     it('Should return a request', async () => {
         const result = await requestService.createRequest({
-            requestType: 'requestType',
-            description: 'description',
-            duration: 'duration',
-        }, '613a9b6b9b0b1d1b1c9b1b1b');
+            requestType: "requestType",
+            description: "description",
+        }, {
+            _id: '613a9b6b9b0b1d1b1c9b1b1b'
+        });
 
 
         sinon.assert.calledOnce(requestStub);
-        // sinon.assert.calledWith(requestStub, sinon.match.has("requestType", 'requestType'));
-        // sinon.assert.calledWith(requestStub, sinon.match.has("description", 'description'));
-
-        // sinon.assert.calledWith(requestStub, {
-        //     requestType: 'requestType',
-        //     description: 'description',
-        //     duration: 'duration',
-        //     status: 'OPEN',
-        //     author: new ObjectId('613a9b6b9b0b1d1b1c9b1b1b')
-        // });
+        sinon.assert.calledWith(requestStub, {
+            requestType: "requestType",
+            description: "description",
+            author: '613a9b6b9b0b1d1b1c9b1b1b'
+        });
 
     });
 
@@ -84,7 +80,7 @@ describe('Test updateRequest', () => {
 
         requestStub.returns(null);
 
-        await expect(requestService.updateRequest('123', {}, '123'))
+        await expect(requestService.updateRequest('123', {}, {_id: '123' }))
             .rejects
             .toThrow(NotFoundError);
 
@@ -99,7 +95,9 @@ describe('Test updateRequest', () => {
             requestType: 'BOOK',
             description: 'description',
             duration: 'duration',
-        }, '123');
+        }, {
+            _id: '123'
+        });
 
         expect(result).toEqual(expected);
         sinon.assert.calledWith(requestStub, {
@@ -136,7 +134,7 @@ describe('Test deleteRequest', () => {
 
         requestStub.returns(null);
 
-        await expect(requestService.deleteRequest('123', '123'))
+        await expect(requestService.deleteRequest('123', {_id: '123' }))
             .rejects
             .toThrow(NotFoundError);
 
@@ -148,7 +146,7 @@ describe('Test deleteRequest', () => {
         const expected = new Request();
         requestStub.returns(expected);
 
-        const result = await requestService.deleteRequest('123', '123');
+        const result = await requestService.deleteRequest('123', {_id: '123' });
 
         expect(result).toEqual(expected);
         sinon.assert.calledWith(requestStub, {
