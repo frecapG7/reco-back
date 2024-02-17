@@ -1,4 +1,4 @@
-const { generateRandom } = require('./utils');
+const { generateRandom , generateJWT, verifyJWT} = require('./utils');
 
 
 describe('Test generateRandom function', () => {
@@ -25,4 +25,20 @@ describe('Test generateRandom function', () => {
 
     })
 
-})
+});
+
+
+describe('Test generateJWT function', () => {
+
+    it('Should generate a token', async () => {
+
+        const token = generateJWT("ezaze354");
+
+        console.debug(token);
+
+        const result = verifyJWT(token);
+
+        expect(result).toEqual("ezaze354");
+
+    });
+});

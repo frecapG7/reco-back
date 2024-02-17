@@ -119,22 +119,24 @@ const deleteRecommendation = async (requestId, recommendationId, userId) => {
 
 
 // Function to like a recommendation
-const likeRecommendation = async (recommendationId, userId) => {
+const likeRecommendation = async (recommendationId, authenticatedUser) => {
 
     // 1.a Check if recommendation exists
-    const recommendation = await Recommendation.findById(recommendationId);
+    const recommendation = await Recommendation.findById(recommendationId)
+        .populate('request')
+        .populate('user')
+        .exec();
     if (!recommendation)
         throw new NotFoundError('Recommendation not found');
     // 1.b Check if user has already liked the recommendation
-    if (recommendation.likes.includes(userId))
+    if (recommendation.likes.includes(authenticatedUser._id))
         throw new ForbiddenError('User has already liked this recommendation');
     // 1.c Check if user is not recommendation's author
-    if (String(recommendation.user_id) == userId)
+    if (recommendation.user === authenticatedUser)
         throw new ForbiddenError('User cannot like his own recommendation');
 
     // 2. Find request
-    const request = await Request.findById(recommendation.request_id);
-    if (!request)
+    if (!recommendation.request)
         throw new NotFoundError('Request not found');
 
     // 2. Start transaction
@@ -146,8 +148,8 @@ const likeRecommendation = async (recommendationId, userId) => {
 
         // 3. Add credit
         // If the user is the author of the recommendation's request, give 5 credit
-        const credit = String(request.author_id) === userId ? 5 : 1;
-        await creditService.addCredit(credit, recommendation.user_id);
+        const credit = request.author_id === authenticatedUser._id ? 5 : 1;
+        await creditService.addCredit(credit, recommendation.user);
         // 4. Add like
         recommendation.likes.push(userId);
 
