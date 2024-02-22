@@ -1,6 +1,6 @@
 const sinon = require('sinon');
 const supertest = require('supertest');
-const recommendationService = require('../service/recommendationService');
+const recommendationService = require('../service/request/recommendationService');
 
 
 
@@ -8,20 +8,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const handleError = require('../middleware/errorMiddleware');
 
-const auth = require('../validator/auth');
-// Mock authenticateToken
-// Order must prevail
-const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
-    // Mock authentication logic
-    req.userId = String(123);
-    next();
-});
-
 const recommendation = require('./recommendation');
 const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
-app.use('/requests/:requestId/recommendations', recommendation);
+app.use('/requests/:requestId/recommendations', (req, res, next) => {
+    req.user = { _id: 123 };
+    next();
+},recommendation);
 app.use(handleError);
 
 
@@ -37,7 +31,7 @@ describe('GET /requests/:requestId/recommendations', () => {
 
     it('should return recommendations', async () => {
         recommendationServiceStub
-            .withArgs('123', '123')
+            .withArgs('123', { _id: 123 })
             .resolves({
                 items: [{ _id: 1 }]
             });
@@ -94,15 +88,15 @@ describe('POST /requests/:requestId/recommendations', () => {
 
     it('should return created recommendation', async () => {
         recommendationServiceStub
-            .withArgs('123', '123', {
+            .withArgs('123', {
                 field1: 'value1',
                 field2: 'value2',
                 field3: 'value3',
-            })
+            }, {_id: '123'})
             .resolves({
                 id: 1,
                 request_id: 1,
-                user_id: 1,
+                user: {_id: '123'},
                 field1: 'value1',
                 field2: 'value2',
                 field3: 'value3',
@@ -112,7 +106,6 @@ describe('POST /requests/:requestId/recommendations', () => {
         const response = await supertest(app)
             .post('/requests/123/recommendations')
             .send({
-                user_id: 1,
                 field1: 'value1',
                 field2: 'value2',
                 field3: 'value3',

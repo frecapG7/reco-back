@@ -111,28 +111,33 @@ describe("Test logout", () => {
 describe("Test validateAccessToken", () => {
 
     let oAuthTokenStub;
-    let userStub;
 
     beforeEach(() => {
         oAuthTokenStub = sinon.stub(OAuthToken, 'findOne');
-        userStub = sinon.stub(User, 'findById');
     });
     afterEach(() => {
         oAuthTokenStub.restore();
-        userStub.restore();
     });
 
     it('Should fail on missing oAuthToken', async () => {
 
-        oAuthTokenStub.withArgs({ accessToken: 'test' }).resolves(null);
+        oAuthTokenStub.withArgs({ accessToken: 'test' }).returns({
+            populate: sinon.stub().withArgs('user').returns({
+                exec: sinon.stub().resolves(null)
+            }),
+        });
         await expect(authService.validateAccessToken('test'))
             .rejects
             .toThrow(ForbidenError);
     });
 
     it('Should fail on expired token', async () => {
-        oAuthTokenStub.withArgs({ accessToken: 'test' }).resolves({
-            expiration: new Date(0)
+        oAuthTokenStub.withArgs({ accessToken: 'test' }).returns({
+            populate: sinon.stub().withArgs('user').returns({
+                exec: sinon.stub().resolves({
+                    expiration: new Date(0),
+                })
+            }),
         });
 
         await expect(authService.validateAccessToken('test'))
@@ -141,12 +146,13 @@ describe("Test validateAccessToken", () => {
     });
 
     it('Should fail on missing user', async () => {
-        oAuthTokenStub.withArgs({ accessToken: 'test' }).resolves({
-            expiration: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-            user: 'test'
+        oAuthTokenStub.withArgs({ accessToken: 'test' }).returns({
+            populate: sinon.stub().withArgs('user').returns({
+                exec: sinon.stub().resolves({
+                    expiration: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                })
+            }),
         });
-
-        userStub.withArgs('test').resolves(null);
 
         await expect(authService.validateAccessToken('test'))
             .rejects
@@ -154,14 +160,23 @@ describe("Test validateAccessToken", () => {
     });
 
     it('Should return user', async () => {
-        oAuthTokenStub.withArgs({ accessToken: 'test' }).resolves({
-            expiration: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-            user: 'test'
+        oAuthTokenStub.withArgs({ accessToken: 'test' }).returns({
+            populate: sinon.stub().withArgs('user').returns({
+                exec: sinon.stub().resolves({
+                    _id: 'test',
+                    expiration: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+                    user: {
+                        _id: 'userId'
+                    }
+                    })
+                })
         });
-        userStub.withArgs('test').resolves({});
-        await expect(authService.validateAccessToken('test'))
-            .resolves
-            .toEqual({});
+        const result = await authService.validateAccessToken('test');
+
+        expect(result).toBeDefined();
+        expect(result).toEqual({ _id: 'userId' });
+
+
     });
 });
 

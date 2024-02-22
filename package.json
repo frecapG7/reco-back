@@ -32,11 +32,11 @@
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
     "passport-oauth2-client-password": "^0.1.2",
-    "pino-http": "^8.5.1",
-    "sinon": "^15.0.4"
+    "pino-http": "^8.5.1"
   },
   "devDependencies": {
     "jest": "^29.5.0",
+    "sinon": "^17.0.1",
     "supertest": "^6.3.3"
   }
 }

@@ -3,12 +3,12 @@
 const mongoose = require('mongoose');
 
 const RecommendationSchema = new mongoose.Schema({
-    request_id: {
+    request: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Request',
         required: true,
     },
-    user_id: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
