@@ -18,22 +18,21 @@ const oauth = require('./oauth2');
 const passport = require('../auth');
 
 
+// ********** Routes **********
+
+// ********** Request **********
 router.use('/requests', passport.authenticate('bearer', {session: false}), request)
 router.use('/requests/:requestId/recommendations', recommendation);
 
-
-
-//router.use('/auth', authentication);
-
+// ********** User **********
 router.use('/users', user);
-router.use('/users/:userId/cart', cart);
+router.use('/users/:userId/cart', passport.authenticate('bearer', {session: false}),  cart);
 
 router.use('/validate', validation),
 
-// router.post('/login', passport.authenticate('local'), async (req, res) => {
-//     res.json({ message: 'Logged in', user: req.user });
-// });
 
+
+// ********** Authentication **********
 router.use("/auth", oauth);
 
 

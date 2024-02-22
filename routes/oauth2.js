@@ -5,7 +5,7 @@ const passport = require('passport');
 const express = require('express');
 const router = express.Router();
 
-const authService = require('../service/user/authService');
+const authService = require('../service/oauth/authService');
 
 const { generateRandom, generateJWT, verifyJWT } = require('../utils/utils');
 

@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 
-const auth = require('../validator/auth');
-const cartService = require('../service/cartService');
+const cartService = require('../service/user/cartService');
 const { ForbiddenError } = require('../errors/error');
 
 
@@ -12,7 +11,7 @@ const { ForbiddenError } = require('../errors/error');
 /**
  * Get all items in cart of a user based on request param user id
  */
-router.get('', auth.authenticateToken, async (req, res, next) => {
+router.get('', async (req, res, next) => {
     try {
         const result = await cartService.getCart(req.params.userId, 1, 10);
         return res.json(result);
@@ -24,9 +23,9 @@ router.get('', auth.authenticateToken, async (req, res, next) => {
 /**
  * Add an item to cart of a user based on request param user id
  */
-router.post('', auth.authenticateToken, async (req, res, next) => {
+router.post('', async (req, res, next) => {
     try {
-        if (req.params.userId !== req.userId)
+        if (req.params.userId !== req.user._id)
             throw new ForbiddenError('You cannot add item to other user cart');
 
         const cart = await cartService.addItemToCart(req.userId, req.body);

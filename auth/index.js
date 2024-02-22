@@ -5,7 +5,7 @@ const User = require('../model/User');
 const LocalStrategy = require('passport-local').Strategy;
 const BearerStrategy = require('passport-http-bearer').Strategy;
 
-const authService = require('../service/user/authService');
+const authService = require('../service/oauth/authService');
 const {verifyJWT} = require('../utils/utils');
 
 

@@ -1,6 +1,6 @@
 const sinon = require('sinon');
 const supertest = require('supertest');
-const cartService = require('../service/cartService');
+const cartService = require('../service/user/cartService');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -11,17 +11,13 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
 
-
-const auth = require('../validator/auth');
-// Mock authenticateToken
-// Order must prevail
-const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
-    // Mock authentication logic
-    req.userId = String(123);
-    next();
-});
 const cartRoutes = require('./cart');
-app.use('/api/users/:userId/carts', cartRoutes);
+app.use('/api/users/:userId/carts', (req, res, next) => {
+    req.user = {
+        _id: '123'
+    };
+    next();
+}, cartRoutes);
 app.use(handleError);
 
 
@@ -83,7 +79,7 @@ describe('Test POST /users/:userId/carts', () => {
             .send({});
         expect(response.status).toEqual(201);
         expect(response.body).toEqual({ items: [{ _id: 1 }] });
-        
+
     });
 });
 
@@ -109,11 +105,11 @@ describe('Test DELETE /users/:userId/carts/:itemId', () => {
 
         const response = await supertest(app)
             .delete('/api/users/123/carts/456');
-            
+
         expect(response.status).toEqual(204);
-        
+
     });
-    
+
 
 });
 

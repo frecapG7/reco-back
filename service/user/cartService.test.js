@@ -1,7 +1,7 @@
 
 const { ObjectId } = require('mongodb');
-const { NotFoundError } = require('../errors/error');
-const { Cart, CartItem } = require('../model/Cart');
+const { NotFoundError } = require('../../errors/error');
+const { Cart, CartItem } = require('../../model/Cart');
 const cartService = require('./cartService');
 const sinon = require('sinon');
 
@@ -22,7 +22,7 @@ describe('Test getCart function', () => {
     it('Should return an empty cart', async () => {
 
         cartStub.withArgs({
-            user_id: '123'
+            user: '123'
         }).resolves(null);
 
         const result = await cartService.getCart('123', 1, 1);
@@ -43,7 +43,7 @@ describe('Test getCart function', () => {
 
 
         cartStub.withArgs({
-            user_id: '123'
+            user: '123'
         }).resolves(new Cart({
             items: [cartItem1, cartItem2]
         }));
@@ -75,15 +75,13 @@ describe('Test addItemToCart function', () => {
     it('Should create a new cart and push item', async () => {
 
         cartFindOneStub.withArgs({
-            user_id: '123'
+            user: '123'
         }).resolves(null);
 
 
         // Stub save method
-        const cart1 = new Cart({});
-        cartInstanceStub.onCall(0).returns(cart1);
-        const cart = new Cart({});
-        cartInstanceStub.onCall(1).returns(cart);
+        cartInstanceStub.resolvesThis();
+
 
         const result = cartService.addItemToCart('123', {
             field1: 'Toito',
@@ -93,22 +91,28 @@ describe('Test addItemToCart function', () => {
 
         expect(result).toBeDefined();
 
+
+        // expect(result.user._id).toEqual('123');
+        expect(result.items.length).toEqual(1);
+        expect(result.items[0].field1).toEqual('Toito');
+        expect(result.items[0].type).toEqual('BOOK');
+
+
+
+
     });
 
     it('Sould push an item into an existing cart', async () => {
 
-       const cart = new Cart({
-              user_id: '123',
-              items: [] 
-       });
-       cart.save = jest.fn();
-
         cartFindOneStub.withArgs({
-            user_id: '123'
+            user: '123'
         }).resolves({
-            cart
+            items: [],
+            save: sinon.stub().resolvesThis()
         });
-    
+        // Stub save method
+        cartInstanceStub.resolvesThis();
+
 
         const result = await cartService.addItemToCart('123', {
             field1: 'Toito2',
@@ -116,6 +120,10 @@ describe('Test addItemToCart function', () => {
         });
 
         expect(result).toBeDefined();
+
+        expect(result.items.length).toEqual(1);
+        expect(result.items[0].field1).toEqual('Toito2');
+        expect(result.items[0].type).toEqual('BOOK');
 
     });
 
@@ -139,7 +147,7 @@ describe('Test deleteItemFromCart function', () => {
 
     it('Should throw a not found error', async () => {
 
-        cartFindOneStub.resolves(null);
+        cartFindOneStub.withArgs({user: '123'}).resolves(null);
 
         await expect(cartService.deleteItemFromCart('123', '123'))
             .rejects
@@ -150,21 +158,20 @@ describe('Test deleteItemFromCart function', () => {
 
     it('Should not remove item from cart', async () => {
 
-        const cartItem1 = new CartItem({
-            field1: 'Toito',
-            type: 'BOOK'
+        cartFindOneStub.withArgs({user: '123'}).resolves({
+            user: {
+                _id: '123'
+            },
+            items: [{
+                _id: '5894',
+                field1: 'Toito',
+                type: 'BOOK'
+            }]
+
         });
 
-        const cart = new Cart({
-            user_id: new ObjectId(12345),
-            items: [cartItem1]
-        });
-
-        cartFindOneStub.resolves(cart);
-
-        const result = await cartService.deleteItemFromCart(123, '123');
+        const result = await cartService.deleteItemFromCart('123', '123');
         expect(result.items.length).toEqual(1);
-        // expect(result.items[0]).toContain(cartItem1);
 
         sinon.assert.notCalled(cartInstanceStub);
 
@@ -172,30 +179,21 @@ describe('Test deleteItemFromCart function', () => {
 
     it('Should remove item from cart', async () => {
 
-        const cartItem1 = new CartItem({
-            field1: 'Toito',
-            type: 'BOOK'
-        });
-        const cartItem2 = new CartItem({
-            field1: 'Toito2',
-            type: 'BOOK'
-        });
-
-        const cart = new Cart({
-            user_id: new ObjectId(12345),
-            items: [cartItem1, cartItem2]
+        cartFindOneStub.withArgs({user: '123'}).resolves({
+            user: {
+                _id: '123'
+            },
+            items: [{
+                _id: '5894',
+                field1: 'Toito',
+                type: 'BOOK'
+            }],
+            save: sinon.stub().resolvesThis()
         });
 
-        cartFindOneStub.resolves(cart);
-
-
-        cartInstanceStub.resolves(cart);
-
-        const result = await cartService.deleteItemFromCart(123, `${cartItem1._id}`);
-        expect(result.items.length).toEqual(1);
-        // expect(result.items).toContain(cartItem2);
-
-        // cartInstanceStub.calledOnceWih(cart);
+        const result = await cartService.deleteItemFromCart('123', '5894');
+        
+        expect(result.items.length).toEqual(0);
 
     });
 
@@ -206,21 +204,18 @@ describe('Test deleteItemFromCart function', () => {
 describe('Test markItemAsRead function', () => {
 
     let cartFindOneStub;
-    let cartInstanceStub;
-    
+
     beforeEach(() => {
         cartFindOneStub = sinon.stub(Cart, 'findOne');
-        cartInstanceStub = sinon.stub(Cart.prototype, 'save');
     });
 
     afterEach(() => {
         cartFindOneStub.restore();
-        cartInstanceStub.restore();
     });
 
     it('Should throw a not found error', async () => {
-        
-        cartFindOneStub.resolves(null);
+
+        cartFindOneStub.withArgs({user: '123'}).resolves(null);
 
         await expect(cartService.markItemAsRead('123', '123'))
             .rejects
@@ -229,45 +224,50 @@ describe('Test markItemAsRead function', () => {
 
     it('Should return same cart', async () => {
 
-        const cart = new Cart({
+        cartFindOneStub.withArgs({user: '123'}).resolves({
+            user: {
+                _id: '123'
+            },
             items: [
-                new CartItem({
-                    _id: new ObjectId(123),
-                })
+                {
+                    _id: '124',
+                    status: 'OPEN'
+                }
             ]
         });
-        cartFindOneStub.resolves(cart);
 
         const result = await cartService.markItemAsRead('123', '456');
 
-        expect(result).toEqual(cart);
+        expect(result).toBeDefined();
 
         expect(result.items.length).toEqual(1);
         expect(result.items[0].status).toEqual('OPEN');
-        
-    
+
+
     });
     it('Should return cart with read item', async () => {
 
-        const cartItem = new CartItem({
-        });
-        const cart = new Cart({
+       
+        cartFindOneStub.withArgs({user: '123'}).resolves({
+            user: {
+                _id: '123'
+            },
             items: [
-                cartItem
-            ]
+                {
+                    _id: '124',
+                    status: 'OPEN'
+                }
+            ],
+            save: sinon.stub().resolvesThis()
         });
-        cartFindOneStub.resolves(cart);
+        const result = await cartService.markItemAsRead('123', '124');
 
-        cartInstanceStub.resolves(cart);
-
-        const result = await cartService.markItemAsRead('123', `${cartItem._id}`);
-
-        expect(result).toEqual(cart);
+        expect(result).toBeDefined();
 
         expect(result.items.length).toEqual(1);
         expect(result.items[0].status).toEqual('READ');
-        
-    
+
+
     });
 
 });
