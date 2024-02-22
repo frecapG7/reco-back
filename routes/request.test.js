@@ -14,18 +14,6 @@ app.use(bodyParser.json());
 app.use(express.json());
 
 
-const passport = require('../auth');
-
-// Mock authenticateToken
-// Order must prevail
-const passportStub = sinon.stub(passport, 'authenticate').callsFake((strategy, options, callback) => {
-    return (req, res, next) => {
-        req.user = {
-            _id: '123'
-        };
-        next();
-    };
-});
 
 const requestRoutes = require('./request');
 app.use('/requests',(req, res, next) => {

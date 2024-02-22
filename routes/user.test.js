@@ -6,6 +6,7 @@ const auth = require('../validator/auth');
 const userService = require('../service/user/userService');
 const userSettingsService = require('../service/user/userSettingsService');
 
+const passport = require('../auth');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -16,6 +17,15 @@ app.use(express.json());
 
 // Mock authenticateToken
 // Order must prevail
+const passportStub = sinon.stub(passport, 'authenticate').callsFake((strategy, options, callback) => {
+    return (req, res, next) => {
+        req.user = {
+            _id: '123'
+        };
+        next();
+    };
+});
+
 const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
     // Mock authentication logic
     req.userId = String(1);
@@ -122,7 +132,7 @@ describe('PUT /users/:id', () => {
         });
 
         const response = await supertest(app)
-            .put('/users/1')
+            .put('/users/123')
             .send({
                 email: 'test',
                 name: 'test',
@@ -150,7 +160,7 @@ describe('GET /users/:id/settings', () => {
 
     it('retun forbidden on invalid user id', async () => {
         const response = await supertest(app)
-            .get('/users/123/settings');
+            .get('/users/2/settings');
 
         expect(response.status).toBe(403);
 
@@ -164,7 +174,7 @@ describe('GET /users/:id/settings', () => {
         });
 
         const response = await supertest(app)
-            .get('/users/1/settings');
+            .get('/users/123/settings');
 
         expect(response.status).toBe(200);
         expect(response.body.lang).toEqual('en');
@@ -189,7 +199,7 @@ describe('PATCH /users/:id/settings', () => {
 
     it('Shoud return forbidden on invalid user id', async () => {
         const response = await supertest(app)
-            .patch('/users/123/settings')
+            .patch('/users/2/settings')
             .send({
                 lang: 'en',
                 theme: 'light',
@@ -208,7 +218,7 @@ describe('PATCH /users/:id/settings', () => {
         });
 
         const response = await supertest(app)
-            .patch('/users/1/settings')
+            .patch('/users/123/settings')
             .send({
                 lang: 'en',
                 theme: 'light',
@@ -234,7 +244,7 @@ describe('DELETE /users/:id/settings', () => {
 
     it('Shoud return forbidden on invalid user id', async () => {
         const response = await supertest(app)
-            .delete('/users/123/settings')
+            .delete('/users/2/settings')
             .send();
 
         expect(response.status).toBe(403);
@@ -249,7 +259,7 @@ describe('DELETE /users/:id/settings', () => {
         });
 
         const response = await supertest(app)
-            .delete('/users/1/settings')
+            .delete('/users/123/settings')
             .send();
 
         expect(response.status).toBe(200);
