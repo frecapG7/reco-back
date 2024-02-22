@@ -7,7 +7,6 @@ const router = express.Router();
 
 const request = require('./request');
 const recommendation = require('./recommendation');
-const authentication = require('./authentication');
 const user = require('./user');
 const cart = require('./cart');
 const validation = require('./validation');
