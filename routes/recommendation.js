@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const { authenticateToken } = require('../validator/auth');
 const recommendationService = require('../service/request/recommendationService');
 
 router.get('', async (req, res, next) => {

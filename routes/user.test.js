@@ -2,7 +2,6 @@ const sinon = require('sinon');
 const supertest = require('supertest');
 
 const User = require('../model/User');
-const auth = require('../validator/auth');
 const userService = require('../service/user/userService');
 const userSettingsService = require('../service/user/userSettingsService');
 
@@ -24,12 +23,6 @@ const passportStub = sinon.stub(passport, 'authenticate').callsFake((strategy, o
         };
         next();
     };
-});
-
-const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
-    // Mock authentication logic
-    req.userId = String(1);
-    next();
 });
 const userRoutes = require('./user');
 
@@ -81,7 +74,6 @@ describe('GET /users/:id', () => {
         userServiceStub = sinon.stub(userService, 'getUser');
     });
     afterEach(() => {
-        authenticateTokenStub.restore();
         userServiceStub.restore();
     });
 

@@ -8,15 +8,21 @@ const mongoose = require('./db');
 const pino = require('pino-http');
 const handleError = require('./middleware/errorMiddleware');
 
+const {TOKEN_SECRET} = require('./config');
+
+const passport = require('./auth');
+const session = require('express-session');
 
 app.use(pino());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use('/', routes);
 app.use(handleError)
 
-
-
-
+// Passport will manage authentication
+//app.use(session({ secret: TOKEN_SECRET, resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 
