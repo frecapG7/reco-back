@@ -216,7 +216,7 @@ describe('Test createRecommendation function', () => {
         // }))
 
         // Verify credit was called
-        sinon.assert.calledWith(creditServiceStub, 5, '678');
+        sinon.assert.calledWith(creditServiceStub, 5, {_id: '678' });
         expect(sessionStub.startTransaction).toHaveBeenCalled();
 
         expect(sessionStub.commitTransaction).toHaveBeenCalled();
@@ -485,7 +485,7 @@ describe('Test likeRecommendation function', () => {
         expect(result).toBeDefined();
 
         sinon.assert.calledOnce(creditServiceStub);
-        sinon.assert.calledWith(creditServiceStub, 1, 'anotherUserId');
+        sinon.assert.calledWith(creditServiceStub, 1, { _id: 'anotherUserId' });
 
         // expect(result.likes.length).toEqual(2);
         // expect(result.likes[1]).toEqual('userId');
@@ -536,7 +536,7 @@ describe('Test likeRecommendation function', () => {
         expect(result).toBeDefined();
 
         sinon.assert.calledOnce(creditServiceStub);
-        sinon.assert.calledWith(creditServiceStub, 5, 'userId');
+        sinon.assert.calledWith(creditServiceStub, 5,  { _id: 'anotherUserId' });
 
         expect(recommendation.likes.length).toEqual(2);
         expect(recommendation.likes[1]).toEqual('userId');
@@ -557,18 +557,15 @@ describe('Test unlikeRecommendation function', () => {
 
     let recommendationStub;
     let mongooseStub;
-    let creditServiceStub;
 
     beforeEach(() => {
         recommendationStub = sinon.stub(Recommendation, 'findById');
         mongooseStub = sinon.stub(mongoose, 'startSession');
-        creditServiceStub = sinon.stub(creditService, 'removeCredit');
     });
 
     afterEach(() => {
         recommendationStub.restore();
         mongooseStub.restore();
-        creditServiceStub.restore();
     });
 
 
@@ -599,7 +596,6 @@ describe('Test unlikeRecommendation function', () => {
             endSession: jest.fn()
         };
         mongooseStub.resolves(sessionStub);
-        creditServiceStub.throws();
 
 
         await expect(recommendationService.unlikeRecommendation('123', '678'))
@@ -640,8 +636,8 @@ describe('Test unlikeRecommendation function', () => {
         expect(sessionStub.endSession).toHaveBeenCalled();
 
 
-        expect(recommendation.likes.length).toEqual(1);
-        expect(recommendation.likes[0]).toEqual('123');
+        expect(result.likes.length).toEqual(1);
+        expect(result.likes[0]).toEqual('123');
 
     });
 

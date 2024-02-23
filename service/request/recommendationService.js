@@ -64,7 +64,7 @@ const createRecommendation = async (requestId, data, user) => {
 
         session.startTransaction();
 
-        await creditService.removeCredit(5, user._id);
+        await creditService.removeCredit(5, user);
 
         const newRecommendation = new Recommendation({
             request: request._id,
@@ -154,7 +154,7 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
         // 3. Add credit
         // If the user is the author of the recommendation's request, give 5 credit
         const credit = recommendation.request.author._id === authenticatedUser._id ? 5 : 1;
-        await creditService.addCredit(Number(credit), recommendation.user._id);
+        await creditService.addCredit(Number(credit), recommendation.user);
         // 4. Add like
         recommendation.likes.push(authenticatedUser._id);
 
@@ -193,8 +193,7 @@ const unlikeRecommendation = async (recommendationId, user) => {
 
         //2. Remove like
         recommendation.likes.pull(userId);
-        //3. Remove credit
-        await creditService.removeCredit(1, recommendation.user_id, { session });
+        //3. Remove credit ?
 
         //4. Commit transaction
         await session.commitTransaction();
