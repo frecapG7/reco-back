@@ -162,7 +162,8 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
         await session.commitTransaction();
 
         //6. Return result
-        return await recommendation.save();
+        const savedRecommendation =  await recommendation.save();
+        return savedRecommendation;
 
     } catch (err) {
         if (session)
@@ -172,7 +173,6 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
         if (session)
             session.endSession();
     }
-
 }
 
 // Function to unlike a recommendation

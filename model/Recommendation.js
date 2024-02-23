@@ -42,8 +42,10 @@ const RecommendationSchema = new mongoose.Schema({
 RecommendationSchema.methods.toJSON = function () {
     return {
         id: this._id,
-        request_id: this.request_id,
-        user_id: this.user_id,
+        request: this.request._id,
+        user: {
+            id: this.user._id,
+        },
         field1: this.field1,
         field2: this.field2,
         field3: this.field3,
