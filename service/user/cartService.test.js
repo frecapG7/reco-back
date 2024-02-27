@@ -70,6 +70,7 @@ describe('Test addItemToCart function', () => {
     });
     afterEach(() => {
         cartFindOneStub.restore();
+        cartInstanceStub.restore();
     });
 
     it('Should create a new cart and push item', async () => {
@@ -83,9 +84,9 @@ describe('Test addItemToCart function', () => {
         cartInstanceStub.resolvesThis();
 
 
-        const result = cartService.addItemToCart('123', {
+        const result = await cartService.addItemToCart('123', {
             field1: 'Toito',
-            type: 'BOOK'
+            requestType: 'BOOK'
         });
 
 

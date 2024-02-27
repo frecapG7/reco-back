@@ -5,7 +5,7 @@ const Recommendation = require('../../model/Recommendation');
 const Request = require('../../model/Request');
 const recommendationService = require('./recommendationService');
 const sinon = require('sinon');
-const creditService = require('../creditService');
+const creditService = require('../market/creditService');
 
 
 describe('Test getRecommendations function', () => {
@@ -169,7 +169,7 @@ describe('Test createRecommendation function', () => {
             .toThrow();
 
         // Verify credit was called
-        sinon.assert.calledWith(creditServiceStub, 5, '678');
+        sinon.assert.calledWith(creditServiceStub, 5, {_id: '678' });
 
         expect(sessionStub.startTransaction).toHaveBeenCalled();
         expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
@@ -451,22 +451,24 @@ describe('Test likeRecommendation function', () => {
 
     it('Should add a like with random author', async () => {
 
+        const expected = {
+            _id: '123',
+            likes: ['anotherUserId'],
+            user: {
+                _id: 'anotherUserId'
+            },
+            request: {
+                _id: 'requestId',
+                author: {
+                    _id: '666'
+                }
+            },
+            save: sinon.stub().resolvesThis()
+        }
+
         recommendationStub.withArgs('123').returns({
             populate: sinon.stub().withArgs('request', 'author').returns({
-                exec: sinon.stub().resolves({
-                    _id: '123',
-                    likes: ['anotherUserId'],
-                    user: {
-                        _id: 'anotherUserId'
-                    },
-                    request: {
-                        _id: 'requestId',
-                        author: {
-                            _id: '666'
-                        }
-                    },
-                    save: sinon.stub().resolvesThis()
-                })
+                exec: sinon.stub().resolves(expected)
             })
         });
 
@@ -474,21 +476,21 @@ describe('Test likeRecommendation function', () => {
             startTransaction: jest.fn(),
             commitTransaction: jest.fn(),
             abortTransaction: jest.fn(),
-            endSession: jest.fn()
+            endSession:  jest.fn()
         };
         mongooseStub.resolves(sessionStub);
         creditServiceStub.resolves();
 
 
-        const result = await expect(recommendationService.likeRecommendation('123', {_id: 'userId'}));
+        const result = await recommendationService.likeRecommendation('123', {_id: 'userId'});
 
         expect(result).toBeDefined();
 
         sinon.assert.calledOnce(creditServiceStub);
         sinon.assert.calledWith(creditServiceStub, 1, { _id: 'anotherUserId' });
 
-        // expect(result.likes.length).toEqual(2);
-        // expect(result.likes[1]).toEqual('userId');
+        expect(result.likes.length).toEqual(2);
+        expect(result.likes[1]).toEqual('userId');
         // expect(result.save).toHaveBeenCalled();
 
         //Verify transaction
@@ -516,7 +518,7 @@ describe('Test likeRecommendation function', () => {
                             _id: 'userId'
                         }
                     },
-                    save: sinon.stub().resolves({_id: '123'})
+                    save: sinon.stub().resolvesThis()
                 })
             })
         });
@@ -531,16 +533,15 @@ describe('Test likeRecommendation function', () => {
         creditServiceStub.resolves();
 
 
-        const result = await expect(recommendationService.likeRecommendation('123', {_id: 'userId'}));
+        const result = await recommendationService.likeRecommendation('123', {_id: 'userId'});
 
         expect(result).toBeDefined();
 
         sinon.assert.calledOnce(creditServiceStub);
         sinon.assert.calledWith(creditServiceStub, 5,  { _id: 'anotherUserId' });
 
-        expect(recommendation.likes.length).toEqual(2);
-        expect(recommendation.likes[1]).toEqual('userId');
-        expect(recommendation.save).toHaveBeenCalled();
+        expect(result.likes.length).toEqual(2);
+        expect(result.likes[1]).toEqual('userId');
 
         //Verify transaction
         expect(sessionStub.startTransaction).toHaveBeenCalled();
@@ -573,7 +574,7 @@ describe('Test unlikeRecommendation function', () => {
 
         recommendationStub.resolves(null);
 
-        await expect(recommendationService.unlikeRecommendation('123', '678'))
+        await expect(recommendationService.unlikeRecommendation('123', {_id: '678' }))
             .rejects
             .toThrow(NotFoundError);
 
@@ -583,8 +584,7 @@ describe('Test unlikeRecommendation function', () => {
 
         const expected = {
             like: ['123'],
-            save: jest.fn(),
-            user_id: '666',
+            save: sinon.stub().resolvesThis(),
         };
 
         recommendationStub.resolves(expected);
@@ -614,8 +614,7 @@ describe('Test unlikeRecommendation function', () => {
 
         const expected = {
             likes: ['123', '678'],
-            save: jest.fn(),
-            user_id: '666',
+            save: sinon.stub().resolvesThis(),
         };
 
         recommendationStub.resolves(expected);
@@ -628,7 +627,7 @@ describe('Test unlikeRecommendation function', () => {
         };
         mongooseStub.resolves(sessionStub);
 
-        const result = await recommendationService.unlikeRecommendation('123', '678');
+        const result = await recommendationService.unlikeRecommendation('123', {_id: '678' });
 
         expect(sessionStub.startTransaction).toHaveBeenCalled();
         expect(sessionStub.commitTransaction).toHaveBeenCalled();

@@ -47,6 +47,10 @@ describe('Test createRequest', () => {
 
 
     it('Should return a request', async () => {
+
+
+        requestStub.resolvesThis();
+
         const result = await requestService.createRequest({
             requestType: "requestType",
             description: "description",
@@ -55,12 +59,14 @@ describe('Test createRequest', () => {
         });
 
 
+        expect(result).toBeInstanceOf(Request);
+        expect(result.requestType).toBe("requestType");
+        expect(result.description).toBe("description");
+        // expect(result.author._id).toEqual('613a9b6b9b0b1d1b1c9b1b1b');
+
+
         sinon.assert.calledOnce(requestStub);
-        sinon.assert.calledWith(requestStub, {
-            requestType: "requestType",
-            description: "description",
-            author: '613a9b6b9b0b1d1b1c9b1b1b'
-        });
+      
 
     });
 

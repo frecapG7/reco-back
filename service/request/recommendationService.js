@@ -2,7 +2,7 @@
 const Recommendation = require('../../model/Recommendation');
 const Request = require('../../model/Request');
 const { NotFoundError, ForbiddenError } = require("../../errors/error");
-const creditService = require('../creditService');
+const creditService = require('../market/creditService');
 const mongoose = require('mongoose');
 
 const toDTO = (recommendation, user) => {
@@ -192,7 +192,7 @@ const unlikeRecommendation = async (recommendationId, user) => {
         session.startTransaction();
 
         //2. Remove like
-        recommendation.likes.pull(userId);
+        recommendation.likes = recommendation.likes.filter(like => like !== user._id);
         //3. Remove credit ?
 
         //4. Commit transaction
