@@ -1,6 +1,6 @@
 {
     "db": {
-        "schema": "cluster0.pd21cjw.mongodb.net/?retryWrites=true&w=majority",
+        "schema": "integration.tf2kpt6.mongodb.net/reco_dev?retryWrites=true&w=majority&appName=integration",
         "username": "frecap",
         "password": "admin"
     }
