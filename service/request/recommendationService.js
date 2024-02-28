@@ -54,7 +54,7 @@ const createRecommendation = async (requestId, data, user) => {
     const request = await Request.findById(requestId);
     if (!request)
         throw new NotFoundError('Request not found');
-    if(request.author === user._id)
+    if(request.author._id.equals(user._id))
         throw new ForbiddenError('User cannot create a recommendation for his own request');
 
 
@@ -137,7 +137,7 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
     if (recommendation.likes.includes(authenticatedUser._id))
         throw new ForbiddenError('User has already liked this recommendation');
     // 1.c Check if user is not recommendation's author
-    if (recommendation.user._id === authenticatedUser._id)
+    if (recommendation.user._id.equals(authenticatedUser._id))
         throw new ForbiddenError('User cannot like his own recommendation');
 
     // 2. Find request
@@ -153,7 +153,7 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
 
         // 3. Add credit
         // If the user is the author of the recommendation's request, give 5 credit
-        const credit = recommendation.request.author._id === authenticatedUser._id ? 5 : 1;
+        const credit = recommendation.request.author._id.equals(authenticatedUser._id) ? 5 : 1;
         await creditService.addCredit(Number(credit), recommendation.user);
         // 4. Add like
         recommendation.likes.push(authenticatedUser._id);

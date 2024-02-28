@@ -16,6 +16,7 @@ const login = async (username, password) => {
         ]
     });
 
+
     // Verify user is found
     if (!user)
         throw new ForbiddenError('Authentication failed.');

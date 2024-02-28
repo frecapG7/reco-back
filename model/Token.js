@@ -5,7 +5,7 @@ const {generateRandom} = require('../utils/utils');
 const tokenSchema = new mongoose.Schema({
     value: {
         type: String,
-        default: generateRandom(4)
+        required: true,
     },
     type: {
         type: String,

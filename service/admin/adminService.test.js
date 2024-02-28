@@ -4,7 +4,7 @@ const Token = require("../../model/Token");
 const adminService = require('./adminService');
 
 
-describe('Test createAdmin', () => {
+describe('Test createToken', () => {
 
     let tokenStub;
 
@@ -21,7 +21,9 @@ describe('Test createAdmin', () => {
         const expected = new Token();
         tokenStub.returns(expected);
 
-        const result = await adminService.createToken('tokenType');
+        const result = await adminService.createToken({
+            type: 'test'
+        });
 
         sinon.assert.calledOnce(tokenStub);
 

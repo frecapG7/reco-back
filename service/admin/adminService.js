@@ -1,13 +1,15 @@
 
-
+const { generateRandom } = require('../../utils/utils');
 
 const Token = require('../../model/Token');
 
-const createToken = async (type) => {
+const createToken = async (data) => {
 
+    const value = await generateRandom(4);
 
     const token = new Token({
-        type: type
+        value: value,
+        type: data.type
     });
     
 

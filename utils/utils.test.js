@@ -7,10 +7,12 @@ describe('Test generateRandom function', () => {
 
 
     it('Should test different random size values', async () => {
-
+        
         const random1 = generateRandom(4);
-
+        const random42 = generateRandom(4);
+        
         console.debug(random1);
+        console.debug(random42);
 
 
         const random2 = generateRandom(6);

@@ -4,28 +4,33 @@ const User = require("../../model/User");
 
 
 const addCredit = async (value, user) => {
+
+    const dbUser = await User.findById(user._id);
+
     // 1. check user is provided
-    if (!user)
+    if (!dbUser)
         throw new InvalidCreditError('User cannot be undefined');
     // 1. add value
-    user.balance += value;
+    dbUser.balance += value;
     // 3. save user
-    return await user.save();
+    return await dbUser.save();
 }
 
 
 const removeCredit = async (value, user) => {
-    if (!user)
+    const dbUser = await User.findById(user._id);
+    // 1. check user is provided
+    if (!dbUser)
         throw new InvalidCreditError('User cannot be undefined');
     // 2.Check if credit is enough
-    if (user.balance < value)
+    if (dbUser.balance < value)
         throw new InvalidCreditError('Not enough credit');
 
     // 3. Remove value
-    user.balance -= value;
+    dbUser.balance -= value;
 
     // 4. Save user
-    return await user.save();
+    return await dbUser.save();
 }
 
 
