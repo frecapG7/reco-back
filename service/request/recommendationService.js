@@ -1,28 +1,34 @@
 
-const Recommendation = require('../model/Recommendation');
-const Request = require('../model/Request');
-const { NotFoundError, ForbiddenError } = require("../errors/error");
-const creditService = require('./creditService');
+const Recommendation = require('../../model/Recommendation');
+const Request = require('../../model/Request');
+const { NotFoundError, ForbiddenError } = require("../../errors/error");
+const creditService = require('../market/creditService');
 const mongoose = require('mongoose');
 
-const toDTO = (recommendation, userId) => {
+const toDTO = (recommendation, user) => {
     console.debug(JSON.stringify(recommendation));
     return {
         id: recommendation._id,
-        request_id: recommendation.request_id,
-        user_id: recommendation.user_id,
+        request: recommendation.request,
+        user: {
+            id: recommendation.user._id,
+            name: recommendation.user.name,
+        },
         field1: recommendation.field1,
         field2: recommendation.field2,
         field3: recommendation.field3,
         created_at: recommendation.created_at,
         likes: recommendation.likes?.length,
-        liked: recommendation.likes?.includes(userId),
+        liked: recommendation.likes?.includes(user._id),
     }
 }
 
-const getRecommendations = async (requestId, userId) => {
-    const recommendations = await Recommendation.find({ request_id: String(requestId) });
-    return recommendations.map(recommendation => toDTO(recommendation, userId));
+const getRecommendations = async (requestId, user) => {
+    const recommendations = await Recommendation.find({ request: String(requestId) })
+    .populate('user', 'name')
+    .exec();
+
+    return recommendations.map(recommendation => toDTO(recommendation, user));
 }
 
 /**
@@ -40,15 +46,15 @@ const getRecommendation = async (recommendationId) => {
 /**
  * 
  * @param {String} requestId 
- * @param {String} userId 
+ * @param {Object} the authenticated user
  * @param {JSON} data 
  */
-const createRecommendation = async (requestId, userId, data) => {
+const createRecommendation = async (requestId, data, user) => {
 
     const request = await Request.findById(requestId);
     if (!request)
         throw new NotFoundError('Request not found');
-    if(request.author_id == userId)
+    if(request.author._id.equals(user._id))
         throw new ForbiddenError('User cannot create a recommendation for his own request');
 
 
@@ -58,11 +64,11 @@ const createRecommendation = async (requestId, userId, data) => {
 
         session.startTransaction();
 
-        await creditService.removeCredit(5, userId);
+        await creditService.removeCredit(5, user);
 
         const newRecommendation = new Recommendation({
-            request_id: String(requestId),
-            user_id: String(userId),
+            request: request._id,
+            user: user._id,
             field1: String(data.field1),
             field2: String(data.field2),
             field3: String(data.field3),
@@ -85,12 +91,12 @@ const createRecommendation = async (requestId, userId, data) => {
 }
 
 
-const updateRecommendation = async (requestId, recommendationId, userId, data) => {
+const updateRecommendation = async (requestId, recommendationId, data, user) => {
     const recommendation = await Recommendation.findOneAndUpdate(
         {
             _id: String(recommendationId),
-            user_id: String(userId),
-            request_id: String(requestId),
+            user: user._id,
+            request: String(requestId),
         },
         {
             field1: String(data.field1),
@@ -103,12 +109,12 @@ const updateRecommendation = async (requestId, recommendationId, userId, data) =
     return recommendation;
 };
 
-const deleteRecommendation = async (requestId, recommendationId, userId) => {
+const deleteRecommendation = async (requestId, recommendationId, user) => {
     const recommendation = await Recommendation.findOneAndDelete(
         {
             _id: String(recommendationId),
-            user_id: String(userId),
-            request_id: String(requestId),
+            user: user._id,
+            request: String(requestId),
         }
     );
 
@@ -119,22 +125,23 @@ const deleteRecommendation = async (requestId, recommendationId, userId) => {
 
 
 // Function to like a recommendation
-const likeRecommendation = async (recommendationId, userId) => {
+const likeRecommendation = async (recommendationId, authenticatedUser) => {
 
     // 1.a Check if recommendation exists
-    const recommendation = await Recommendation.findById(recommendationId);
+    const recommendation = await Recommendation.findById(recommendationId)
+        .populate("request", "author")
+        .exec();
     if (!recommendation)
         throw new NotFoundError('Recommendation not found');
     // 1.b Check if user has already liked the recommendation
-    if (recommendation.likes.includes(userId))
+    if (recommendation.likes.includes(authenticatedUser._id))
         throw new ForbiddenError('User has already liked this recommendation');
     // 1.c Check if user is not recommendation's author
-    if (String(recommendation.user_id) == userId)
+    if (recommendation.user._id.equals(authenticatedUser._id))
         throw new ForbiddenError('User cannot like his own recommendation');
 
     // 2. Find request
-    const request = await Request.findById(recommendation.request_id);
-    if (!request)
+    if (!recommendation.request)
         throw new NotFoundError('Request not found');
 
     // 2. Start transaction
@@ -142,20 +149,21 @@ const likeRecommendation = async (recommendationId, userId) => {
     try {
 
         session = await mongoose.startSession();
-        await session.startTransaction();
+        session.startTransaction();
 
         // 3. Add credit
         // If the user is the author of the recommendation's request, give 5 credit
-        const credit = String(request.author_id) === userId ? 5 : 1;
-        await creditService.addCredit(credit, recommendation.user_id);
+        const credit = recommendation.request.author._id.equals(authenticatedUser._id) ? 5 : 1;
+        await creditService.addCredit(Number(credit), recommendation.user);
         // 4. Add like
-        recommendation.likes.push(userId);
+        recommendation.likes.push(authenticatedUser._id);
 
         // 5. Commit transaction
         await session.commitTransaction();
 
         //6. Return result
-        return await recommendation.save();
+        const savedRecommendation =  await recommendation.save();
+        return savedRecommendation;
 
     } catch (err) {
         if (session)
@@ -165,11 +173,10 @@ const likeRecommendation = async (recommendationId, userId) => {
         if (session)
             session.endSession();
     }
-
 }
 
 // Function to unlike a recommendation
-const unlikeRecommendation = async (recommendationId, userId) => {
+const unlikeRecommendation = async (recommendationId, user) => {
 
     // 1. Find recommendation
     const recommendation = await Recommendation.findById(recommendationId);
@@ -185,9 +192,8 @@ const unlikeRecommendation = async (recommendationId, userId) => {
         session.startTransaction();
 
         //2. Remove like
-        recommendation.likes.pull(userId);
-        //3. Remove credit
-        await creditService.removeCredit(1, recommendation.user_id, { session });
+        recommendation.likes = recommendation.likes.filter(like => like !== user._id);
+        //3. Remove credit ?
 
         //4. Commit transaction
         await session.commitTransaction();

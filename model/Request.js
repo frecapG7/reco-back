@@ -11,14 +11,9 @@ const RequestSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    duration: {
-        type: String,
-        default: 'OPEN',
-        required: true,
-    },
     status: {
         type: String,
-        required: true,
+        default: "OPEN",
     },
     author: {
         type: mongoose.Schema.Types.ObjectId,

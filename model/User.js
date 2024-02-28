@@ -16,6 +16,10 @@ const UserSchema = new mongoose.Schema({
     },
     hash: String,
     salt: String,
+    role: {
+        type: String,
+        default: "USER"
+    },
     settings: {
         lang: {
             type: String,
@@ -30,9 +34,9 @@ const UserSchema = new mongoose.Schema({
             default: constants.defaultSettings.notifications,
         },
     },
-    credit: {
+    balance: {
         type: Number,
-        default: 0
+        default: 20
     },
     created: {
         type: Date,

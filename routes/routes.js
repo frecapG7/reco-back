@@ -7,23 +7,35 @@ const router = express.Router();
 
 const request = require('./request');
 const recommendation = require('./recommendation');
-const authentication = require('./authentication');
 const user = require('./user');
 const cart = require('./cart');
 const validation = require('./validation');
-
-
-router.use('/requests', request)
-router.use('/requests/:requestId/recommendations', recommendation);
+const admin = require('./admin');
+const oauth = require('./oauth2');
 
 
 
-router.use('/auth', authentication);
+const passport = require('../auth');
 
+
+// ********** Routes **********
+
+// ********** Request **********
+router.use('/requests', passport.authenticate('bearer', { session: false }), request)
+router.use('/requests/:requestId/recommendations',  passport.authenticate('bearer', { session: false }), recommendation);
+
+// ********** User **********
 router.use('/users', user);
-router.use('/users/:userId/cart', cart);
+router.use('/users/:userId/cart', passport.authenticate('bearer', { session: false }), cart);
 
-router.use('/validate', validation),
+router.use('/validate', validation);
+
+// ********** Admin **********
+router.use('/admin', passport.authenticate('bearer', { session: false }), admin);
+
+
+// ********** Authentication **********
+router.use("/auth", oauth);
 
 
 module.exports = router;

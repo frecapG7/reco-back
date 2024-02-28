@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
-const {generateRandom} = require('../service/util/utils');
+const {generateRandom} = require('../utils/utils');
 
 
 const tokenSchema = new mongoose.Schema({
     value: {
         type: String,
-        default: generateRandom(4)
+        required: true,
     },
     type: {
         type: String,

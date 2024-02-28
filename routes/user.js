@@ -2,13 +2,12 @@
 
 const express = require('express');
 const router = express.Router();
-const User = require('../model/User');
-const auth = require('../validator/auth');
 const userService = require('../service/user/userService');
 const userSettingsService = require('../service/user/userSettingsService');
 const { ForbiddenError } = require('../errors/error');
 
 
+const passport = require('../auth');
 
 
 /**
@@ -29,9 +28,8 @@ router.post('', async (req, res, next) => {
 /**
  * GET /user to get user by id
  */
-router.get('/:id', auth.authenticateToken, async (req, res, next) => {
+router.get('/:id', passport.authenticate('bearer', {session: false}), async (req, res, next) => {
     try {
-        req.log?.info('call API');
         const user = await userService.getUser(req.params.id);
         return res.json(user);
     } catch (err) {
@@ -43,10 +41,9 @@ router.get('/:id', auth.authenticateToken, async (req, res, next) => {
 /**
  * PUT /user to update user
  */
-router.put('/:id', auth.authenticateToken, async (req, res, next) => {
+router.put('/:id', passport.authenticate('bearer', {session: false}), async (req, res, next) => {
     try {
-
-        if (req.userId !== req.params.id)
+        if (req.user._id !== req.params.id)
             throw new ForbiddenError('You cannot update other user');
         const user = await userService.updateUser(req.params.id, req.body);
         return res.json(user);
@@ -60,10 +57,10 @@ router.put('/:id', auth.authenticateToken, async (req, res, next) => {
 
 /** SETTINGS ROUTES */
 
-router.get('/:id/settings', auth.authenticateToken, async (req, res, next) => {
+router.get('/:id/settings', passport.authenticate('bearer', {session: false}), async (req, res, next) => {
 
     try {
-        if (req.userId !== req.params.id)
+        if (req.user._id !== req.params.id)
             throw new ForbiddenError('You cannot get other user settings');
 
         const settings = await userSettingsService.getSettings(req.params.id);
@@ -75,10 +72,10 @@ router.get('/:id/settings', auth.authenticateToken, async (req, res, next) => {
 });
 
 
-router.patch('/:id/settings', auth.authenticateToken, async (req, res, next) => {
+router.patch('/:id/settings', passport.authenticate('bearer', {session: false}), async (req, res, next) => {
 
     try {
-        if (req.userId !== req.params.id)
+        if (req.user._id !== req.params.id)
             throw new ForbiddenError('You cannot update other user settings');
 
         const settings = await userSettingsService.updateSettings(req.params.id, req.body);
@@ -90,10 +87,10 @@ router.patch('/:id/settings', auth.authenticateToken, async (req, res, next) => 
 });
 
 
-router.delete('/:id/settings', auth.authenticateToken, async (req, res, next) => {
+router.delete('/:id/settings', passport.authenticate('bearer', {session: false}), async (req, res, next) => {
 
     try {
-        if (req.userId !== req.params.id)
+        if (req.user._id !== req.params.id)
             throw new ForbiddenError('You cannot reset other user settings');
 
         const settings = await userSettingsService.resetSettings(req.params.id);

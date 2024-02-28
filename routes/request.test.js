@@ -2,7 +2,7 @@
 
 const sinon = require('sinon');
 const supertest = require('supertest');
-const requestService = require('../service/requestService');
+const requestService = require('../service/request/requestService');
 
 
 const express = require('express');
@@ -14,16 +14,14 @@ app.use(bodyParser.json());
 app.use(express.json());
 
 
-const auth = require('../validator/auth');
-// Mock authenticateToken
-// Order must prevail
-const authenticateTokenStub = sinon.stub(auth, 'authenticateToken').callsFake((req, res, next) => {
-    // Mock authentication logic
-    req.userId = String(123);
-    next();
-});
+
 const requestRoutes = require('./request');
-app.use('/requests', requestRoutes);
+app.use('/requests',(req, res, next) => {
+    req.user = {
+        _id: '123'
+    };
+    next();
+}, requestRoutes);
 app.use(handleError);
 
 describe('GET /requests/:id', () => {
@@ -76,7 +74,10 @@ describe('POST /request', () => {
             .withArgs({
                 requestType: 'BOOK',
                 description: 'SciFi recommended book',
-            }, '123')
+            }, {
+                _id: '123'
+            
+            })
             .resolves({
                 id: '1',
                 requestType: 'BOOK',
@@ -122,7 +123,9 @@ describe('PUT /request', () => {
                     description: 'SciFi recommended book',
                     duration: '2D',
                 },
-                '123')
+                {
+                    _id: '123'
+                })
             .resolves(
                 {
                     id: 1,
@@ -140,7 +143,7 @@ describe('PUT /request', () => {
                 duration: '2D',
             });
 
-        expect(response.status).toBe(204);
+        expect(response.status).toBe(200);
 
 
     });

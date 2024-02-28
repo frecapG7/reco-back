@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const { authenticateToken } = require('../validator/auth');
-const recommendationService = require('../service/recommendationService');
+const recommendationService = require('../service/request/recommendationService');
 
-router.get('', authenticateToken, async (req, res, next) => {
+router.get('', async (req, res, next) => {
     try {
-        const result = await recommendationService.getRecommendations(req.params.requestId, req.userId);
+        const result = await recommendationService.getRecommendations(req.params.requestId, req.user);
         res.status(200)
             .json(result);
     } catch (err) {
@@ -25,9 +24,9 @@ router.get('/:id', async (req, res, next) => {
 
 });
 
-router.post('/', authenticateToken, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
     try {
-        const recommendation = await recommendationService.createRecommendation(req.params.requestId, req.userId, req.body);
+        const recommendation = await recommendationService.createRecommendation(req.params.requestId, req.body, req.user);
         res.status(201)
             .json(recommendation);
     } catch (err) {
@@ -40,7 +39,7 @@ router.put('/:id', async (req, res, next) => {
         const recommendation = recommendationService.updateRecommendation(
             req.params.requestId,
             req.params.id,
-            req.userId,
+            req.user,
             req.body
         );
 
@@ -58,7 +57,7 @@ router.delete('/:id', async (req, res, next) => {
         await recommendationService.deletedRecommendation(
             req.params.requestId,
             req.params.id,
-            req.userId
+            req.use
         );
     } catch (err) {
         next(err);
@@ -66,9 +65,9 @@ router.delete('/:id', async (req, res, next) => {
 });
 
 // POST like
-router.post("/:id/like", authenticateToken, async (req, res, next) => {
+router.post("/:id/like", async (req, res, next) => {
     try {
-        const recommendation = await recommendationService.likeRecommendation(req.params.id, req.userId);
+        const recommendation = await recommendationService.likeRecommendation(req.params.id, req.user);
         res.status(200)
             .json(recommendation);
     } catch (err) {
@@ -76,9 +75,9 @@ router.post("/:id/like", authenticateToken, async (req, res, next) => {
     }
 });
 // DELETE like
-router.delete("/:id/like", authenticateToken, async (req, res, next) => {
+router.delete("/:id/like", async (req, res, next) => {
     try {
-        const recommendation = await recommendationService.unlikeRecommendation(req.params.id, req.userId);
+        const recommendation = await recommendationService.unlikeRecommendation(req.params.id, req.user);
         res.status(200)
             .json(recommendation);
     } catch (err) {

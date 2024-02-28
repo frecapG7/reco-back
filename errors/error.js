@@ -8,6 +8,15 @@ class NotFoundError extends Error {
     }
 }
 
+
+class UnAuthorizedError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'UnAuthorizedError';
+        this.statusCode = 401;
+    }
+}
+
 class ForbiddenError extends Error {
     constructor(message) {
         super(message);
@@ -47,6 +56,7 @@ class AlreadyUsedException extends Error {
 
 module.exports = {
     NotFoundError,
+    UnAuthorizedError,
     ForbiddenError,
     InvalidCreditError,
     InternalServerError,
