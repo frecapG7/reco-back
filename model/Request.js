@@ -1,42 +1,49 @@
-
-
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const RequestSchema = new mongoose.Schema({
-    requestType: {
-        type: String,
-        required: true,
-    },
-    description: {
-        type: String,
-        required: true,
-    },
-    status: {
-        type: String,
-        default: "OPEN",
-    },
-    author: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    created_at: {
-        type: Date,
-        default: Date.now,
-    }
+  requestType: {
+    type: String,
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: false,
+  },
+  tags: {
+    type: [String],
+    required: false,
+  },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 RequestSchema.methods.toJSON = function () {
-    return {
-        id: this._id,
-        requestType: this.requestType,
-        description: this.description,
-        duration: this.duration,
-        status: this.status,
-        created: this.created_at,
-        author: this.author._id
-    }
+  return {
+    id: this._id,
+    requestType: this.requestType,
+    title: this.title,
+    description: this.description,
+    tags: this.tags,
+    created: this.created_at,
+    author: {
+      id: this.author._id,
+      ...(this.populated("author") && {
+        name: this.author.name,
+        title: this.author.title,
+      }),
+    },
+  };
 };
 
-
-module.exports = mongoose.model('Request', RequestSchema);
+module.exports = mongoose.model("Request", RequestSchema);

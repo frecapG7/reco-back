@@ -1,76 +1,79 @@
+const mongoose = require("mongoose");
+const crypto = require("crypto");
 
-const mongoose = require('mongoose');
-const crypto = require('crypto');
-
-const constants = require('../constants');
-
+const constants = require("../constants");
 
 const UserSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+  hash: String,
+  salt: String,
+  role: {
+    type: String,
+    default: "USER",
+  },
+  settings: {
+    lang: {
+      type: String,
+      default: constants.defaultSettings.lang,
     },
-    email: {
-        type: String,
-        required: true,
+    theme: {
+      type: String,
+      default: constants.defaultSettings.theme,
     },
-    hash: String,
-    salt: String,
-    role: {
-        type: String,
-        default: "USER"
+    notifications: {
+      type: Boolean,
+      default: constants.defaultSettings.notifications,
     },
-    settings: {
-        lang: {
-            type: String,
-            default: constants.defaultSettings.lang,
-        },
-        theme: {
-            type: String,
-            default: constants.defaultSettings.theme,
-        },
-        notifications: {
-            type: Boolean,
-            default: constants.defaultSettings.notifications,
-        },
-    },
-    balance: {
-        type: Number,
-        default: 20
-    },
-    created: {
-        type: Date,
-        default: Date.now,
-    }
+  },
+  balance: {
+    type: Number,
+    default: 20,
+  },
+  title: {
+    type: String,
+    default: "Rookie Balboa",
+  },
+  created: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 // Method to set salt and hash password for user
 UserSchema.methods.setPassword = function (password) {
-    // Creating a unique salt
-    this.salt = crypto.randomBytes(16).toString('hex');
+  // Creating a unique salt
+  this.salt = crypto.randomBytes(16).toString("hex");
 
-    // hashing password and salt 
-    this.hash = crypto.pbkdf2Sync(password, this.salt, 100, 64, 'sha512').toString('hex');
-}
+  // hashing password and salt
+  this.hash = crypto
+    .pbkdf2Sync(password, this.salt, 100, 64, "sha512")
+    .toString("hex");
+};
 
 // Method to validate password
 UserSchema.methods.validPassword = function (password) {
-    var hash = crypto.pbkdf2Sync(password, this.salt, 100, 64, 'sha512').toString('hex');
-    return this.hash === hash;
-
-}
+  var hash = crypto
+    .pbkdf2Sync(password, this.salt, 100, 64, "sha512")
+    .toString("hex");
+  return this.hash === hash;
+};
 
 // Method to build JSON response
 UserSchema.methods.toJSON = function () {
-    return {
-        id: this._id,
-        name: this.name,
-        email: this.email,
-        created: this.created,
-    }
-}
+  return {
+    id: this._id,
+    name: this.name,
+    title: this.title,
+    balance: this.balance,
+    created: this.created,
+  };
+};
 
-
-
-
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model("User", UserSchema);

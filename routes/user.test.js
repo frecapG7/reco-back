@@ -1,262 +1,225 @@
-const sinon = require('sinon');
-const supertest = require('supertest');
+const sinon = require("sinon");
+const supertest = require("supertest");
 
-const User = require('../model/User');
-const userService = require('../service/user/userService');
-const userSettingsService = require('../service/user/userSettingsService');
+const User = require("../model/User");
+const userService = require("../service/user/userService");
+const userSettingsService = require("../service/user/userSettingsService");
 
-const passport = require('../auth');
+const passport = require("../auth");
 
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require("express");
+const bodyParser = require("body-parser");
 const app = express();
-const handleError = require('../middleware/errorMiddleware');
+const handleError = require("../middleware/errorMiddleware");
 app.use(bodyParser.json());
 app.use(express.json());
 
 // Mock authenticateToken
 // Order must prevail
-const passportStub = sinon.stub(passport, 'authenticate').callsFake((strategy, options, callback) => {
+const passportStub = sinon
+  .stub(passport, "authenticate")
+  .callsFake((strategy, options, callback) => {
     return (req, res, next) => {
-        req.user = {
-            _id: '123'
-        };
-        next();
+      req.user = {
+        _id: "123",
+      };
+      next();
     };
-});
-const userRoutes = require('./user');
+  });
+const userRoutes = require("./user");
 
-app.use('/users', userRoutes);
+app.use("/users", userRoutes);
 app.use(handleError);
 
+describe("POST /users", () => {
+  let userServiceStub;
+  beforeEach(() => {
+    userServiceStub = sinon.stub(userService, "createUser");
+  });
+  afterEach(() => {
+    userServiceStub.restore();
+  });
 
-describe('POST /users', () => {
+  it("should return 201", async () => {
+    userServiceStub.resolves(
+      new User({
+        email: "test",
+        name: "test",
+      })
+    );
 
-    let userServiceStub;
-    beforeEach(() => {
-        userServiceStub = sinon.stub(userService, 'createUser');
+    const response = await supertest(app).post("/users?token=123").send({
+      email: "test",
+      name: "test",
+      password: "test",
     });
-    afterEach(() => {
-        userServiceStub.restore();
-    });
 
-    it('should return 201', async () => {
+    expect(response.status).toBe(201);
 
-        userServiceStub.resolves(new User({
-            email: 'test',
-            name: 'test',
-        }));
-
-        const response = await supertest(app)
-            .post('/users?token=123')
-            .send({
-                email: 'test',
-                name: 'test',
-                password: 'test'
-            });
-
-        expect(response.status).toBe(201);
-
-        sinon.assert.calledWith(userServiceStub, {
-            email: 'test',
-            name: 'test',
-            password: 'test'
-        }, String('123'));
-    });
+    sinon.assert.calledWith(
+      userServiceStub,
+      {
+        email: "test",
+        name: "test",
+        password: "test",
+      },
+      String("123")
+    );
+  });
 });
 
+describe("GET /users/:id", () => {
+  let userServiceStub;
 
-describe('GET /users/:id', () => {
+  beforeEach(() => {
+    userServiceStub = sinon.stub(userService, "getUser");
+  });
+  afterEach(() => {
+    userServiceStub.restore();
+  });
 
-    let userServiceStub;
+  it("should return user", async () => {
+    userServiceStub.resolves(
+      new User({
+        email: "test",
+        name: "test",
+      })
+    );
 
-    beforeEach(() => {
-        userServiceStub = sinon.stub(userService, 'getUser');
-    });
-    afterEach(() => {
-        userServiceStub.restore();
-    });
+    const response = await supertest(app).get("/users/1");
 
-    it('should return user', async () => {
-        userServiceStub.resolves(new User({
-            email: 'test',
-            name: 'test',
-        }));
-
-        const response = await supertest(app)
-            .get('/users/1');
-
-        expect(response.status).toBe(200);
-
-    });
+    expect(response.status).toBe(200);
+  });
 });
 
-describe('PUT /users/:id', () => {
+describe("PUT /users/:id", () => {
+  let userServiceStub;
 
-    let userServiceStub;
+  beforeEach(() => {
+    userServiceStub = sinon.stub(userService, "updateUser");
+  });
+  afterEach(() => {
+    userServiceStub.restore();
+  });
 
-
-    beforeEach(() => {
-        userServiceStub = sinon.stub(userService, 'updateUser');
-    });
-    afterEach(() => {
-        userServiceStub.restore();
-    });
-
-    it('should return forbiden on invalid user id', async () => {
-
-        const response = await supertest(app)
-            .put('/users/2')
-            .send({
-                email: 'test',
-                name: 'test',
-            });
-
-        expect(response.status).toBe(403);
-
+  it("should return forbiden on invalid user id", async () => {
+    const response = await supertest(app).put("/users/2").send({
+      email: "test",
+      name: "test",
     });
 
+    expect(response.status).toBe(403);
+  });
 
-    it('should return updated user', async () => {
-
-        userServiceStub.resolves({
-            id: 1
-        });
-
-        const response = await supertest(app)
-            .put('/users/123')
-            .send({
-                email: 'test',
-                name: 'test',
-            });
-
-        expect(response.status).toBe(200);
-        expect(response.body.id).toEqual(1);
-
+  it("should return updated user", async () => {
+    userServiceStub.resolves({
+      id: 1,
     });
 
+    const response = await supertest(app).put("/users/123").send({
+      email: "test",
+      name: "test",
+    });
 
+    expect(response.status).toBe(200);
+    expect(response.body.id).toEqual(1);
+  });
 });
 
+describe("GET /users/:id/settings", () => {
+  let userSettingsServiceStub;
 
-describe('GET /users/:id/settings', () => {
+  beforeEach(() => {
+    userSettingsServiceStub = sinon.stub(userSettingsService, "getSettings");
+  });
+  afterEach(() => {
+    userSettingsServiceStub.restore();
+  });
 
-    let userSettingsServiceStub;
+  it("retun forbidden on invalid user id", async () => {
+    const response = await supertest(app).get("/users/2/settings");
 
-    beforeEach(() => {
-        userSettingsServiceStub = sinon.stub(userSettingsService, 'getSettings');
-    });
-    afterEach(() => {
-        userSettingsServiceStub.restore();
-    });
+    expect(response.status).toBe(403);
+  });
 
-    it('retun forbidden on invalid user id', async () => {
-        const response = await supertest(app)
-            .get('/users/2/settings');
-
-        expect(response.status).toBe(403);
-
-    });
-
-    it('should return user settings', async () => {
-        userSettingsServiceStub.resolves({
-            lang: 'en',
-            theme: 'light',
-            notifications: true,
-        });
-
-        const response = await supertest(app)
-            .get('/users/123/settings');
-
-        expect(response.status).toBe(200);
-        expect(response.body.lang).toEqual('en');
-        expect(response.body.theme).toEqual('light');
-        expect(response.body.notifications).toEqual(true);
-
-
+  it("should return user settings", async () => {
+    userSettingsServiceStub.resolves({
+      lang: "en",
+      theme: "light",
+      notifications: true,
     });
 
+    const response = await supertest(app).get("/users/123/settings");
+
+    expect(response.status).toBe(200);
+    expect(response.body.lang).toEqual("en");
+    expect(response.body.theme).toEqual("light");
+    expect(response.body.notifications).toEqual(true);
+  });
 });
 
-describe('PATCH /users/:id/settings', () => {
+describe("PATCH /users/:id/settings", () => {
+  let userSettingsServiceStub;
 
-    let userSettingsServiceStub;
+  beforeEach(() => {
+    userSettingsServiceStub = sinon.stub(userSettingsService, "updateSettings");
+  });
+  afterEach(() => {
+    userSettingsServiceStub.restore();
+  });
 
-    beforeEach(() => {
-        userSettingsServiceStub = sinon.stub(userSettingsService, 'updateSettings');
-    });
-    afterEach(() => {
-        userSettingsServiceStub.restore();
-    });
-
-    it('Shoud return forbidden on invalid user id', async () => {
-        const response = await supertest(app)
-            .patch('/users/2/settings')
-            .send({
-                lang: 'en',
-                theme: 'light',
-                notifications: true,
-            });
-
-        expect(response.status).toBe(403);
-
+  it("Shoud return forbidden on invalid user id", async () => {
+    const response = await supertest(app).patch("/users/2/settings").send({
+      lang: "en",
+      theme: "light",
+      notifications: true,
     });
 
-    it('Should return updated settings', async () => {
-        userSettingsServiceStub.resolves({
-            lang: 'en',
-            theme: 'light',
-            notifications: true,
-        });
+    expect(response.status).toBe(403);
+  });
 
-        const response = await supertest(app)
-            .patch('/users/123/settings')
-            .send({
-                lang: 'en',
-                theme: 'light',
-                notifications: true,
-            });
-
-        expect(response.status).toBe(200);
-
+  it("Should return updated settings", async () => {
+    userSettingsServiceStub.resolves({
+      lang: "en",
+      theme: "light",
+      notifications: true,
     });
 
+    const response = await supertest(app).patch("/users/123/settings").send({
+      lang: "en",
+      theme: "light",
+      notifications: true,
+    });
+
+    expect(response.status).toBe(200);
+  });
 });
 
-describe('DELETE /users/:id/settings', () => {
+describe("DELETE /users/:id/settings", () => {
+  let userSettingsServiceStub;
 
-    let userSettingsServiceStub;
+  beforeEach(() => {
+    userSettingsServiceStub = sinon.stub(userSettingsService, "resetSettings");
+  });
+  afterEach(() => {
+    userSettingsServiceStub.restore();
+  });
 
-    beforeEach(() => {
-        userSettingsServiceStub = sinon.stub(userSettingsService, 'resetSettings');
-    });
-    afterEach(() => {
-        userSettingsServiceStub.restore();
-    });
+  it("Shoud return forbidden on invalid user id", async () => {
+    const response = await supertest(app).delete("/users/2/settings").send();
 
-    it('Shoud return forbidden on invalid user id', async () => {
-        const response = await supertest(app)
-            .delete('/users/2/settings')
-            .send();
+    expect(response.status).toBe(403);
+  });
 
-        expect(response.status).toBe(403);
-
-    });
-
-    it('Should return updated settings', async () => {
-        userSettingsServiceStub.resolves({
-            lang: 'en',
-            theme: 'light',
-            notifications: true,
-        });
-
-        const response = await supertest(app)
-            .delete('/users/123/settings')
-            .send();
-
-        expect(response.status).toBe(200);
-
+  it("Should return updated settings", async () => {
+    userSettingsServiceStub.resolves({
+      lang: "en",
+      theme: "light",
+      notifications: true,
     });
 
+    const response = await supertest(app).delete("/users/123/settings").send();
+
+    expect(response.status).toBe(200);
+  });
 });
-
