@@ -7,14 +7,16 @@ describe('User method.toJSON', () => {
         const user = new User({
             _id: '64f6db09096d83b20116e62f',
             name: 'John',
-            email: 'johndoe@exemple.fr',
+            title: 'Rookie Balboa',
+            balance: 20,
         });
 
         const userJSON = user.toJSON();
 
         expect(userJSON.id).toBeDefined();
         expect(userJSON.name).toEqual('John');
-        expect(userJSON.email).toEqual('johndoe@exemple.fr');
+        expect(userJSON.title).toEqual('Rookie Balboa');
+        expect(userJSON.balance).toEqual(20);
         expect(userJSON.created).toBeDefined();
 
     });
