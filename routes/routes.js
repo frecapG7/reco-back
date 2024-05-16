@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 const request = require("./request");
-const recommendation = require("./recommendation");
+const recommendation = require("./requests/recommendations");
 const user = require("./user");
 const cart = require("./cart");
 const validation = require("./validation");
 const admin = require("./admin");
 const oauth = require("./oauth2");
+const embed = require("./embed");
 
 const passport = require("../auth");
 
@@ -26,6 +27,9 @@ router.use(
 );
 
 router.use("/validate", validation);
+
+// ********** Embed **********
+router.use("/embed", embed);
 
 // ********** Admin **********
 router.use(

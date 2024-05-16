@@ -68,11 +68,13 @@ const createRecommendation = async (requestId, data, user) => {
     await creditService.removeCredit(5, user);
 
     const newRecommendation = new Recommendation({
-      request: request._id,
-      user: user._id,
+      request: request,
+      user: user,
       field1: String(data.field1),
       field2: String(data.field2),
       field3: String(data.field3),
+      html: String(data.html),
+      url: String(data.url),
     });
     const savedRecommendation = await newRecommendation.save();
 
