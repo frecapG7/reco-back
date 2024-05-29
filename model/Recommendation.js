@@ -1,3 +1,4 @@
+const { times } = require("lodash");
 const mongoose = require("mongoose");
 
 const RecommendationSchema = new mongoose.Schema({
@@ -54,6 +55,7 @@ RecommendationSchema.methods.toJSON = function () {
     user: {
       id: this.user._id,
       name: this.user.name,
+      title: this.user.title,
     },
     field1: this.field1,
     field2: this.field2,

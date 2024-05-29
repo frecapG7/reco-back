@@ -20,7 +20,9 @@ app.use("/", routes);
 app.use(handleError);
 
 // Passport will manage authentication
-//app.use(session({ secret: TOKEN_SECRET, resave: false, saveUninitialized: false }));
+app.use(
+  session({ secret: TOKEN_SECRET, resave: false, saveUninitialized: false })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 

@@ -6,27 +6,16 @@ const mongoose = require("mongoose");
 
 const toDTO = (recommendation, user) => {
   console.debug(JSON.stringify(recommendation));
-  return {
-    id: recommendation._id,
-    request: recommendation.request,
-    user: {
-      id: recommendation.user._id,
-      name: recommendation.user.name,
-    },
-    field1: recommendation.field1,
-    field2: recommendation.field2,
-    field3: recommendation.field3,
-    created_at: recommendation.created_at,
-    likes: recommendation.likes?.length,
-    // liked: recommendation.likes?.includes(user._id),
-  };
+  const json = recommendation.toJSON();
+  //TODO: liked
+  return json;
 };
 
 const getRecommendations = async (requestId, user) => {
   const recommendations = await Recommendation.find({
     request: String(requestId),
   })
-    .populate("user", "name")
+    .populate("user")
     .exec();
 
   return recommendations.map((recommendation) => toDTO(recommendation, user));
