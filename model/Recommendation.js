@@ -1,57 +1,69 @@
-
-
-const mongoose = require('mongoose');
+const { times } = require("lodash");
+const mongoose = require("mongoose");
 
 const RecommendationSchema = new mongoose.Schema({
-    request: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Request',
-        required: true,
+  request: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Request",
+    required: true,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  field1: {
+    type: String,
+    required: true,
+  },
+  field2: {
+    type: String,
+    required: false,
+  },
+  field3: {
+    type: String,
+    required: false,
+  },
+  html: {
+    type: String,
+    required: false,
+  },
+  url: {
+    type: String,
+    required: false,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
+  seen: {
+    type: Boolean,
+    default: false,
+  },
+  likes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    field1: {
-        type: String,
-        required: true,
-    },
-    field2: {
-        type: String,
-        required: false,
-    },
-    field3: {
-        type: String,
-        required: false,
-    },
-    created_at: {
-        type: Date,
-        default: Date.now,
-    },
-    seen: {
-        type: Boolean,
-        default: false,
-    },
-    likes: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    }]
+  ],
 });
 
 RecommendationSchema.methods.toJSON = function () {
-    return {
-        id: this._id,
-        request: this.request._id,
-        user: {
-            id: this.user._id,
-        },
-        field1: this.field1,
-        field2: this.field2,
-        field3: this.field3,
-        created_at: this.created_at,
-    }
+  return {
+    id: this._id,
+    request: this.request._id,
+    user: {
+      id: this.user._id,
+      name: this.user.name,
+      title: this.user.title,
+    },
+    field1: this.field1,
+    field2: this.field2,
+    field3: this.field3,
+    html: this.html,
+    url: this.url,
+    created_at: this.created_at,
+  };
 };
 
-
-module.exports = mongoose.model('Recommendation', RecommendationSchema);
+module.exports = mongoose.model("Recommendation", RecommendationSchema);

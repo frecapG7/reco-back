@@ -18,6 +18,8 @@ describe("Request method.toJSON", () => {
     expect(requestJSON.description).toEqual("SciFi recommended book");
     expect(requestJSON.tags).toEqual(["SciFi", "Book"]);
     expect(requestJSON.created).toBeDefined();
-    expect(requestJSON.author.equals("64f6db09096d83b20116e62f")).toEqual(true);
+    expect(requestJSON.author.id.equals("64f6db09096d83b20116e62f")).toEqual(
+      true
+    );
   });
 });
