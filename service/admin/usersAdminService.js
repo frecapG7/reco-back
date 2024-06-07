@@ -1,15 +1,25 @@
 const { NotFoundError } = require("../../errors/error");
 const User = require("../../model/User");
 
-const search = async (filters, pageSize, pageNumber) => {
+const Request = require("../../model/Request");
+const Recommendation = require("../../model/Recommendation");
+
+const search = async ({
+  filters = {},
+  pageSize = 1,
+  pageNumber = 10,
+  authenticatedUser,
+}) => {
   const totalResults = await User.countDocuments();
 
-  const results = await User.find(filters)
+  const results = await User.find({
+    ...filters,
+    id: { $ne: authenticatedUser.id },
+  })
     .skip(pageSize * (pageNumber - 1))
     .limit(pageSize)
     .exec();
 
-  console.log(Math.ceil(totalResults / pageSize));
   return {
     pagination: {
       currentPage: pageNumber,
@@ -20,15 +30,70 @@ const search = async (filters, pageSize, pageNumber) => {
   };
 };
 
+const getUserDetails = async (userId) => {
+  const user = await getUser(userId);
+
+  const stats = await getStats(user);
+
+  return {
+    ...user.toJSON(),
+    stats,
+  };
+};
+
+const getLastRequests = async (id) => {
+  const user = await getUser(id);
+
+  return Request.find({ author: user._id })
+    .sort({ created_at: -1 })
+    .limit(5)
+    .exec();
+};
+
+const getLastRecommendations = async (id) => {
+  const user = await getUser(id);
+
+  return Recommendation.find({ user: user._id })
+    .sort({ created_at: -1 })
+    .limit(5)
+    .exec();
+};
+
+/********************************************************
+ *                   PROTECTED FUNCTIONS                *
+ * ***************************************************
+ */
+
+/**
+ * Evaluate the stats of a user
+ * TODO: export in a userStatsService
+ * @param {*} user
+ * @returns {Object} stats
+ */
+const getStats = async (user) => {
+  const [requestsCount, recommendationsCount] = await Promise.all([
+    Request.countDocuments({ author: user._id }),
+    Recommendation.countDocuments({ user: user._id }),
+  ]);
+
+  return {
+    requestsCount,
+    recommendationsCount,
+    balance: user.balance,
+  };
+};
+
 const getUser = async (userId) => {
   const user = await User.findById(userId);
 
   if (!user) throw new NotFoundError("User not found");
 
-  return user.toJSON();
+  return user;
 };
 
 module.exports = {
   search,
-  getUser,
+  getUserDetails,
+  getLastRequests,
+  getLastRecommendations,
 };
