@@ -3,6 +3,8 @@ const router = express.Router();
 
 const request = require("./request");
 const recommendation = require("./requests/recommendations");
+
+const recommendations = require("./recommendations");
 const user = require("./user");
 const cart = require("./cart");
 const validation = require("./validation");
@@ -17,6 +19,7 @@ const passport = require("../auth");
 // ********** Request **********
 router.use("/requests", request);
 router.use("/requests/:requestId/recommendations", recommendation);
+router.use("/recommendations", recommendations);
 
 // ********** User **********
 router.use("/users", user);

@@ -64,6 +64,8 @@ const createRecommendation = async (requestId, data, user) => {
       field3: String(data.field3),
       html: String(data.html),
       url: String(data.url),
+      ...(data.duplicate_from && { duplicate_from: data.duplicate_from }),
+      ...(data.provider && { provider: data.provider }),
     });
     const savedRecommendation = await newRecommendation.save();
 
