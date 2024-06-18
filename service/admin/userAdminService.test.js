@@ -44,6 +44,7 @@ describe("Test search", () => {
       },
       pageSize: 1,
       pageNumber: 1,
+      authenticatedUser: { id: 1}
     });
 
     expect(result.pagination.currentPage).toEqual(1);

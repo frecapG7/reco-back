@@ -16,11 +16,11 @@ const searchRecommendations = async ({ requestType, search = "" }) => {
       { field2: { $regex: search, $options: "i" } },
       { field3: { $regex: search, $options: "i" } },
     ],
+    requestType: requestType,
   })
     .limit(5)
     .sort({ created_at: -1 })
     .exec();
-  //TODO: filter on request.requestType
 
   return results.map((result) => ({
     id: result._id,

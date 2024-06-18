@@ -55,6 +55,11 @@ const RecommendationSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  // Use for search
+  requestType: {
+    type: String,
+    required: true,
+  },
 });
 
 RecommendationSchema.methods.toJSON = function () {
