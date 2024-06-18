@@ -5,7 +5,6 @@ const creditService = require("../market/creditService");
 const mongoose = require("mongoose");
 
 const toDTO = (recommendation, user) => {
-  console.debug(JSON.stringify(recommendation));
   const json = recommendation.toJSON();
   //TODO: liked
   return json;
@@ -64,6 +63,9 @@ const createRecommendation = async (requestId, data, user) => {
       field3: String(data.field3),
       html: String(data.html),
       url: String(data.url),
+      requestType: String(request.requestType),
+      ...(data.duplicate_from && { duplicate_from: data.duplicate_from }),
+      ...(data.provider && { provider: data.provider }),
     });
     const savedRecommendation = await newRecommendation.save();
 

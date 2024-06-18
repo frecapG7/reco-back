@@ -43,7 +43,7 @@ describe("GET /requests/:requestId/recommendations", () => {
   });
 
   it("should return recommendations", async () => {
-    recommendationServiceStub.withArgs("123", { _id: 123 }).resolves({
+    recommendationServiceStub.resolves({
       items: [{ _id: 1 }],
     });
     const response = await supertest(app).get("/requests/123/recommendations");

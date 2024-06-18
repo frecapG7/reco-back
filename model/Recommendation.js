@@ -46,6 +46,20 @@ const RecommendationSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  duplicate_from: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Recommendation",
+    required: false,
+  },
+  provider: {
+    type: String,
+    required: false,
+  },
+  // Use for search
+  requestType: {
+    type: String,
+    required: true,
+  },
 });
 
 RecommendationSchema.methods.toJSON = function () {

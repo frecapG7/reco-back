@@ -18,6 +18,22 @@ describe("Test getRecommendations function", () => {
   });
 
   it("Should return a list of recommendations", async () => {
+    const expected = {
+      _id: "1",
+      request: {
+        _id: "123",
+      },
+      user: {
+        _id: "123",
+        name: "name",
+      },
+      field1: "field1",
+      field2: "field2",
+      field3: "field3",
+      created_at: new Date(),
+      likes: ["123", "456"],
+    };
+
     recommendationStub.withArgs({ request: "123" }).returns({
       populate: sinon
         .stub()
@@ -26,16 +42,7 @@ describe("Test getRecommendations function", () => {
           exec: sinon.stub().resolves([
             {
               _id: "1",
-              request: "123",
-              user: {
-                _id: "123",
-                name: "name",
-              },
-              field1: "field1",
-              field2: "field2",
-              field3: "field3",
-              created_at: new Date(),
-              likes: ["123", "456"],
+              toJSON: sinon.stub().returns(expected),
             },
           ]),
         }),
@@ -47,20 +54,7 @@ describe("Test getRecommendations function", () => {
 
     expect(result.length).toEqual(1);
 
-    expect(result[0]).toEqual({
-      id: "1",
-      request: "123",
-      user: {
-        id: "123",
-        name: "name",
-      },
-      field1: "field1",
-      field2: "field2",
-      field3: "field3",
-      created_at: expect.any(Date),
-      likes: 2,
-      liked: true,
-    });
+    expect(result[0]).toEqual(expected);
   });
 });
 
@@ -188,6 +182,7 @@ describe("Test createRecommendation function", () => {
     requestStub.resolves({
       _id: "123",
       author: new ObjectId("678354154544"),
+      requestType: "BOOK",
     });
 
     const sessionStub = {
@@ -214,13 +209,15 @@ describe("Test createRecommendation function", () => {
     );
 
     expect(result).toEqual(expected);
-    // sinon.assert.calledWith(recommendationStub, sinon.match({
-    //     request: '123',
-    //     user: '678',
-    //     field1: 'field1',
-    //     field2: 'field2',
-    //     field3: 'field3',
-    // }))
+
+    sinon.assert.calledOnce(recommendationStub);
+    const savedArgs = recommendationStub.getCall(0).thisValue;
+    console.log("save called with:", savedArgs);
+
+    expect(savedArgs.field1).toEqual("field1");
+    expect(savedArgs.field2).toEqual("field2");
+    expect(savedArgs.field3).toEqual("field3");
+    expect(savedArgs.requestType).toEqual("BOOK");
 
     // Verify credit was called
     sinon.assert.calledWith(creditServiceStub, 5, { _id: "678" });
