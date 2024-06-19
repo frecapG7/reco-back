@@ -2,6 +2,7 @@ const Recommendation = require("../../model/Recommendation");
 const Request = require("../../model/Request");
 const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const creditService = require("../market/creditService");
+const notificationService = require("../user/notificationService");
 const mongoose = require("mongoose");
 
 const toDTO = (recommendation, user) => {
@@ -136,21 +137,29 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
     session = await mongoose.startSession();
     session.startTransaction();
 
-    // 3. Add credit
+    // 3. Evaluate credit
     // If the user is the author of the recommendation's request, give 5 credit
     const credit = recommendation.request.author._id.equals(
       authenticatedUser._id
     )
       ? 5
       : 1;
-    await creditService.addCredit(Number(credit), recommendation.user);
-    // 4. Add like
+    // 4. Add credit and create notification
+    await Promise.all([
+      creditService.addCredit(Number(credit), recommendation.user),
+      notificationService.createRecommendation({
+        to: recommendation.user,
+        from: authenticatedUser,
+        type: "like_recommendation",
+      }),
+    ]);
+    // 5. Add like
     recommendation.likes.push(authenticatedUser._id);
 
-    // 5. Commit transaction
+    // 6. Commit transaction
     await session.commitTransaction();
 
-    //6. Return result
+    //7. Return result
     const savedRecommendation = await recommendation.save();
     return savedRecommendation;
   } catch (err) {
