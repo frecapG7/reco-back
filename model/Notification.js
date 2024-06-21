@@ -16,11 +16,6 @@ const NotificationSchema = new mongoose.Schema({
     required: true,
     enum: ["like_request", "like_recommendation", "comment"],
   },
-  message: {
-    type: String,
-    required: true,
-    maxLength: 200,
-  },
   read: {
     type: Boolean,
     default: false,

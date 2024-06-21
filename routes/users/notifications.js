@@ -12,7 +12,20 @@ router.get("", async (req, res, next) => {
     verifyUser(req);
 
     const result = await notificationService.getNotifications({
-      userId: req.params.id,
+      userId: req.params.userId,
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/unread", async (req, res, next) => {
+  try {
+    verifyUser(req);
+
+    const result = await notificationService.countUnread({
+      userId: req.params.userId,
     });
     res.json(result);
   } catch (err) {

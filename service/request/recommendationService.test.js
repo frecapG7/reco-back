@@ -5,6 +5,7 @@ const Request = require("../../model/Request");
 const recommendationService = require("./recommendationService");
 const sinon = require("sinon");
 const creditService = require("../market/creditService");
+const notificationService = require("../user/notificationService");
 const { ObjectId } = require("mongodb");
 
 describe("Test getRecommendations function", () => {
@@ -325,16 +326,22 @@ describe("Test likeRecommendation function", () => {
   let recommendationStub;
   let mongooseStub;
   let creditServiceStub;
+  let notificationServiceStub;
 
   beforeEach(() => {
     recommendationStub = sinon.stub(Recommendation, "findById");
     mongooseStub = sinon.stub(mongoose, "startSession");
     creditServiceStub = sinon.stub(creditService, "addCredit");
+    notificationServiceStub = sinon.stub(
+      notificationService,
+      "createNotification"
+    );
   });
   afterEach(() => {
     recommendationStub.restore();
     mongooseStub.restore();
     creditServiceStub.restore();
+    notificationServiceStub.restore();
   });
 
   it("Should thrown a recommendation not found error", async () => {
@@ -483,6 +490,7 @@ describe("Test likeRecommendation function", () => {
     };
     mongooseStub.resolves(sessionStub);
     creditServiceStub.resolves();
+    notificationServiceStub.resolves();
 
     const result = await recommendationService.likeRecommendation("123", {
       _id: "userId",
@@ -494,6 +502,13 @@ describe("Test likeRecommendation function", () => {
     sinon.assert.calledWith(creditServiceStub, 1, {
       _id: new ObjectId("678354154544"),
     });
+
+    sinon.assert.calledOnce(notificationServiceStub);
+    // sinon.assert.calledWith(notificationServiceStub, {
+    //   to: new ObjectId("666666666666"),
+    //   from: new ObjectId("678354154"),
+    //   type: "like_recommendation",
+    // });
 
     expect(result.likes.length).toEqual(2);
     expect(result.likes[1]).toEqual("userId");
@@ -537,6 +552,7 @@ describe("Test likeRecommendation function", () => {
     };
     mongooseStub.resolves(sessionStub);
     creditServiceStub.resolves();
+    notificationServiceStub.resolves();
 
     const result = await recommendationService.likeRecommendation("123", {
       _id: "666666666666",
@@ -548,6 +564,8 @@ describe("Test likeRecommendation function", () => {
     sinon.assert.calledWith(creditServiceStub, 5, {
       _id: new ObjectId("678354154544"),
     });
+
+    sinon.assert.calledOnce(notificationServiceStub);
 
     expect(result.likes.length).toEqual(2);
     expect(result.likes[1]).toEqual("666666666666");

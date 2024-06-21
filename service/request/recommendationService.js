@@ -147,7 +147,7 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
     // 4. Add credit and create notification
     await Promise.all([
       creditService.addCredit(Number(credit), recommendation.user),
-      notificationService.createRecommendation({
+      notificationService.createNotification({
         to: recommendation.user,
         from: authenticatedUser,
         type: "like_recommendation",

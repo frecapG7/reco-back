@@ -29,7 +29,7 @@ describe("Test getNotifications", () => {
               sort: sinon.stub().returns({
                 populate: sinon
                   .stub()
-                  .withArgs("from", "to")
+                  .withArgs("from", "name")
                   .returns({
                     exec: sinon.stub().returns([
                       {
@@ -48,18 +48,18 @@ describe("Test getNotifications", () => {
         }),
     });
 
-    countStub.withArgs({ to: "123" }).returns(1);
+    countStub.withArgs({ to: "123" }).returns(10);
 
     const result = await notificationService.getNotifications({
       userId: "123",
     });
     expect(result).toBeDefined();
-    expect(result.resultSet).toBeDefined();
-    expect(result.resultSet.length).toBe(1);
+    expect(result.results).toBeDefined();
+    expect(result.results.length).toBe(1);
 
-    expect(result.page).toBe(1);
-    expect(result.pageSize).toBe(50);
-    expect(result.totalResults).toBe(1);
+    expect(result.pagination.currentPage).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+    expect(result.pagination.totalResults).toBe(10);
   });
 
   it("Should return notifications with arguments in the query", async () => {
@@ -75,7 +75,7 @@ describe("Test getNotifications", () => {
               sort: sinon.stub().returns({
                 populate: sinon
                   .stub()
-                  .withArgs("from", "to")
+                  .withArgs("from", "name")
                   .returns({
                     exec: sinon.stub().returns([
                       {
@@ -94,7 +94,7 @@ describe("Test getNotifications", () => {
         }),
     });
 
-    countStub.withArgs({ to: "123", read: false }).returns(1);
+    countStub.withArgs({ to: "123", read: false }).returns(10);
 
     const result = await notificationService.getNotifications({
       userId: "123",
@@ -103,12 +103,33 @@ describe("Test getNotifications", () => {
       pageSize: 10,
     });
     expect(result).toBeDefined();
-    expect(result.resultSet).toBeDefined();
-    expect(result.resultSet.length).toBe(1);
+    expect(result.results).toBeDefined();
+    expect(result.results.length).toBe(1);
 
-    expect(result.page).toBe(2);
-    expect(result.pageSize).toBe(10);
-    expect(result.totalResults).toBe(1);
+    expect(result.pagination.currentPage).toBe(2);
+    expect(result.pagination.totalPages).toBe(1);
+    expect(result.pagination.totalResults).toBe(10);
+  });
+});
+
+describe("Test countUnread", () => {
+  let countStub;
+
+  beforeEach(() => {
+    countStub = sinon.stub(Notification, "countDocuments");
+  });
+  afterEach(() => {
+    countStub.restore();
+  });
+
+  it("Should return unread notifications", async () => {
+    countStub.withArgs({ to: "123", read: false }).returns(10);
+
+    const result = await notificationService.countUnread({
+      userId: "123",
+    });
+    expect(result).toBeDefined();
+    expect(result.value).toBe(10);
   });
 });
 

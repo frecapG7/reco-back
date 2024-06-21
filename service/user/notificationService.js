@@ -18,10 +18,10 @@ const getNotifications = async ({
     .skip((page - 1) * pageSize)
     .limit(pageSize)
     .sort({ createdAt: -1 })
-    .populate("from", "to")
+    .populate("from", "name")
     .exec();
   return {
-    resultSet: notifications.map((notification) => ({
+    results: notifications.map((notification) => ({
       id: notification._id,
       from: {
         id: notification.from._id,
@@ -30,9 +30,21 @@ const getNotifications = async ({
       type: notification.type,
       createdAt: notification.createdAt,
     })),
-    page,
-    pageSize,
-    totalResults,
+    pagination: {
+      currentPage: page,
+      totalPages: Math.ceil(totalResults / pageSize),
+      totalResults,
+    },
+  };
+};
+
+const countUnread = async ({ userId }) => {
+  const unreadCount = await Notification.countDocuments({
+    to: userId,
+    read: false,
+  });
+  return {
+    value: unreadCount,
   };
 };
 
@@ -73,6 +85,7 @@ const createNotification = async ({ to, from, type }) => {
 
 module.exports = {
   getNotifications,
+  countUnread,
   markAsRead,
   markAllAsRead,
   createNotification,
