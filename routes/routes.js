@@ -5,7 +5,8 @@ const request = require("./request");
 const recommendation = require("./requests/recommendations");
 
 const recommendations = require("./recommendations");
-const user = require("./user");
+
+const users = require("./users");
 const cart = require("./cart");
 const validation = require("./validation");
 const admin = require("./admin");
@@ -22,7 +23,7 @@ router.use("/requests/:requestId/recommendations", recommendation);
 router.use("/recommendations", recommendations);
 
 // ********** User **********
-router.use("/users", user);
+router.use("/users", users);
 router.use(
   "/users/:userId/cart",
   passport.authenticate("bearer", { session: false }),
