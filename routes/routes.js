@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const request = require("./request");
-const recommendation = require("./requests/recommendations");
+const requests = require("./requests");
 
 const recommendations = require("./recommendations");
 
@@ -18,8 +17,8 @@ const passport = require("../auth");
 // ********** Routes **********
 
 // ********** Request **********
-router.use("/requests", request);
-router.use("/requests/:requestId/recommendations", recommendation);
+router.use("/requests", requests);
+
 router.use("/recommendations", recommendations);
 
 // ********** User **********
