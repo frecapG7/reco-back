@@ -83,12 +83,12 @@ const deleteRequest = async (id, user) => {
 
 /**
  * Asynchronous function to search requests.
- * @param {*} filters
- * @param {*} pageSize
- * @param {*} pageNumber
+ * @param {Object} filters
+ * @param {Number} pageSize
+ * @param {Number} pageNumber
  * @returns
  */
-const search = async (filters, pageSize, pageNumber) => {
+const search = async ({ filters: {}, pageSize, pageNumber }) => {
   const totalResults = await Request.countDocuments(filters);
 
   const results = await Request.find(filters)

@@ -8,7 +8,10 @@ const mongoose = require("mongoose");
 const toDTO = (recommendation, user) => {
   const json = recommendation.toJSON();
   //TODO: liked
-  return json;
+  return {
+    ...recommendation.toJSON(),
+    liked: recommendation.likes.includes(user?._id),
+  };
 };
 
 const getRecommendations = async (requestId, user) => {
@@ -26,12 +29,12 @@ const getRecommendations = async (requestId, user) => {
  * @param {String} recommendationId
  * @returns Recommendation
  */
-const getRecommendation = async (recommendationId) => {
+const getRecommendation = async (recommendationId, user) => {
   const recommendation = await Recommendation.findById(recommendationId)
     .populate("user")
     .exec();
   if (!recommendation) throw new NotFoundError("Recommendation not found");
-  return recommendation;
+  return toDTO(recommendation, user);
 };
 
 /**
