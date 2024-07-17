@@ -88,7 +88,7 @@ const deleteRequest = async (id, user) => {
  * @param {Number} pageNumber
  * @returns
  */
-const search = async ({ filters: {}, pageSize, pageNumber }) => {
+const search = async ({ filters, pageSize, pageNumber }) => {
   const totalResults = await Request.countDocuments(filters);
 
   const results = await Request.find(filters)
