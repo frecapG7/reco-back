@@ -45,6 +45,21 @@ class AlreadyUsedException extends Error {
   }
 }
 
+class UnprocessableEntityError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "UnprocessableEntityException";
+    this.statusCode = 422;
+  }
+}
+
+class UnSupportedTypeError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "UnSupportedTypeError";
+    this.statusCode = 415;
+  }
+}
 
 module.exports = {
   NotFoundError,
@@ -53,4 +68,6 @@ module.exports = {
   InvalidCreditError,
   InternalServerError,
   AlreadyUsedException,
+  UnprocessableEntityError,
+  UnSupportedTypeError,
 };
