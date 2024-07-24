@@ -2,15 +2,13 @@ const {
   UnAuthorizedError,
   UnprocessableEntityError,
   UnSupportedTypeError,
+  NotFoundError,
 } = require("../../errors/error");
 
-const { MarketIcon } = require("../../model/market/MarketItem");
+const { MarketIcon, MarketItem } = require("../../model/market/MarketItem");
 
 const createMarketItem = async ({ item, authenticatedUser }) => {
-  if (authenticatedUser?.role !== "ADMIN")
-    throw new UnAuthorizedError(
-      `User ${authenticatedUser.id} is not authorized to create a market item`
-    );
+  await verifyUser({ user: authenticatedUser });
 
   let marketItem = null;
   switch (item?.type) {
@@ -32,6 +30,15 @@ const createMarketItem = async ({ item, authenticatedUser }) => {
   return await marketItem.save();
 };
 
+const getMarketItem = async ({ itemId, authenticatedUser }) => {
+  await verifyUser({ user: authenticatedUser });
+
+  const item = await MarketItem.findById(itemId);
+  if (!item) throw new NotFoundError("Cannot find user");
+
+  return item;
+};
+
 /********************************************************
  *                   PROTECTED FUNCTIONS                *
  * ***************************************************
@@ -50,6 +57,12 @@ const createIconItem = ({ data }) => {
 
 const createTitleItem = {};
 
+const verifyUser = async ({ user }) => {
+  if ("ADMIN" !== user?.role)
+    throw new UnAuthorizedError("Only admin users are authorized");
+};
+
 module.exports = {
   createMarketItem,
+  getMarketItem,
 };
