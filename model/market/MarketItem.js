@@ -18,6 +18,10 @@ const MarketItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    disable: {
+      type: Boolean,
+      default: false,
+    },
     created_by: {
       type: mongoose.Schema.ObjectId,
       ref: "User",

@@ -1,5 +1,7 @@
 const express = require("express");
 const users = require("./users");
+
+const items = require("./market/items");
 const passport = require("../../auth");
 const router = express.Router({ mergeParams: true });
 
@@ -19,5 +21,7 @@ router.post("/token", async (req, res, next) => {
 });
 
 router.use("/users", users);
+
+router.use("/market/items", items);
 
 module.exports = router;
