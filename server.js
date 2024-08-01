@@ -13,7 +13,7 @@ const passport = require("./auth");
 const session = require("express-session");
 
 app.use(cors());
-app.use(pino());
+// app.use(pino());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use("/", routes);

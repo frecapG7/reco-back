@@ -27,6 +27,7 @@ const getNotifications = async ({
         id: notification.from._id,
         name: notification.from.name,
       },
+      read: notification.read,
       type: notification.type,
       createdAt: notification.createdAt,
     })),
