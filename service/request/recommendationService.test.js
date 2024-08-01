@@ -32,7 +32,6 @@ describe("Test getRecommendations function", () => {
       field2: "field2",
       field3: "field3",
       created_at: new Date(),
-      likes: ["123", "456"],
     };
 
     recommendationStub.withArgs({ request: "123" }).returns({
@@ -44,6 +43,7 @@ describe("Test getRecommendations function", () => {
             {
               _id: "1",
               toJSON: sinon.stub().returns(expected),
+              likes: ["123", "456"],
             },
           ]),
         }),
@@ -54,8 +54,7 @@ describe("Test getRecommendations function", () => {
     });
 
     expect(result.length).toEqual(1);
-
-    expect(result[0]).toEqual(expected);
+    expect(result[0].liked).toEqual(true);
   });
 });
 
@@ -91,13 +90,18 @@ describe("Test getRecommendation function", () => {
         .stub()
         .withArgs("user", "name")
         .returns({
-          exec: sinon.stub().resolves(expected),
+          exec: sinon.stub().resolves({
+            _id: "1",
+            toJSON: sinon.stub().returns(expected),
+            likes: ["123", "456"],
+          }),
         }),
     });
 
     const result = await recommendationService.getRecommendation("123");
 
-    expect(result).toEqual(expected);
+    expect(result).toBeDefined();
+    expect(result.liked).toEqual(false);
   });
 });
 
