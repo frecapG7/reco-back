@@ -6,10 +6,34 @@ const options = {
 
 const MarketItemSchema = new mongoose.Schema(
   {
+    /**
+     * @property {String} name - The name of the item
+     * @required
+     * @unique
+     */
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    /**
+     * @property {String} label - The label of the item as shown in the UI
+     * @required
+     */
+    label: {
+      type: String,
+      required: true,
+    },
+    /**
+     * deprecated
+     */
     title: {
       type: String,
       required: true,
     },
+    /**
+     * @property {String} description - The description of the item shown in the store
+     */
     description: {
       type: String,
       required: false,
@@ -32,6 +56,10 @@ const MarketItemSchema = new mongoose.Schema(
       required: true,
       default: Date.now,
     },
+    tags: {
+      type: [String],
+      required: false,
+    },
   },
   options
 );
@@ -40,7 +68,11 @@ const MarketItem = mongoose.model("MarketItem", MarketItemSchema);
 const MarketIcon = MarketItem.discriminator(
   "IconItem",
   new mongoose.Schema({
-    svgContent: String,
+    url: {
+      type: String,
+      required: true,
+    },
+    // svgContent: String,
   }),
   options
 );

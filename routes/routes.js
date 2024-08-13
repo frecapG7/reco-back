@@ -12,6 +12,8 @@ const admin = require("./admin");
 const oauth = require("./oauth2");
 const embed = require("./embed");
 
+const stores = require("./stores");
+
 const passport = require("../auth");
 
 // ********** Routes **********
@@ -40,6 +42,9 @@ router.use(
   passport.authenticate("bearer", { session: false }),
   admin
 );
+
+// ********** Stores **********
+router.use("/stores", stores);
 
 // ********** Authentication **********
 router.use("/auth", oauth);
