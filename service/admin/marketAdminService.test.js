@@ -1,4 +1,8 @@
-const { createMarketItem, getMarketItem } = require("./marketAdminService");
+const {
+  createMarketItem,
+  getMarketItem,
+  searchItems,
+} = require("./marketAdminService");
 const { MarketItem } = require("../../model/market/MarketItem");
 const {
   UnAuthorizedError,
@@ -109,5 +113,50 @@ describe("Test getMarketItem", () => {
 
     expect(result).toBeDefined();
     expect(result._id).toEqual("expected");
+  });
+});
+
+describe("Test searchItems", () => {
+  const countDocumentsStub = sinon.stub(MarketItem, "countDocuments");
+  const findStub = sinon.stub(MarketItem, "find");
+
+  beforeEach(() => {
+    countDocumentsStub.reset();
+    findStub.reset();
+  });
+
+  it("Should return items with default values", async () => {
+    countDocumentsStub.resolves(10);
+    findStub.returns({
+      skip: () => ({
+        limit: () => ({
+          populate: sinon
+            .stub()
+            .withArgs("created_by")
+            .returns({
+              exec: () => [
+                {
+                  name: "name",
+                  label: "label",
+                  title: "title",
+                  description: "description",
+                  price: 10,
+                  disable: false,
+                  created_by: "12345",
+                },
+              ],
+            }),
+        }),
+      }),
+    });
+
+    const result = await searchItems({});
+
+    expect(result).toBeDefined();
+    expect(result.pagination.currentPage).toEqual(1);
+    expect(result.pagination.totalPages).toEqual(1);
+    expect(result.pagination.totalResults).toEqual(10);
+    expect(result.results).toBeDefined();
+    expect(result.results.length).toEqual(1);
   });
 });

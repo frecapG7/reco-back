@@ -28,9 +28,13 @@ router.get("/:itemsId", async (req, res, next) => {
 
 router.get("/", async (req, res, next) => {
   try {
-
-    console.log("")
-
+    const result = await marketAdminService.searchItems({
+      value: req.query.value,
+      type: req.query.type,
+      page: parseInt(req.query.page),
+      pageSize: parseInt(req.query.pageSize),
+    });
+    return res.status(200).json(result);
   } catch (err) {
     next(err);
   }
