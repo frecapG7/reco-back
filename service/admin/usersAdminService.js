@@ -14,7 +14,7 @@ const search = async ({
 
   const results = await User.find({
     ...filters,
-    id: { $ne: authenticatedUser._id },
+    _id: { $ne: authenticatedUser._id },
   })
     .skip(pageSize * (pageNumber - 1))
     .limit(pageSize)
