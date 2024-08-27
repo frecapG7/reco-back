@@ -2,17 +2,26 @@ const express = require("express");
 
 const router = express.Router();
 const marketAdminService = require("../../../service/admin/marketAdminService");
-router.post("", async (req, res, next) => {
-  try {
-    const result = await marketAdminService.createMarketItem({
-      item: req.body,
-      authenticatedUser: req?.user,
-    });
-    return res.status(201).json(result);
-  } catch (err) {
-    next(err);
+
+const { upload } = require("../../../middleware/upload");
+
+router.post(
+  "",
+  upload.fields([{ name: "image", maxCount: 1 }]),
+  async (req, res, next) => {
+    try {
+      console.log(req.file);
+
+      const result = await marketAdminService.createMarketItem({
+        item: req.body,
+        authenticatedUser: req?.user,
+      });
+      return res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 router.get("/:itemsId", async (req, res, next) => {
   try {
