@@ -1,25 +1,21 @@
+const { generateRandom } = require("../../utils/utils");
+const { verifyAdmin } = require("../validation/privilegeValidation");
+const Token = require("../../model/Token");
 
-const { generateRandom } = require('../../utils/utils');
+const createToken = async ({ data, authenticatedUser }) => {
+  await verifyAdmin(authenticatedUser);
+  const value = await generateRandom(4);
 
-const Token = require('../../model/Token');
+  const token = new Token({
+    value: value,
+    type: data.type,
+  });
 
-const createToken = async (data) => {
+  const savedToken = await token.save();
 
-    const value = await generateRandom(4);
-
-    const token = new Token({
-        value: value,
-        type: data.type
-    });
-    
-
-    const savedToken = await token.save();
-
-    return savedToken;
-}
-
-
+  return savedToken;
+};
 
 module.exports = {
-    createToken
+  createToken,
 };

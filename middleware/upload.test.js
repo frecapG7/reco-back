@@ -1,6 +1,6 @@
 const sinon = require("sinon");
 const multer = require("multer");
-const { upload } = require("./upload");
+const { upload, uploadToGCS } = require("./upload");
 const path = require("path");
 
 describe("upload middleware", () => {
@@ -35,5 +35,15 @@ describe("upload middleware", () => {
     const result = upload.fileFilter(null, file, cb);
 
     expect(cb).toHaveBeenCalledWith(null, true);
+  });
+});
+
+describe("uploadToGCS", () => {
+  it("Should reject when no file is provided", async () => {
+    try {
+      const result = await uploadToGCS(null);
+    } catch (err) {
+      expect(err).toBe("No file");
+    }
   });
 });

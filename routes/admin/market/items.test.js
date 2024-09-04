@@ -11,10 +11,10 @@ app.use(express.json());
 const itemsRoutes = require("./items");
 app.use("/admin/market/items", itemsRoutes);
 
-describe("POST /admin/market/items", () => {
+describe("POST /admin/market/items/icons", () => {
   let createItemStub;
   beforeEach(() => {
-    createItemStub = sinon.stub(marketAdminService, "createMarketItem");
+    createItemStub = sinon.stub(marketAdminService, "createIconItem");
   });
   afterEach(() => {
     createItemStub.restore();
@@ -23,7 +23,9 @@ describe("POST /admin/market/items", () => {
   it("Should create specific item", async () => {
     const expected = createItemStub.returns({});
 
-    const response = await supertest(app).post("/admin/market/items").send({});
+    const response = await supertest(app)
+      .post("/admin/market/items/icons")
+      .send({});
     expect(response.status).toBe(201);
   });
 });

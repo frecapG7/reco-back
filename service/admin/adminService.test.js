@@ -1,33 +1,33 @@
-
 const sinon = require("sinon");
 const Token = require("../../model/Token");
-const adminService = require('./adminService');
+const adminService = require("./adminService");
 
+describe("Test createToken", () => {
+  let tokenStub;
 
-describe('Test createToken', () => {
+  beforeEach(() => {
+    tokenStub = sinon.stub(Token.prototype, "save");
+  });
 
-    let tokenStub;
+  afterEach(() => {
+    tokenStub.restore();
+  });
 
-    beforeEach(() => {
-        tokenStub = sinon.stub(Token.prototype, 'save');
+  it("Should save a new token", async () => {
+    const expected = new Token();
+    tokenStub.returns(expected);
+
+    const result = await adminService.createToken({
+      data: {
+        type: "test",
+      },
+      authenticatedUser: {
+        role: "ADMIN",
+      },
     });
 
-    afterEach(() => {
-        tokenStub.restore();
-    });
+    sinon.assert.calledOnce(tokenStub);
 
-
-    it('Should save a new token', async () => {
-        const expected = new Token();
-        tokenStub.returns(expected);
-
-        const result = await adminService.createToken({
-            type: 'test'
-        });
-
-        sinon.assert.calledOnce(tokenStub);
-
-        expect(result).toEqual(expected);
-    });
-
+    expect(result).toEqual(expected);
+  });
 });

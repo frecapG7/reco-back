@@ -2,26 +2,17 @@ const express = require("express");
 
 const router = express.Router();
 const marketAdminService = require("../../../service/admin/marketAdminService");
-
-const { upload } = require("../../../middleware/upload");
-
-router.post(
-  "",
-  upload.fields([{ name: "image", maxCount: 1 }]),
-  async (req, res, next) => {
-    try {
-      console.log(req.file);
-
-      const result = await marketAdminService.createMarketItem({
-        item: req.body,
-        authenticatedUser: req?.user,
-      });
-      return res.status(201).json(result);
-    } catch (err) {
-      next(err);
-    }
+router.post("/icons", async (req, res, next) => {
+  try {
+    const result = await marketAdminService.createIconItem({
+      data: req.body,
+      authenticatedUser: req?.user,
+    });
+    return res.status(201).json(result);
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 router.get("/:itemsId", async (req, res, next) => {
   try {
@@ -48,5 +39,7 @@ router.get("/", async (req, res, next) => {
     next(err);
   }
 });
+
+router.put("/:itemsId", async (req, res, next) => {});
 
 module.exports = router;

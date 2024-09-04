@@ -5,33 +5,30 @@ const {
   NotFoundError,
 } = require("../../errors/error");
 
+const { verifyAdmin } = require("../validation/privilegeValidation");
+
 const { MarketIcon, MarketItem } = require("../../model/market/MarketItem");
 
-const createMarketItem = async ({ item, authenticatedUser }) => {
-  await verifyUser({ user: authenticatedUser });
+const createIconItem = async ({ data, authenticatedUser }) => {
+  verifyAdmin(authenticatedUser);
 
-  let marketItem = null;
-  switch (item?.type) {
-    case "Icon":
-      marketItem = createIconItem({ data: item });
-      break;
-    case "Title":
-      marketItem = createTitleItem({ data: item });
-      break;
+  await verifyUniqueName(data?.name);
 
-    default:
-      throw new UnSupportedTypeError(
-        `Unsupported market item type ${item?.type}`
-      );
-  }
+  if (!data.url)
+    throw new UnprocessableEntityError(
+      "Wrong market place item body : missing url"
+    );
 
-  marketItem.created_by = authenticatedUser;
+  const marketIcon = new MarketIcon({
+    ...data,
+    created_by: authenticatedUser,
+  });
 
-  return await marketItem.save();
+  return await marketIcon.save();
 };
 
 const getMarketItem = async ({ itemId, authenticatedUser }) => {
-  await verifyUser({ user: authenticatedUser });
+  verifyAdmin(authenticatedUser);
 
   const item = await MarketItem.findById(itemId);
   if (!item) throw new NotFoundError("Cannot find user");
@@ -79,27 +76,15 @@ const searchItems = async ({ value, type, page = 1, pageSize = 25 }) => {
  *                   PROTECTED FUNCTIONS                *
  * ***************************************************
  */
+const verifyUniqueName = async (name) => {
+  const exists = await MarketItem.exists({ name });
 
-const createIconItem = ({ data }) => {
-  if (!data.svgContent)
-    throw new UnprocessableEntityException(
-      "Wrong market place item body : missing svgContent"
-    );
-
-  return new MarketIcon({
-    ...data,
-  });
-};
-
-const createTitleItem = {};
-
-const verifyUser = async ({ user }) => {
-  if ("ADMIN" !== user?.role)
-    throw new UnAuthorizedError("Only admin users are authorized");
+  if (exists)
+    throw new UnprocessableEntityError("Market item name already exists");
 };
 
 module.exports = {
-  createMarketItem,
+  createIconItem,
   getMarketItem,
   searchItems,
 };

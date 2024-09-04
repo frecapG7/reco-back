@@ -1,5 +1,5 @@
 const {
-  createMarketItem,
+  createIconItem,
   getMarketItem,
   searchItems,
 } = require("./marketAdminService");
@@ -7,54 +7,69 @@ const { MarketItem } = require("../../model/market/MarketItem");
 const {
   UnAuthorizedError,
   UnSupportedTypeError,
+  UnprocessableEntityError,
   NotFoundError,
 } = require("../../errors/error");
 
 const sinon = require("sinon");
 
-describe("Test createMarketItem", () => {
-  let marketItemStub;
+describe("Test createIconItem", () => {
+  let existsStub = sinon.stub(MarketItem, "exists");
+  let marketItemStub = sinon.stub(MarketItem.prototype, "save");
   beforeEach(() => {
-    marketItemStub = sinon.stub(MarketItem.prototype, "save");
-  });
-
-  afterEach(() => {
-    marketItemStub.restore();
+    existsStub.reset;
+    marketItemStub.reset();
   });
 
   it("Should throw unAuthorized error", async () => {
     await expect(
-      createMarketItem({
-        item: {
-          type: "Icon",
-        },
+      createIconItem({
+        data: {},
         authenticatedUser: {
           role: "USER",
         },
       })
     ).rejects.toThrow(UnAuthorizedError);
   });
-  it("Should throw UnSupportedTypeError", async () => {
+  it("Should throw UnprocessableEntityError", async () => {
+    existsStub.resolves(true);
+
     await expect(
-      createMarketItem({
-        item: {
-          type: "Invalid",
+      createIconItem({
+        data: {
+          name: "Toto",
         },
         authenticatedUser: {
           role: "ADMIN",
         },
       })
-    ).rejects.toThrow(UnSupportedTypeError);
+    ).rejects.toThrow(UnprocessableEntityError);
+  });
+
+  it("Should throw UnprocessableEntityError", async () => {
+    existsStub.resolves(false);
+
+    await expect(
+      createIconItem({
+        data: {
+          name: "Toto",
+        },
+        authenticatedUser: {
+          role: "ADMIN",
+        },
+      })
+    ).rejects.toThrow(UnprocessableEntityError);
   });
 
   it("Should create icon item", async () => {
+    existsStub.resolves(false);
     marketItemStub.resolvesThis();
 
     const result = await expect(
-      createMarketItem({
-        item: {
-          type: "Icon",
-          svgContent: "toto",
+      createIconItem({
+        data: {
+          name: "Icon",
+          url: "toto.url",
         },
         authenticatedUser: {
           role: "ADMIN",

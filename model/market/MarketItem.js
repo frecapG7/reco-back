@@ -25,13 +25,6 @@ const MarketItemSchema = new mongoose.Schema(
       required: true,
     },
     /**
-     * deprecated
-     */
-    title: {
-      type: String,
-      required: true,
-    },
-    /**
      * @property {String} description - The description of the item shown in the store
      */
     description: {
@@ -42,7 +35,7 @@ const MarketItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    disable: {
+    enabled: {
       type: Boolean,
       default: false,
     },
@@ -50,11 +43,13 @@ const MarketItemSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "User",
       required: true,
+      immutable: true,
     },
     created_at: {
       type: Date,
       required: true,
       default: Date.now,
+      immutable: true,
     },
     tags: {
       type: [String],
