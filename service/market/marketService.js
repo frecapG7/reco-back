@@ -5,11 +5,11 @@ const {
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 
-const getItems = async ({ id }) => {
+const getItem = async ({ id }) => {
   const item = await MarketItem.findById(id);
   if (!item) throw new NotFoundError("Cannot find market item");
 
-  if (item?.disable)
+  if (!item?.enabled)
     throw new UnprocessableEntityError("Cannot read disabled item");
 
   return item;
@@ -25,6 +25,7 @@ const searchItems = async ({ value, type, page = 1, pageSize = 10 }) => {
       ],
     }),
     ...(type && { type }),
+    enabled: true,
   };
 
   const totalResults = await MarketItem.countDocuments(query);
@@ -48,6 +49,6 @@ const buyItem = async ({ id, user }) => {
 };
 
 module.exports = {
-  getItems,
+  getItem,
   searchItems,
 };

@@ -20,27 +20,27 @@ describe("Should validate getItems", () => {
   it("Should thrown NotFoundError", async () => {
     marketItemStub.withArgs("12345").returns(null);
 
-    await expect(marketService.getItems({ id: "12345" })).rejects.toThrow(
+    await expect(marketService.getItem({ id: "12345" })).rejects.toThrow(
       NotFoundError
     );
   });
 
   it("Should thrown UnprocessableEntityError", async () => {
     marketItemStub.withArgs("12345").returns({
-      disable: true,
+      enabled: false,
     });
 
-    await expect(marketService.getItems({ id: "12345" })).rejects.toThrow(
+    await expect(marketService.getItem({ id: "12345" })).rejects.toThrow(
       UnprocessableEntityError
     );
   });
 
   it("Should test happy path", async () => {
     marketItemStub.withArgs("12345").returns({
-      disable: false,
+      enabled: true,
     });
 
-    const result = await expect(marketService.getItems({ id: "12345" }));
+    const result = await expect(marketService.getItem({ id: "12345" }));
     expect(result).toBeDefined();
   });
 });

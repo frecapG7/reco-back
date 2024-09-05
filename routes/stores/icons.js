@@ -3,13 +3,6 @@ const router = express.Router({ mergeParams: true });
 
 const marketService = require("../../service/market/marketService");
 
-const path = require("path");
-const fs = require("fs");
-
-// Load SVG file content as a string
-const tmpIconPath = path.join("./", "assets", "tmpIcon.svg");
-const tmpIcon = fs.readFileSync(tmpIconPath, "utf8");
-
 router.get("", async (req, res, next) => {
   try {
     const result = await marketService.searchItems({
@@ -22,11 +15,6 @@ router.get("", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
-
-router.get("/:id", async (req, res, next) => {
-  console.log("GET /stores/icons/:id");
-  return res.set("Content-Type", "image/svg+xml").send(tmpIcon);
 });
 
 module.exports = router;
