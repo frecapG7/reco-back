@@ -4,17 +4,21 @@ const User = require("../../model/User");
 const Request = require("../../model/Request");
 const Recommendation = require("../../model/Recommendation");
 
+const { verifyAdmin } = require("../validation/privilegeValidation");
+
 const search = async ({
   filters = {},
   pageSize = 1,
   pageNumber = 10,
   authenticatedUser,
 }) => {
+  verifyAdmin(authenticatedUser);
+
   const totalResults = await User.countDocuments();
 
   const results = await User.find({
     ...filters,
-    id: { $ne: authenticatedUser._id },
+    _id: { $ne: authenticatedUser._id },
   })
     .skip(pageSize * (pageNumber - 1))
     .limit(pageSize)
@@ -30,7 +34,9 @@ const search = async ({
   };
 };
 
-const getUserDetails = async (userId) => {
+const getUserDetails = async ({ userId, authenticatedUser }) => {
+  verifyAdmin(authenticatedUser);
+
   const user = await getUser(userId);
 
   const stats = await getStats(user);
@@ -41,7 +47,9 @@ const getUserDetails = async (userId) => {
   };
 };
 
-const getLastRequests = async (id) => {
+const getLastRequests = async ({ id, authenticatedUser }) => {
+  verifyAdmin(authenticatedUser);
+
   const user = await getUser(id);
 
   return Request.find({ author: user._id })
@@ -50,7 +58,9 @@ const getLastRequests = async (id) => {
     .exec();
 };
 
-const getLastRecommendations = async (id) => {
+const getLastRecommendations = async ({ id, authenticatedUser }) => {
+  verifyAdmin(authenticatedUser);
+
   const user = await getUser(id);
 
   return Recommendation.find({ user: user._id })

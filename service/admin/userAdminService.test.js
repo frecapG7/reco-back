@@ -44,7 +44,7 @@ describe("Test search", () => {
       },
       pageSize: 1,
       pageNumber: 1,
-      authenticatedUser: { id: 1}
+      authenticatedUser: { id: 1, role: "ADMIN" },
     });
 
     expect(result.pagination.currentPage).toEqual(1);
@@ -74,9 +74,12 @@ describe("Test getUserDetails", () => {
   it("Should throw not found error", async () => {
     userStub.returns(null);
 
-    await expect(userAdminService.getUserDetails(52)).rejects.toThrow(
-      NotFoundError
-    );
+    await expect(
+      userAdminService.getUserDetails({
+        userId: 52,
+        authenticatedUser: { role: "ADMIN" },
+      })
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("Should return user", async () => {
@@ -88,7 +91,10 @@ describe("Test getUserDetails", () => {
     requestsCountStub.returns(10);
     recommendationsCountStub.returns(10);
 
-    const result = await userAdminService.getUserDetails(52);
+    const result = await userAdminService.getUserDetails({
+      userId: 52,
+      authenticatedUser: { role: "ADMIN" },
+    });
 
     expect(result).toBeDefined();
     expect(result.stats).toBeDefined();
@@ -114,9 +120,12 @@ describe("Test getLastRequests", () => {
   it("Should throw not found error", async () => {
     userStub.returns(null);
 
-    await expect(userAdminService.getLastRequests(52)).rejects.toThrow(
-      NotFoundError
-    );
+    await expect(
+      userAdminService.getLastRequests({
+        id: 52,
+        authenticatedUser: { role: "ADMIN" },
+      })
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("Should return last requests", async () => {
@@ -139,7 +148,10 @@ describe("Test getLastRequests", () => {
         }),
     });
 
-    const result = await userAdminService.getLastRequests(52);
+    const result = await userAdminService.getLastRequests({
+      id: 52,
+      authenticatedUser: { role: "ADMIN" },
+    });
 
     expect(result).toBeDefined();
     expect(result.length).toEqual(2);
@@ -162,9 +174,12 @@ describe("Test getLastRecommendations", () => {
   it("Should throw not found error", async () => {
     userStub.returns(null);
 
-    await expect(userAdminService.getLastRequests(52)).rejects.toThrow(
-      NotFoundError
-    );
+    await expect(
+      userAdminService.getLastRequests({
+        id: 52,
+        authenticatedUser: { role: "ADMIN" },
+      })
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("Should return last recommendation", async () => {
@@ -188,7 +203,10 @@ describe("Test getLastRecommendations", () => {
         }),
     });
 
-    const result = await userAdminService.getLastRecommendations(52);
+    const result = await userAdminService.getLastRecommendations({
+      id: 52,
+      authenticatedUser: { role: "ADMIN" },
+    });
 
     expect(result).toBeDefined();
     expect(result.length).toEqual(2);
