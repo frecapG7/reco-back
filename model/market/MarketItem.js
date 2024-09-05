@@ -39,6 +39,10 @@ const MarketItemSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    tags: {
+      type: [String],
+      required: false,
+    },
     created_by: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
@@ -51,13 +55,25 @@ const MarketItemSchema = new mongoose.Schema(
       default: Date.now,
       immutable: true,
     },
-    tags: {
-      type: [String],
-      required: false,
+    modified_at: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+    modified_by: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true,
     },
   },
   options
 );
+
+MarketItemSchema.pre("findOneAndUpdate", function (next) {
+  this._update.modified_at = new Date();
+  next();
+});
+
 const MarketItem = mongoose.model("MarketItem", MarketItemSchema);
 
 const MarketIcon = MarketItem.discriminator(

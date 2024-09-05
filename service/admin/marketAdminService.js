@@ -27,10 +27,32 @@ const createIconItem = async ({ data, authenticatedUser }) => {
   return await marketIcon.save();
 };
 
+const updateItem = async ({ id, data, authenticatedUser }) => {
+  verifyAdmin(authenticatedUser);
+
+  await verifyUniqueName(data?.name, id);
+
+  const updatedItem = await MarketItem.findByIdAndUpdate(
+    id,
+    {
+      ...data,
+      modified_by: authenticatedUser,
+    },
+    { new: true }
+  );
+
+  if (!updatedItem) throw new NotFoundError("Cannot find market item");
+
+  return updatedItem;
+};
+
 const getMarketItem = async ({ itemId, authenticatedUser }) => {
   verifyAdmin(authenticatedUser);
 
-  const item = await MarketItem.findById(itemId);
+  const item = await MarketItem.findById(itemId)
+    .populate("created_by")
+    .populate("modified_by")
+    .exec();
   if (!item) throw new NotFoundError("Cannot find user");
 
   return item;
@@ -76,8 +98,11 @@ const searchItems = async ({ value, type, page = 1, pageSize = 25 }) => {
  *                   PROTECTED FUNCTIONS                *
  * ***************************************************
  */
-const verifyUniqueName = async (name) => {
-  const exists = await MarketItem.exists({ name });
+const verifyUniqueName = async (name, id) => {
+  const exists = await MarketItem.exists({
+    name,
+    ...(id && { _id: { $ne: id } }),
+  });
 
   if (exists)
     throw new UnprocessableEntityError("Market item name already exists");
@@ -85,6 +110,7 @@ const verifyUniqueName = async (name) => {
 
 module.exports = {
   createIconItem,
+  updateItem,
   getMarketItem,
   searchItems,
 };

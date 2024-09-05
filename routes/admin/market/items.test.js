@@ -47,3 +47,22 @@ describe("GET /admin/market/items/:id", () => {
     expect(response.status).toBe(200);
   });
 });
+
+describe("PUT /admin/market/items/id", () => {
+  let updateItemStub;
+  beforeEach(() => {
+    updateItemStub = sinon.stub(marketAdminService, "updateItem");
+  });
+  afterEach(() => {
+    updateItemStub.restore();
+  });
+
+  it("Should create specific item", async () => {
+    const expected = updateItemStub.returns({});
+
+    const response = await supertest(app)
+      .put("/admin/market/items/123")
+      .send({});
+    expect(response.status).toBe(200);
+  });
+});

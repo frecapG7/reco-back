@@ -2,6 +2,7 @@ const {
   createIconItem,
   getMarketItem,
   searchItems,
+  updateItem,
 } = require("./marketAdminService");
 const { MarketItem } = require("../../model/market/MarketItem");
 const {
@@ -14,11 +15,17 @@ const {
 const sinon = require("sinon");
 
 describe("Test createIconItem", () => {
-  let existsStub = sinon.stub(MarketItem, "exists");
-  let marketItemStub = sinon.stub(MarketItem.prototype, "save");
+  let existsStub;
+  let marketItemStub;
+
   beforeEach(() => {
-    existsStub.reset;
-    marketItemStub.reset();
+    existsStub = sinon.stub(MarketItem, "exists");
+    marketItemStub = sinon.stub(MarketItem.prototype, "save");
+  });
+
+  afterEach(() => {
+    existsStub.restore();
+    marketItemStub.restore();
   });
 
   it("Should throw unAuthorized error", async () => {
@@ -81,6 +88,78 @@ describe("Test createIconItem", () => {
   });
 });
 
+describe("Test updateItem", () => {
+  let existStub;
+  let findByIdAndUpdateStub;
+
+  beforeEach(() => {
+    existStub = sinon.stub(MarketItem, "exists");
+    findByIdAndUpdateStub = sinon.stub(MarketItem, "findByIdAndUpdate");
+  });
+
+  afterEach(() => {
+    existStub.restore();
+    findByIdAndUpdateStub.restore();
+  });
+
+  it("Should throw unAuthorized error", async () => {
+    await expect(
+      updateItem({
+        id: "123",
+        data: {},
+        authenticatedUser: {
+          role: "USER",
+        },
+      })
+    ).rejects.toThrow(UnAuthorizedError);
+  });
+
+  it("Should throw NotFoundError", async () => {
+    existStub.resolves(false);
+
+    findByIdAndUpdateStub.returns(null);
+
+    await expect(
+      updateItem({
+        id: "123",
+        data: {
+          name: "Toto",
+        },
+        authenticatedUser: {
+          role: "ADMIN",
+        },
+      })
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("Should update iteù", async () => {
+    existStub.resolves(false);
+    findByIdAndUpdateStub
+      .withArgs("123", {
+        name: "Icon",
+        modified_by: {
+          role: "ADMIN",
+        },
+      })
+      .returns({});
+
+    const result = await expect(
+      createIconItem({
+        id: "123",
+        data: {
+          name: "Icon",
+          url: "toto.url",
+        },
+        authenticatedUser: {
+          role: "ADMIN",
+        },
+      })
+    );
+
+    expect(result).toBeDefined();
+  });
+});
+
 describe("Test getMarketItem", () => {
   let marketItemStub;
 
@@ -103,7 +182,19 @@ describe("Test getMarketItem", () => {
   });
 
   it("Should throw NotFoundError", async () => {
-    marketItemStub.withArgs("azaeaa112").resolves(null);
+    marketItemStub.withArgs("azaeaa112").returns({
+      populate: sinon
+        .stub()
+        .withArgs("created_by")
+        .returns({
+          populate: sinon
+            .stub()
+            .withArgs("modified_by")
+            .returns({
+              exec: () => null,
+            }),
+        }),
+    });
     await expect(
       getMarketItem({
         itemId: "azaeaa112",
@@ -115,8 +206,20 @@ describe("Test getMarketItem", () => {
   });
 
   it("Should return item", async () => {
-    marketItemStub.withArgs("azaeaa112").resolves({
-      _id: "expected",
+    marketItemStub.withArgs("azaeaa112").returns({
+      populate: sinon
+        .stub()
+        .withArgs("created_by")
+        .returns({
+          populate: sinon
+            .stub()
+            .withArgs("modified_by")
+            .returns({
+              exec: () => ({
+                _id: "expected",
+              }),
+            }),
+        }),
     });
 
     const result = await getMarketItem({
