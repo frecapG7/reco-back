@@ -33,6 +33,24 @@ const UserSchema = new mongoose.Schema({
       type: Boolean,
       default: constants.defaultSettings.notifications,
     },
+    privacy : {
+      privateRequests: {
+        type: Boolean,
+        default: constants.defaultSettings.privacy.privateRequests,
+      },
+      privateRecommendations: {
+        type: Boolean,
+        default: constants.defaultSettings.privacy.privateRecommendations,
+      },
+      privateFollows: {
+        type: Boolean,
+        default: constants.defaultSettings.privacy.privateFollows,
+      },
+      privatePurchases: {
+        type: Boolean,
+        default: constants.defaultSettings.privacy.privatePurchases,
+      },
+    }
   },
   balance: {
     type: Number,

@@ -55,9 +55,7 @@ router.get(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      if (req.user._id !== req.params.id)
-        throw new ForbiddenError("You cannot get other user settings");
-
+      verifyUser(req.params.id, req.user);
       const settings = await userSettingsService.getSettings(req.params.id);
 
       return res.json(settings);
@@ -72,9 +70,7 @@ router.patch(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      if (req.user._id !== req.params.id)
-        throw new ForbiddenError("You cannot update other user settings");
-
+      verifyUser(req.params.id, req.user);
       const settings = await userSettingsService.updateSettings(
         req.params.id,
         req.body
@@ -92,9 +88,7 @@ router.delete(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      if (req.user._id !== req.params.id)
-        throw new ForbiddenError("You cannot reset other user settings");
-
+      verifyUser(req.params.id, req.user);
       const settings = await userSettingsService.resetSettings(req.params.id);
 
       return res.json(settings);
@@ -103,5 +97,10 @@ router.delete(
     }
   }
 );
+
+const verifyUser = (id, authenticatedUser) => {
+  if (!authenticatedUser._id.equals(id))
+    throw new ForbiddenError("You cannot access other user settings");
+};
 
 module.exports = router;
