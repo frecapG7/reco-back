@@ -6,6 +6,7 @@ const userService = require("../../service/user/userService");
 const userSettingsService = require("../../service/user/userSettingsService");
 
 const passport = require("../../auth");
+const ObjectId = require("mongoose").Types.ObjectId;
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -21,7 +22,7 @@ const passportStub = sinon
   .callsFake((strategy, options, callback) => {
     return (req, res, next) => {
       req.user = {
-        _id: "123",
+        _id: new ObjectId("123456789123"),
       };
       next();
     };
@@ -116,7 +117,7 @@ describe("PUT /users/:id", () => {
       id: 1,
     });
 
-    const response = await supertest(app).put("/users/123").send({
+    const response = await supertest(app).put("/users/123456789123").send({
       email: "test",
       name: "test",
     });
@@ -149,7 +150,7 @@ describe("GET /users/:id/settings", () => {
       notifications: true,
     });
 
-    const response = await supertest(app).get("/users/123/settings");
+    const response = await supertest(app).get("/users/123456789123/settings");
 
     expect(response.status).toBe(200);
     expect(response.body.lang).toEqual("en");
@@ -185,11 +186,13 @@ describe("PATCH /users/:id/settings", () => {
       notifications: true,
     });
 
-    const response = await supertest(app).patch("/users/123/settings").send({
-      lang: "en",
-      theme: "light",
-      notifications: true,
-    });
+    const response = await supertest(app)
+      .patch("/users/123456789123/settings")
+      .send({
+        lang: "en",
+        theme: "light",
+        notifications: true,
+      });
 
     expect(response.status).toBe(200);
   });
@@ -218,7 +221,9 @@ describe("DELETE /users/:id/settings", () => {
       notifications: true,
     });
 
-    const response = await supertest(app).delete("/users/123/settings").send();
+    const response = await supertest(app)
+      .delete("/users/123456789123/settings")
+      .send();
 
     expect(response.status).toBe(200);
   });

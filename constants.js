@@ -9,7 +9,7 @@ const defaultSettings = {
     privateRequests: false,
     privateRecommendations: false,
     privateFollows: false,
-    privatePurchases: false,
+    privatePurchases: true,
   },
 };
 

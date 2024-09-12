@@ -23,7 +23,7 @@ router.post("", async (req, res, next) => {
  */
 router.get("/:id", async (req, res, next) => {
   try {
-    const user = await userService.getUser(req.params.id);
+    const user = await userService.getUser({ id: req.params.id });
     return res.json(user);
   } catch (err) {
     next(err);
@@ -38,8 +38,7 @@ router.put(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      if (req.user._id !== req.params.id)
-        throw new ForbiddenError("You cannot update other user");
+      verifyUser(req.params.id, req.user);
       const user = await userService.updateUser(req.params.id, req.body);
       return res.json(user);
     } catch (err) {
@@ -97,6 +96,26 @@ router.delete(
     }
   }
 );
+
+router.get("/:id/requests", async (req, res, next) => {
+  try {
+    const requests = await userService.getLastRequests({ id: req.params.id });
+    return res.json(requests);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id/recommendations", async (req, res, next) => {
+  try {
+    const recommendations = await userService.getLastRecommendations({
+      id: req.params.id,
+    });
+    return res.json(recommendations);
+  } catch (err) {
+    next(err);
+  }
+});
 
 const verifyUser = (id, authenticatedUser) => {
   if (!authenticatedUser._id.equals(id))

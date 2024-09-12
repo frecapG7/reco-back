@@ -5,7 +5,6 @@ const {
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 const marketService = require("./marketService");
-const { values } = require("lodash");
 
 describe("Should validate getItems", () => {
   let marketItemStub;

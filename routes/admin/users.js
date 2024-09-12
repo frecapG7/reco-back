@@ -48,7 +48,7 @@ router.get(
 router.get("/:userId/requests", async (req, res, next) => {
   try {
     const request = await getLastRequests({
-      userId: req.params.userId,
+      id: req.params.userId,
       authenticatedUser: req.user,
     });
     return res.status(200).json(request);
@@ -60,7 +60,7 @@ router.get("/:userId/requests", async (req, res, next) => {
 router.get("/:userId/recommendations", async (req, res, next) => {
   try {
     const recommendation = await getLastRecommendations({
-      userId: req.params.userId,
+      id: req.params.userId,
       authenticatedUser: req.user,
     });
     return res.status(200).json(recommendation);
