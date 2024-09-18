@@ -5,6 +5,7 @@ const User = require("../model/User");
 const LocalStrategy = require("passport-local").Strategy;
 const BearerStrategy = require("passport-http-bearer").Strategy;
 const CookieStrategy = require("passport-cookie").Strategy;
+const AnonymousStrategy = require("passport-anonymous").Strategy;
 
 const authService = require("../service/oauth/authService");
 const { verifyJWT } = require("../utils/utils");
@@ -77,5 +78,7 @@ passport.use(
     }
   })
 );
+
+passport.use(new AnonymousStrategy());
 
 module.exports = passport;

@@ -71,24 +71,28 @@ router.delete(
 /**
  *
  */
-router.get("", async (req, res, next) => {
-  try {
-    const pageNumber = parseInt(req.query.pageNumber) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+router.get(
+  "",
+  passport.authenticate(["bearer", "anonymous"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const pageNumber = parseInt(req.query.pageNumber) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
 
-    const results = await requestService.search({
-      filters: {
-        ...(req.query.type && { requestType: req.query.type }),
-        ...(req.query.status && { status: req.query.status }),
-        ...(req.query.me && req.user && { author: req.user._id }),
-      },
-      pageSize,
-      pageNumber,
-    });
-    return res.json(results);
-  } catch (err) {
-    next(err);
+      const results = await requestService.search({
+        filters: {
+          ...(req.query.type && { requestType: req.query.type }),
+          ...(req.query.status && { status: req.query.status }),
+          ...(req.query.me && req.user && { author: req.user._id }),
+        },
+        pageSize,
+        pageNumber,
+      });
+      return res.json(results);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 module.exports = router;

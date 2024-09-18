@@ -66,7 +66,10 @@ const MarketItemSchema = new mongoose.Schema(
       required: true,
     },
   },
-  options
+  {
+    discriminatorKey: "type",
+    timestamps: true,
+  }
 );
 
 MarketItemSchema.pre("findOneAndUpdate", function (next) {
@@ -83,7 +86,6 @@ const MarketIcon = MarketItem.discriminator(
       type: String,
       required: true,
     },
-    // svgContent: String,
   }),
   options
 );

@@ -1,10 +1,12 @@
 const {
   NotFoundError,
-  ForbiddenError,
   UnprocessableEntityError,
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-
+const mongoose = require("mongoose");
+const creditService = require("./creditService");
+const IconPurchase = require("../../model/purchase/IconPurchase");
+const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 const getItem = async ({ id }) => {
   const item = await MarketItem.findById(id);
   if (!item) throw new NotFoundError("Cannot find market item");
@@ -44,11 +46,57 @@ const searchItems = async ({ value, type, page = 1, pageSize = 10 }) => {
   };
 };
 
-const buyItem = async ({ id, user }) => {
-  if (!user) throw new ForbiddenError("Only logged user can buy item");
+const buyItem = async ({ marketItem, user }) => {
+  let session;
+  try {
+    session = await mongoose.startSession();
+
+    session.startTransaction();
+
+    await creditService.removeCredit(marketItem.price, user);
+
+    const purchase = buildPurchaseItem(marketItem, user);
+
+    const savedPurchase = await purchase.save();
+
+    await session.commitTransaction();
+
+    return savedPurchase;
+  } catch (err) {
+    if (session) await session.abortTransaction();
+    throw err;
+  } finally {
+    if (session) await session.endSession();
+  }
+};
+
+const buildPurchaseItem = (marketItem, user) => {
+  const basePurchase = {
+    name: marketItem.name,
+    user: user,
+    item: marketItem,
+    payment_details: {
+      price: marketItem.price,
+    },
+  };
+
+  switch (marketItem.type) {
+    case "IconItem":
+      return new IconPurchase({
+        ...basePurchase,
+        icon: marketItem.url,
+      });
+    case "ConsumableItem":
+      return new ConsumablePurchase(basePurchase);
+    default:
+      throw new UnprocessableEntityError(
+        `Invalid item type ${marketItem.type}`
+      );
+  }
 };
 
 module.exports = {
   getItem,
   searchItems,
+  buyItem,
 };

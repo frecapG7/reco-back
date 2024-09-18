@@ -1,5 +1,7 @@
 const router = require("express").Router();
 
+const marketService = require("../../service/market/marketService");
+
 router.use("/icons", require("./icons"));
 
 router.get("/items/:id", async (req, res, next) => {
@@ -11,4 +13,5 @@ router.get("/items/:id", async (req, res, next) => {
   }
 });
 
+router.use("/others", require("./others"));
 module.exports = router;
