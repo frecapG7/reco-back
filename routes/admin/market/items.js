@@ -15,6 +15,18 @@ router.post("/icons", async (req, res, next) => {
   }
 });
 
+router.post("/consumables", async (req, res, next) => {
+  try {
+    const result = await marketAdminService.createConsumableItem({
+      data: req.body,
+      authenticatedUser: req?.user,
+    });
+    return res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:itemsId", async (req, res, next) => {
   try {
     const result = await marketAdminService.getMarketItem({

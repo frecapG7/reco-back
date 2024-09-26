@@ -1,9 +1,14 @@
 const sinon = require("sinon");
 
-const { buyInvitation, buyGift } = require("./consumableStoreService");
+const {
+  getConsumableItems,
+  buyInvitation,
+  buyGift,
+} = require("./consumableStoreService");
 const mongoose = require("mongoose");
 const creditService = require("../../market/creditService");
 const ConsumablePurchase = require("../../../model/purchase/ConsumablePurchase");
+const marketService = require("../../market/marketService");
 
 const sessionStub = {
   startTransaction: jest.fn(),
@@ -11,6 +16,33 @@ const sessionStub = {
   endSession: jest.fn(),
 };
 sinon.stub(mongoose, "startSession").returns(sessionStub);
+
+describe("Test getConsumableItems", () => {
+  let searchItemsStub;
+
+  beforeEach(() => {
+    searchItemsStub = sinon.stub(marketService, "searchItems");
+  });
+
+  afterEach(() => {
+    searchItemsStub.restore();
+  });
+
+  it("should return result", async () => {
+    searchItemsStub
+      .withArgs({
+        type: "ConsumableItem",
+        page: 1,
+        pageSize: 15,
+      })
+      .returns("any");
+
+    const result = await getConsumableItems();
+
+    expect(result).toEqual("any");
+  });
+});
+
 describe("Test buyInvitation", () => {
   let removeCreditStub;
   let saveStub;

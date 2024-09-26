@@ -3,16 +3,18 @@ const {
   getMarketItem,
   searchItems,
   updateItem,
+  createConsumableItem,
 } = require("./marketAdminService");
 const { MarketItem } = require("../../model/market/MarketItem");
+const User = require("../../model/User");
 const {
   UnAuthorizedError,
-  UnSupportedTypeError,
   UnprocessableEntityError,
   NotFoundError,
 } = require("../../errors/error");
 
 const sinon = require("sinon");
+const { before } = require("lodash");
 
 describe("Test createIconItem", () => {
   let existsStub;
@@ -76,13 +78,83 @@ describe("Test createIconItem", () => {
       createIconItem({
         data: {
           name: "Icon",
+          label: "Icon",
           url: "toto.url",
+          price: 10,
+        },
+        authenticatedUser: new User({
+          role: "ADMIN",
+        }),
+      })
+    );
+
+    expect(result).toBeDefined();
+  });
+});
+
+describe("Test createConsumableItem", () => {
+  let existsStub;
+  let saveStub;
+  beforeEach(() => {
+    existsStub = sinon.stub(MarketItem, "exists");
+    saveStub = sinon.stub(MarketItem.prototype, "save");
+  });
+  afterEach(() => {
+    existsStub.restore();
+    saveStub.restore();
+  });
+
+  it("Should throw unAuthorized error", async () => {
+    await expect(
+      createConsumableItem({
+        data: {},
+        authenticatedUser: {
+          role: "USER",
+        },
+      })
+    ).rejects.toThrow(UnAuthorizedError);
+  });
+
+  it("Should throw UnprocessableEntityError", async () => {
+    existsStub
+      .withArgs({
+        type: "MarketConsumable",
+        consumableType: "Toto",
+      })
+      .returns(true);
+
+    await expect(
+      createConsumableItem({
+        data: {
+          consumableType: "Toto",
         },
         authenticatedUser: {
           role: "ADMIN",
         },
       })
-    );
+    ).rejects.toThrow(UnprocessableEntityError);
+  });
+
+  it("Should create consumable item", async () => {
+    existsStub
+      .withArgs({
+        type: "MarketConsumable",
+        consumableType: "invitation",
+      })
+      .returns(false);
+    saveStub.resolvesThis();
+
+    const result = await createConsumableItem({
+      data: {
+        name: "Invitation",
+        label: "Invitation",
+        consumableType: "invitation",
+        price: 40,
+      },
+      authenticatedUser: new User({
+        role: "ADMIN",
+      }),
+    });
 
     expect(result).toBeDefined();
   });
@@ -132,19 +204,12 @@ describe("Test updateItem", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("Should update iteù", async () => {
+  it("Should update item", async () => {
     existStub.resolves(false);
-    findByIdAndUpdateStub
-      .withArgs("123", {
-        name: "Icon",
-        modified_by: {
-          role: "ADMIN",
-        },
-      })
-      .returns({});
+    findByIdAndUpdateStub.returns({});
 
     const result = await expect(
-      createIconItem({
+      updateItem({
         id: "123",
         data: {
           name: "Icon",

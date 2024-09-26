@@ -2,6 +2,17 @@ const mongoose = require("mongoose");
 const { INVITATION, GIFT } = require("./storesConstants");
 const ConsumablePurchase = require("../../../model/purchase/ConsumablePurchase");
 const creditService = require("../../market/creditService");
+const { get } = require("lodash");
+const marketService = require("../../market/marketService");
+
+const getConsumableItems = async () => {
+  const result = await marketService.searchItems({
+    type: "ConsumableItem",
+    page: 1,
+    pageSize: 15,
+  });
+  return result;
+};
 
 const buyInvitation = async ({ authenticatedUser }) => {
   let session;
@@ -53,6 +64,7 @@ const buyGift = async ({ authenticatedUser }) => {
 };
 
 module.exports = {
+  getConsumableItems,
   buyInvitation,
   buyGift,
 };
