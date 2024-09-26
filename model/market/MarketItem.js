@@ -66,10 +66,7 @@ const MarketItemSchema = new mongoose.Schema(
       required: true,
     },
   },
-  {
-    discriminatorKey: "type",
-    timestamps: true,
-  }
+  options
 );
 
 MarketItemSchema.pre("findOneAndUpdate", function (next) {

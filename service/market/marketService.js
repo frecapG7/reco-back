@@ -73,8 +73,8 @@ const buyItem = async ({ marketItem, user }) => {
 const buildPurchaseItem = (marketItem, user) => {
   const basePurchase = {
     name: marketItem.name,
-    user: user,
-    item: marketItem,
+    user: user._id,
+    item: marketItem._id,
     payment_details: {
       price: marketItem.price,
     },

@@ -8,4 +8,6 @@ router.use(
   require("./notifications")
 );
 
+router.use("/:userId/purchases", require("./purchases"));
+
 module.exports = router;

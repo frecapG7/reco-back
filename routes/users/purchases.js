@@ -7,12 +7,15 @@ router.get(
   passport.authenticate(["bearer", "anonymous"], { session: false }),
   async (req, res, next) => {
     try {
-      purchase.getPurchases({
+      const result = await purchase.getPurchases({
         id: req.params.userId,
         authenticatedUser: req.user,
       });
+      return res.json(result);
     } catch (err) {
       next(err);
     }
   }
 );
+
+module.exports = router;

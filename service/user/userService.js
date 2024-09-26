@@ -10,30 +10,6 @@ const mongoose = require("mongoose");
 
 const historyService = require("./usersHistoryService");
 
-const getUser = async ({ id }) => {
-  // 1 - Get user
-  const user = await User.findById(id);
-  if (!user) throw new NotFoundError("User not found");
-
-  // 2 - Get stats
-  const statistics = await historyService.getStats({ user });
-
-  return {
-    id: user._id,
-    name: user.name,
-    title: user.title,
-    avatar: user.avatar,
-    balance: user.balance,
-    created: user.created,
-    statistics,
-    privacy: {
-      showRequests: !user.settings.privacy.privateRequests,
-      showRecommendations: !user.settings.privacy.privateRecommendations,
-      showPurchaseHistory: !user.settings.privacy.privatePurchases,
-    },
-  };
-};
-
 const createUser = async (data, tokenValue) => {
   //1 - Apply validations
   await Promise.all([
@@ -85,34 +61,7 @@ const updateUser = async (id, data) => {
   return updatedUser;
 };
 
-const getLastRequests = async ({ id }) => {
-  // 1 - Get user
-  const user = await User.findById(id);
-  if (!user) throw new NotFoundError("User not found");
-
-  if (user.settings.privacy.privateRequests)
-    throw new ForbiddenError("User requests are private");
-
-  // 2 - Get last requests
-  return await historyService.getRequestsHistory({ user });
-};
-
-const getLastRecommendations = async ({ id }) => {
-  // 1 - Get user
-  const user = await User.findById(id);
-  if (!user) throw new NotFoundError("User not found");
-
-  if (user.settings.privacy.privateRequests)
-    throw new ForbiddenError("User requests are private");
-
-  // 2 - Get last requests
-  return await historyService.getRecommendationsHistory({ user });
-};
-
 module.exports = {
-  getUser,
   createUser,
   updateUser,
-  getLastRequests,
-  getLastRecommendations,
 };

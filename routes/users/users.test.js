@@ -3,6 +3,7 @@ const supertest = require("supertest");
 
 const User = require("../../model/User");
 const userService = require("../../service/user/userService");
+const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 
 const passport = require("../../auth");
@@ -27,9 +28,8 @@ const passportStub = sinon
       next();
     };
   });
-const userRoutes = require("./users");
 
-app.use("/users", userRoutes);
+app.use("/users", require("./users"));
 app.use(handleError);
 
 describe("POST /users", () => {
@@ -70,17 +70,17 @@ describe("POST /users", () => {
 });
 
 describe("GET /users/:id", () => {
-  let userServiceStub;
+  let usersStub;
 
   beforeEach(() => {
-    userServiceStub = sinon.stub(userService, "getUser");
+    usersStub = sinon.stub(users, "getUser");
   });
   afterEach(() => {
-    userServiceStub.restore();
+    usersStub.restore();
   });
 
   it("should return user", async () => {
-    userServiceStub.resolves(
+    usersStub.resolves(
       new User({
         email: "test",
         name: "test",

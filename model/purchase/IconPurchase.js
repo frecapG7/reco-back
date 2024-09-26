@@ -8,7 +8,10 @@ const IconPurchase = PurchaseItem.discriminator(
       type: String,
       required: true,
     },
-  })
+  }),
+  {
+    discriminatorKey: "type",
+  }
 );
 
 module.exports = IconPurchase;

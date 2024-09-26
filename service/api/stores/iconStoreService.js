@@ -15,7 +15,7 @@ const getRecentsIcon = async ({ value, page, pageSize }) => {
 };
 
 const buyIcon = async ({ id, user }) => {
-  const iconItem = marketService.getItem({ id });
+  const iconItem = await marketService.getItem({ id });
 
   if (iconItem.type !== "IconItem")
     throw new UnSupportedTypeError(`Item ${id} is not an IconItem`);

@@ -76,6 +76,7 @@ RecommendationSchema.methods.toJSON = function () {
     field3: this.field3,
     html: this.html,
     url: this.url,
+    type: this.requestType,
     created_at: this.created_at,
   };
 };

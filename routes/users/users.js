@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const userService = require("../../service/user/userService");
+
+const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 const { ForbiddenError } = require("../../errors/error");
 
@@ -21,14 +23,21 @@ router.post("", async (req, res, next) => {
 /**
  * GET /user to get user by id
  */
-router.get("/:id", async (req, res, next) => {
-  try {
-    const user = await userService.getUser({ id: req.params.id });
-    return res.json(user);
-  } catch (err) {
-    next(err);
+router.get(
+  "/:id",
+  passport.authenticate(["bearer", "anonymous"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const user = await users.getUser({
+        id: req.params.id,
+        authenticatedUser: req.user,
+      });
+      return res.json(user);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 /**
  * PUT /user to update user
@@ -97,25 +106,37 @@ router.delete(
   }
 );
 
-router.get("/:id/requests", async (req, res, next) => {
-  try {
-    const requests = await userService.getLastRequests({ id: req.params.id });
-    return res.json(requests);
-  } catch (err) {
-    next(err);
+router.get(
+  "/:id/requests",
+  passport.authenticate(["bearer", "anonymous"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const requests = await users.getLastRequests({
+        id: req.params.id,
+        authenticatedUser: req.user,
+      });
+      return res.json(requests);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-router.get("/:id/recommendations", async (req, res, next) => {
-  try {
-    const recommendations = await userService.getLastRecommendations({
-      id: req.params.id,
-    });
-    return res.json(recommendations);
-  } catch (err) {
-    next(err);
+router.get(
+  "/:id/recommendations",
+  passport.authenticate(["bearer", "anonymous"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const recommendations = await users.getLastRecommendations({
+        id: req.params.id,
+        authenticatedUser: req.user,
+      });
+      return res.json(recommendations);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 const verifyUser = (id, authenticatedUser) => {
   if (!authenticatedUser._id.equals(id))
