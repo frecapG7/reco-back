@@ -41,7 +41,6 @@ describe("POST /stores/icons/123/buy", () => {
   });
   it("Should buy IconItem", async () => {
     buyIconStub.returns({
-      _id: "123",
       label: "Krishna the Wise",
       url: "https://thisIsValidUrl.com",
       price: 45,

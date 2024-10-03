@@ -32,3 +32,25 @@ describe("GET /stores/consumables", () => {
     expect(response.status).toBe(200);
   });
 });
+
+describe("POST /stores/consumables/123/buy", () => {
+  let buyStub;
+
+  beforeEach(() => {
+    buyStub = sinon.stub(consumableStoreService, "buyConsumable");
+  });
+
+  afterEach(() => {
+    buyStub.restore();
+  });
+  it("Should buy ConsumableItem", async () => {
+    buyStub.returns({
+      _id: "123",
+      label: "Krishna the Wise",
+      price: 45,
+    });
+
+    const response = await supertest(app).post("/stores/consumables/123/buy");
+    expect(response.status).toBe(201);
+  });
+});

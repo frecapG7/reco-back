@@ -2,20 +2,11 @@ const sinon = require("sinon");
 
 const {
   getConsumableItems,
-  buyInvitation,
-  buyGift,
+  buyConsumable,
 } = require("./consumableStoreService");
-const mongoose = require("mongoose");
-const creditService = require("../../market/creditService");
-const ConsumablePurchase = require("../../../model/purchase/ConsumablePurchase");
-const marketService = require("../../market/marketService");
+const { UnSupportedTypeError } = require("../../../errors/error");
 
-const sessionStub = {
-  startTransaction: jest.fn(),
-  abortTransaction: jest.fn(),
-  endSession: jest.fn(),
-};
-sinon.stub(mongoose, "startSession").returns(sessionStub);
+const marketService = require("../../market/marketService");
 
 describe("Test getConsumableItems", () => {
   let searchItemsStub;
@@ -43,100 +34,77 @@ describe("Test getConsumableItems", () => {
   });
 });
 
-describe("Test buyInvitation", () => {
-  let removeCreditStub;
-  let saveStub;
+describe("Test buyConsumable", () => {
+  let getItemStub;
+  let buyItemStub;
 
   beforeEach(() => {
-    removeCreditStub = sinon.stub(creditService, "removeCredit");
-    saveStub = sinon.stub(ConsumablePurchase.prototype, "save");
-  });
-  afterEach(() => {
-    removeCreditStub.restore();
-    saveStub.restore();
+    getItemStub = sinon.stub(marketService, "getItem");
+    buyItemStub = sinon.stub(marketService, "buyItem");
   });
 
-  it("Should rollback transaction", async () => {
-    removeCreditStub.throws();
+  afterEach(() => {
+    getItemStub.restore();
+    buyItemStub.restore();
+  });
+
+  it("Should throw a UnSupportedTypeError", async () => {
+    getItemStub
+      .withArgs({
+        id: "123",
+      })
+      .returns({
+        type: "NotConsumableItem",
+      });
 
     await expect(
-      buyInvitation({
-        authenticatedUser: {
-          _id: "23564",
-        },
+      buyConsumable({
+        id: "123",
       })
-    ).rejects.toThrow();
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
+    ).rejects.toThrow("Item 123 is not a ConsumableItem");
   });
 
-  it("Should buy item", async () => {
-    removeCreditStub.returns(true);
-    saveStub.returnsThis();
+  it("Should buy consumable", async () => {
+    const item = {
+      _id: "12345qs4365465345",
+      type: "ConsumableItem",
+      name: "Krishna the Wise",
+      price: 10,
+      icon: "toto",
+      consumableType: "invitation",
+    };
 
-    const result = await buyInvitation({
-      authenticatedUser: {
-        _id: "23564",
+    getItemStub
+      .withArgs({
+        id: "123",
+      })
+      .returns(item);
+
+    buyItemStub.returns({
+      _id: "12345qs4365465345",
+      type: "ConsumablePurchase",
+      name: "Krishna the Wise",
+      payment_details: {
+        price: 10,
+        purchased_at: new Date(),
+      },
+    });
+
+    const result = await buyConsumable({
+      id: "123",
+      user: {
+        _id: "536476465478458aefze",
       },
     });
 
     expect(result).toBeDefined();
-    expect(result.name).toBe("Invitation");
-    expect(result.price).toBe(10);
+    expect(result.name).toBe("Krishna the Wise");
 
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
-  });
-});
-
-describe("Test buyGift", () => {
-  let removeCreditStub;
-  let saveStub;
-
-  beforeEach(() => {
-    removeCreditStub = sinon.stub(creditService, "removeCredit");
-    saveStub = sinon.stub(ConsumablePurchase.prototype, "save");
-  });
-  afterEach(() => {
-    removeCreditStub.restore();
-    saveStub.restore();
-  });
-
-  it("Should rollback transaction", async () => {
-    removeCreditStub.throws();
-
-    await expect(
-      buyGift({
-        authenticatedUser: {
-          _id: "23564",
-        },
-      })
-    ).rejects.toThrow();
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
-  });
-
-  it("Should buy item", async () => {
-    removeCreditStub.returns(true);
-    saveStub.returnsThis();
-
-    const result = await buyGift({
-      authenticatedUser: {
-        _id: "23564",
-      },
-    });
-
-    expect(result).toBeDefined();
-    expect(result.name).toBe("Gift");
-    expect(result.price).toBe(5);
-
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
+    // sinon.assert.calledWith(buyItemStub, {
+    //   marketItem: item,
+    //   user: {
+    //     _id: "536476465478458aefze",
+    //   },
+    // });
   });
 });
