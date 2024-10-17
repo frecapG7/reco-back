@@ -1,13 +1,15 @@
 const {
-  UnAuthorizedError,
   UnprocessableEntityError,
-  UnSupportedTypeError,
   NotFoundError,
 } = require("../../errors/error");
 
 const { verifyAdmin } = require("../validation/privilegeValidation");
 
-const { MarketIcon, MarketItem } = require("../../model/market/MarketItem");
+const {
+  MarketIcon,
+  MarketItem,
+  MarketConsumable,
+} = require("../../model/market/MarketItem");
 
 const createIconItem = async ({ data, authenticatedUser }) => {
   verifyAdmin(authenticatedUser);
@@ -25,6 +27,19 @@ const createIconItem = async ({ data, authenticatedUser }) => {
   });
 
   return await marketIcon.save();
+};
+
+const createConsumableItem = async ({ data, authenticatedUser }) => {
+  verifyAdmin(authenticatedUser);
+
+  await verifyUniqueConsumableType(data?.consumableType);
+
+  const marketConsumable = new MarketConsumable({
+    ...data,
+    created_by: authenticatedUser,
+  });
+
+  return await marketConsumable.save();
 };
 
 const updateItem = async ({ id, data, authenticatedUser }) => {
@@ -108,8 +123,19 @@ const verifyUniqueName = async (name, id) => {
     throw new UnprocessableEntityError("Market item name already exists");
 };
 
+const verifyUniqueConsumableType = async (type) => {
+  const exists = await MarketItem.exists({
+    type: "ConsumableItem",
+    consumableType: type,
+  });
+
+  if (exists)
+    throw new UnprocessableEntityError("Consumable item type already exists");
+};
+
 module.exports = {
   createIconItem,
+  createConsumableItem,
   updateItem,
   getMarketItem,
   searchItems,

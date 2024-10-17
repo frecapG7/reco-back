@@ -30,6 +30,27 @@ describe("POST /admin/market/items/icons", () => {
   });
 });
 
+describe("POST /admin/market/items/consumables", () => {
+  let createItemStub;
+  beforeEach(() => {
+    createItemStub = sinon.stub(marketAdminService, "createConsumableItem");
+  });
+  afterEach(() => {
+    createItemStub.restore();
+  });
+
+  it("Should create specific item", async () => {
+    const expected = createItemStub.returns({});
+
+    const response = await supertest(app)
+      .post("/admin/market/items/consumables")
+      .send({});
+    expect(response.status).toBe(201);
+
+    expect(expected.calledOnce).toBe(true);
+  });
+});
+
 describe("GET /admin/market/items/:id", () => {
   let getItemStub;
   beforeEach(() => {

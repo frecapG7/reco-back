@@ -13,5 +13,5 @@ router.get("/items/:id", async (req, res, next) => {
   }
 });
 
-router.use("/others", require("./others"));
+router.use("/consumables", require("./consumables"));
 module.exports = router;

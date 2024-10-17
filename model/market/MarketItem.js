@@ -63,7 +63,6 @@ const MarketItemSchema = new mongoose.Schema(
     modified_by: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
-      required: true,
     },
   },
   options
@@ -94,8 +93,25 @@ const MarketTitle = MarketItem.discriminator(
   options
 );
 
+const MarketConsumable = MarketItem.discriminator(
+  "ConsumableItem",
+  new mongoose.Schema({
+    icon: {
+      type: String,
+      required: true,
+    },
+    consumableType: {
+      type: String,
+      required: true,
+      enum: ["invitation", "boost"],
+    },
+  }),
+  options
+);
+
 module.exports = {
   MarketItem,
   MarketIcon,
   MarketTitle,
+  MarketConsumable,
 };
