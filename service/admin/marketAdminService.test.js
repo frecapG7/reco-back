@@ -118,7 +118,7 @@ describe("Test createConsumableItem", () => {
   it("Should throw UnprocessableEntityError", async () => {
     existsStub
       .withArgs({
-        type: "MarketConsumable",
+        type: "ConsumableItem",
         consumableType: "Toto",
       })
       .returns(true);
@@ -138,7 +138,7 @@ describe("Test createConsumableItem", () => {
   it("Should create consumable item", async () => {
     existsStub
       .withArgs({
-        type: "MarketConsumable",
+        type: "ConsumableItem",
         consumableType: "invitation",
       })
       .returns(false);

@@ -16,13 +16,13 @@ router.get("", async (req, res, next) => {
 router.post(
   "/:id/buy",
   passport.authenticate("bearer", { session: false }),
-  async () => {
+  async (req, res, next) => {
     try {
       const result = await consumableStoreService.buyConsumable({
         id: req.params.id,
         authenticatedUser: req.user,
       });
-      return res.status(200).json(result);
+      return res.status(201).json(result);
     } catch (err) {
       next(err);
     }

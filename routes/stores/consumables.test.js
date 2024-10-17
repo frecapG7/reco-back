@@ -8,6 +8,18 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
 
+const passport = require("../../auth");
+sinon
+  .stub(passport, "authenticate")
+  .callsFake((strategy, options, callback) => {
+    return (req, res, next) => {
+      req.user = {
+        _id: "123",
+      };
+      next();
+    };
+  });
+
 const consumableRoutes = require("./consumables");
 app.use("/stores/consumables", consumableRoutes);
 
@@ -43,6 +55,7 @@ describe("POST /stores/consumables/123/buy", () => {
   afterEach(() => {
     buyStub.restore();
   });
+  
   it("Should buy ConsumableItem", async () => {
     buyStub.returns({
       _id: "123",

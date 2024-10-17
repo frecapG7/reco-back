@@ -9,7 +9,20 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
 
+const passport = require("../../auth");
+sinon
+  .stub(passport, "authenticate")
+  .callsFake((strategy, options, callback) => {
+    return (req, res, next) => {
+      req.user = {
+        _id: "123",
+      };
+      next();
+    };
+  });
+
 const iconsRoutes = require("./icons");
+
 app.use("/stores/icons", iconsRoutes);
 
 describe("GET /stores/icons", () => {
@@ -39,6 +52,7 @@ describe("POST /stores/icons/123/buy", () => {
   afterEach(() => {
     buyIconStub.restore();
   });
+
   it("Should buy IconItem", async () => {
     buyIconStub.returns({
       label: "Krishna the Wise",

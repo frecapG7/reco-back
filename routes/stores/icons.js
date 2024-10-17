@@ -18,8 +18,8 @@ router.get("", async (req, res, next) => {
     const result = await iconStoreService.getRecentsIcon({
       value: req.query.value,
       type: "IconItem",
-      page: parseInt(req.query.page),
-      pageSize: parseInt(req.query.pageSize),
+      page: parseInt(req.query.page) || 1,
+      pageSize: parseInt(req.query.pageSize) || 10,
     });
     return res.status(200).json(result);
   } catch (err) {
