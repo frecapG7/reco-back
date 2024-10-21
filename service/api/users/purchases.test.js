@@ -1,11 +1,12 @@
 const sinon = require("sinon");
-const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 const User = require("../../../model/User");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { getPurchases } = require("./purchases");
+const { getPurchases, getPurchase } = require("./purchases");
+const purchaseService = require("../../market/purchaseService");
+const { ForbiddenError } = require("../../../errors/error");
 
-describe("Test getPurchase", () => {
+describe("Test getPurchases", () => {
   let findByIdStub;
 
   beforeEach(() => {
@@ -55,16 +56,19 @@ describe("Test getPurchase", () => {
       },
     });
 
-    const findStub = sinon.stub(PurchaseItem, "find");
+    const searchPurchases = sinon.stub(purchaseService, "searchPurchases");
 
-    findStub.returns([
-      {
-        _id: "123",
-        name: "Krishna the Wise",
-        price: 10,
-        url: "https://thisIsValidUrl.com",
-      },
-    ]);
+    searchPurchases.returns({
+      pagination: {},
+      results: [
+        {
+          _id: "123",
+          name: "Krishna the Wise",
+          price: 10,
+          url: "https://thisIsValidUrl.com",
+        },
+      ],
+    });
 
     const result = await getPurchases({
       id: "123",
@@ -74,9 +78,57 @@ describe("Test getPurchase", () => {
     });
 
     expect(result).toBeDefined();
-    expect(result[0].name).toBe("Krishna the Wise");
-    expect(result[0].price).toBe(10);
+    expect(result.results[0].name).toBe("Krishna the Wise");
+    expect(result.results[0].price).toBe(10);
 
-    findStub.restore();
+    searchPurchases.restore();
+  });
+});
+
+describe("Test getPurchase", () => {
+  const getPurchaseStub = sinon.stub(purchaseService, "getPurchase");
+
+  beforeEach(() => {
+    getPurchaseStub.reset();
+  });
+
+  it("Should return ForbiddenError", async () => {
+    await expect(
+      getPurchase({
+        id: "123",
+        purchaseId: "456",
+        authenticatedUser: {
+          _id: new ObjectId("123456789123"),
+          role: "USER",
+        },
+      })
+    ).rejects.toThrow(
+      "User 313233343536373839313233 is not allowed to see this purchase"
+    );
+  });
+
+  it("Should return purchase", async () => {
+    getPurchaseStub.returns({
+      _id: "123",
+      name: "Krishna the Wise",
+      payment_details: {
+        price: 10,
+        purchased_at: new Date(),
+      },
+    });
+
+    const result = await getPurchase({
+      id: "123",
+      purchaseId: "456",
+      authenticatedUser: {
+        _id: new ObjectId("123456789123"),
+        role: "ADMIN",
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.name).toBe("Krishna the Wise");
+    expect(result.payment_details).toBeDefined();
+    expect(result.payment_details.price).toBe(10);
   });
 });
