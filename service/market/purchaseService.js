@@ -1,4 +1,5 @@
 const PurchaseItem = require("../../model/purchase/PurchaseItem");
+const User = require("../../model/User");
 
 const searchPurchases = async ({
   user,
@@ -45,7 +46,29 @@ const getPurchase = async ({ userId, purchaseId }) => {
   return purchase;
 };
 
+const redeem = async ({ purchase }) => {
+  switch (purchase.type) {
+    case "IconPurchase":
+      const user = await User.findByIdAndUpdate(
+        purchase.user,
+        {
+          avatar: purchase.icon,
+        },
+        { new: true }
+      );
+      if (!user) throw new Error("User not found");
+      break;
+
+    case "ConsumablePurchase":
+      // TODO: might depend of consumable type
+      break;
+    default:
+      throw new Error(`Invalid purchase type ${purchase.type}`);
+  }
+};
+
 module.exports = {
   searchPurchases,
   getPurchase,
+  redeem,
 };

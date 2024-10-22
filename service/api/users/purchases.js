@@ -33,7 +33,7 @@ const getPurchases = async ({ id, query, authenticatedUser }) => {
   return results;
 };
 
-const getPurchase = ({ id, purchaseId, authenticatedUser }) => {
+const getPurchase = async ({ id, purchaseId, authenticatedUser }) => {
   // 1 - Verify authorization
   if (!authenticatedUser?._id.equals(id) && authenticatedUser?.role !== "ADMIN")
     throw new ForbiddenError(
@@ -41,15 +41,39 @@ const getPurchase = ({ id, purchaseId, authenticatedUser }) => {
     );
 
   // 2 - Get Purchase
-  const purchase = purchaseService.getPurchase({
+  const purchase = await purchaseService.getPurchase({
     userId: id,
     purchaseId,
   });
 
+  if (!purchase)
+    throw new NotFoundError(`Cannot find purchase with id ${purchaseId}`);
+
   return purchase;
+};
+
+const redeemPurchase = async ({ id, purchaseId, authenticatedUser }) => {
+  // 1 - Verify authorization
+  if (!authenticatedUser._id?.equals(id))
+    throw new ForbiddenError(
+      `User ${authenticatedUser._id} is not allowed to redeem this purchase`
+    );
+
+  // 2 - Get Purchase
+  const purchase = await purchaseService.getPurchase({
+    userId: id,
+    purchaseId,
+  });
+
+  if (!purchase)
+    throw new NotFoundError(`Cannot find purchase with id ${purchaseId}`);
+
+  // 3 - Redeem Purchase
+  await purchaseService.redeem({ purchase });
 };
 
 module.exports = {
   getPurchases,
   getPurchase,
+  redeemPurchase,
 };

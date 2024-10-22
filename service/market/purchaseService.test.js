@@ -1,7 +1,7 @@
 const PurchaseItem = require("../../model/purchase/PurchaseItem");
 const User = require("../../model/User");
 const sinon = require("sinon");
-const { searchPurchases, getPurchase } = require("./purchaseService");
+const { searchPurchases, getPurchase, redeem } = require("./purchaseService");
 const ObjectId = require("mongoose").Types.ObjectId;
 
 describe("Validate searchPurchases", () => {
@@ -132,5 +132,62 @@ describe("Validate getPurchase", () => {
 
     expect(result).toBeDefined();
     expect(result.name).toBe("Test Purchase");
+  });
+});
+
+describe("Validate redeem", () => {
+  const findByIdAndUpdateStub = sinon.stub(User, "findByIdAndUpdate");
+
+  beforeEach(() => {
+    findByIdAndUpdateStub.reset();
+  });
+
+  it("should throw an error when user is not foun when redeeming an icon purchase", async () => {
+    const purchase = {
+      type: "IconPurchase",
+      user: new ObjectId(),
+      icon: "test-icon",
+    };
+
+    findByIdAndUpdateStub.returns(null);
+
+    await expect(
+      redeem({
+        purchase,
+      })
+    ).rejects.toThrow("User not found");
+  });
+  it("should redeem an IconPurchase", async () => {
+    const purchase = {
+      type: "IconPurchase",
+      user: new ObjectId(),
+      icon: "test-icon",
+    };
+
+    const user = {
+      _id: purchase.user,
+    };
+
+    findByIdAndUpdateStub.returns(user);
+
+    const result = await redeem({
+      purchase,
+    });
+
+    sinon.assert.calledWith(findByIdAndUpdateStub, purchase.user, {
+      avatar: purchase.icon,
+    });
+  });
+
+  it("Should throw invalid purchase type", async () => {
+    const purchase = {
+      type: "InvalidPurchase",
+    };
+
+    await expect(
+      redeem({
+        purchase,
+      })
+    ).rejects.toThrow("Invalid purchase type");
   });
 });

@@ -37,4 +37,21 @@ router.get(
   }
 );
 
+router.post(
+  "/:purchaseId/redeem",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      await purchase.redeemPurchase({
+        id: req.params.userId,
+        purchaseId: req.params.purchaseId,
+        authenticatedUser: req.user,
+      });
+      return res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 module.exports = router;

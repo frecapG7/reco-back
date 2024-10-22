@@ -41,6 +41,7 @@ RequestSchema.methods.toJSON = function () {
       ...(this.populated("author") && {
         name: this.author.name,
         title: this.author.title,
+        avatar: this.author.avatar,
       }),
     },
   };

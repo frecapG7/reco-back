@@ -2,10 +2,11 @@ const sinon = require("sinon");
 const User = require("../../../model/User");
 const ObjectId = require("mongoose").Types.ObjectId;
 
-const { getPurchases, getPurchase } = require("./purchases");
+const { getPurchases, getPurchase, redeemPurchase } = require("./purchases");
 const purchaseService = require("../../market/purchaseService");
-const { ForbiddenError } = require("../../../errors/error");
+const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 
+const getPurchaseStub = sinon.stub(purchaseService, "getPurchase");
 describe("Test getPurchases", () => {
   let findByIdStub;
 
@@ -86,8 +87,6 @@ describe("Test getPurchases", () => {
 });
 
 describe("Test getPurchase", () => {
-  const getPurchaseStub = sinon.stub(purchaseService, "getPurchase");
-
   beforeEach(() => {
     getPurchaseStub.reset();
   });
@@ -130,5 +129,60 @@ describe("Test getPurchase", () => {
     expect(result.name).toBe("Krishna the Wise");
     expect(result.payment_details).toBeDefined();
     expect(result.payment_details.price).toBe(10);
+  });
+});
+
+describe("Test redeemPurchase", () => {
+  beforeEach(() => {
+    getPurchaseStub.reset();
+  });
+
+  it("Should return ForbiddenError", async () => {
+    await expect(
+      redeemPurchase({
+        id: "123",
+        purchaseId: "456",
+        authenticatedUser: {
+          _id: new ObjectId("123456789123"),
+        },
+      })
+    ).rejects.toThrow("User 313233343536373839313233 is not allowed to redeem this purchase");
+  });
+
+  it("Should return NotFoundError", async () => {
+    getPurchaseStub.returns(null);
+
+    await expect(
+      redeemPurchase({
+        id: "123456789123",
+        purchaseId: "456",
+        authenticatedUser: {
+          _id: new ObjectId("123456789123"),
+        },
+      })
+    ).rejects.toThrow("Cannot find purchase with id 456");
+  });
+
+  it("Should redeem purchase", async () => {
+    const purchase = sinon.createStubInstance(PurchaseItem);
+
+    getPurchaseStub.returns(purchase);
+
+    const redeemStub = sinon.stub(purchaseService, "redeem").resolvesThis();
+
+    const result = await redeemPurchase({
+      id: "123456789123",
+      purchaseId: "456",
+      authenticatedUser: {
+        _id: new ObjectId("123456789123"),
+      },
+    });
+
+    sinon.assert.calledOnce(redeemStub);
+    sinon.assert.calledWith(redeemStub, {
+      purchase,
+    });
+
+    redeemStub.restore();
   });
 });
