@@ -20,6 +20,9 @@ const UserSchema = new mongoose.Schema({
     required: true,
     enum: ["USER", "ADMIN"],
   },
+  avatar: {
+    type: String,
+  },
   settings: {
     lang: {
       type: String,
@@ -33,7 +36,7 @@ const UserSchema = new mongoose.Schema({
       type: Boolean,
       default: constants.defaultSettings.notifications,
     },
-    privacy : {
+    privacy: {
       privateRequests: {
         type: Boolean,
         default: constants.defaultSettings.privacy.privateRequests,
@@ -50,7 +53,7 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: constants.defaultSettings.privacy.privatePurchases,
       },
-    }
+    },
   },
   balance: {
     type: Number,
@@ -91,6 +94,7 @@ UserSchema.methods.toJSON = function () {
     id: this._id,
     name: this.name,
     title: this.title,
+    avatar: this.avatar,
     balance: this.balance,
     created: this.created,
   };

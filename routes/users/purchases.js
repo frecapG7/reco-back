@@ -9,9 +9,45 @@ router.get(
     try {
       const result = await purchase.getPurchases({
         id: req.params.userId,
+        query: req.query,
         authenticatedUser: req.user,
       });
       return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/:purchaseId",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const result = await purchase.getPurchase({
+        id: req.params.userId,
+        purchaseId: req.params.purchaseId,
+        authenticatedUser: req.user,
+      });
+
+      return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/:purchaseId/redeem",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      await purchase.redeemPurchase({
+        id: req.params.userId,
+        purchaseId: req.params.purchaseId,
+        authenticatedUser: req.user,
+      });
+      return res.status(204).send();
     } catch (err) {
       next(err);
     }
