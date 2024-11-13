@@ -199,7 +199,9 @@ describe("Test createRecommendation function", () => {
 
     mongooseStub.resolves(sessionStub);
 
-    const expected = {};
+    const expected = {
+      toJSON: sinon.stub().returnsThis(),
+    };
     recommendationStub.resolves(expected);
     const result = await recommendationService.createRecommendation(
       "123",
@@ -217,7 +219,6 @@ describe("Test createRecommendation function", () => {
 
     sinon.assert.calledOnce(recommendationStub);
     const savedArgs = recommendationStub.getCall(0).thisValue;
-    console.log("save called with:", savedArgs);
 
     expect(savedArgs.field1).toEqual("field1");
     expect(savedArgs.field2).toEqual("field2");
@@ -258,7 +259,9 @@ describe("Test updateRecommendation function", () => {
   });
 
   it("Should return updated recommendation", async () => {
-    const expected = {};
+    const expected = {
+      toJSON: sinon.stub().returnsThis(),
+    };
     recommendationStub.resolves(expected);
 
     const result = await recommendationService.updateRecommendation(
@@ -475,6 +478,7 @@ describe("Test likeRecommendation function", () => {
         },
       },
       save: sinon.stub().resolvesThis(),
+      toJSON: sinon.stub().returnsThis(),
     };
 
     recommendationStub.withArgs("123").returns({
@@ -516,6 +520,7 @@ describe("Test likeRecommendation function", () => {
 
     expect(result.likes.length).toEqual(2);
     expect(result.likes[1]).toEqual("userId");
+    expect(result.liked).toEqual(true);
     // expect(result.save).toHaveBeenCalled();
 
     //Verify transaction
@@ -544,6 +549,7 @@ describe("Test likeRecommendation function", () => {
               },
             },
             save: sinon.stub().resolvesThis(),
+            toJSON: sinon.stub().returnsThis(),
           }),
         }),
     });
@@ -573,6 +579,7 @@ describe("Test likeRecommendation function", () => {
 
     expect(result.likes.length).toEqual(2);
     expect(result.likes[1]).toEqual("666666666666");
+    expect(result.liked).toEqual(true);
 
     //Verify transaction
     expect(sessionStub.startTransaction).toHaveBeenCalled();
@@ -634,6 +641,7 @@ describe("Test unlikeRecommendation function", () => {
     const expected = {
       likes: ["123", "678"],
       save: sinon.stub().resolvesThis(),
+      toJSON: sinon.stub().returnsThis(),
     };
 
     recommendationStub.resolves(expected);

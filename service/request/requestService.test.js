@@ -2,6 +2,9 @@ const Request = require("../../model/Request");
 const sinon = require("sinon");
 const requestService = require("./requestService");
 const { NotFoundError } = require("../../errors/error");
+const Recommendation = require("../../model/Recommendation");
+
+const recommendationsStub = sinon.stub(Recommendation, "countDocuments");
 
 describe("Test getRequest", () => {
   let requestStub;
@@ -11,22 +14,42 @@ describe("Test getRequest", () => {
   });
   afterEach(() => {
     requestStub.restore();
+    recommendationsStub.reset();
   });
 
   it("Should thrown a not found error", async () => {
-    requestStub.returns(null);
+    requestStub.returns({
+      populate: sinon
+        .stub()
+        .withArgs("author")
+        .returns({
+          exec: sinon.stub().returns(null),
+        }),
+    });
     await expect(requestService.getRequest("123")).rejects.toThrow(
       NotFoundError
     );
   });
 
   it("Should return a request", async () => {
-    const expected = new Request();
-    requestStub.returns(expected);
+    const expected = {
+      toJSON: sinon.stub().returnsThis(),
+    };
+    requestStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("author")
+        .returns({
+          exec: sinon.stub().returns(expected),
+        }),
+    });
+
+    recommendationsStub.returns(7);
 
     const result = await requestService.getRequest("123");
 
-    expect(result).toEqual(expected);
+    expect(result).toBeDefined();
+    expect(result.recommendationsCount).toEqual(7);
   });
 });
 
@@ -37,6 +60,7 @@ describe("Test createRequest", () => {
   });
   afterEach(() => {
     requestStub.restore();
+    recommendationsStub.reset();
   });
 
   it("Should return a request", async () => {
@@ -54,7 +78,9 @@ describe("Test createRequest", () => {
       }
     );
 
-    expect(result).toBeInstanceOf(Request);
+    recommendationsStub.returns(0);
+
+    expect(result).toBeDefined();
     expect(result.requestType).toBe("requestType");
     expect(result.title).toBe("title");
     expect(result.description).toBe("description");
@@ -73,6 +99,7 @@ describe("Test updateRequest", () => {
   });
   afterEach(() => {
     requestStub.restore();
+    recommendationsStub.reset();
   });
 
   it("Should thrown a NotFoundError", async () => {
@@ -84,7 +111,9 @@ describe("Test updateRequest", () => {
   });
 
   it("Should return updated request", async () => {
-    const expected = new Request();
+    const expected = {
+      toJSON: sinon.stub().returnsThis(),
+    };
     requestStub.returns(expected);
 
     const result = await requestService.updateRequest(
@@ -99,6 +128,7 @@ describe("Test updateRequest", () => {
         _id: "123",
       }
     );
+    recommendationsStub.returns(8);
 
     expect(result).toEqual(expected);
     sinon.assert.calledWith(
@@ -115,6 +145,8 @@ describe("Test updateRequest", () => {
       },
       { new: true }
     );
+
+    expect(result.recommendationsCount).toEqual(8);
   });
 });
 

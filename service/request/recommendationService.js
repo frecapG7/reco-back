@@ -6,11 +6,9 @@ const notificationService = require("../user/notificationService");
 const mongoose = require("mongoose");
 
 const toDTO = (recommendation, user) => {
-  const json = recommendation.toJSON();
-  //TODO: liked
   return {
     ...recommendation.toJSON(),
-    liked: recommendation.likes.includes(user?._id),
+    liked: recommendation.likes?.includes(user?._id),
   };
 };
 
@@ -75,7 +73,7 @@ const createRecommendation = async (requestId, data, user) => {
 
     await session.commitTransaction();
 
-    return savedRecommendation;
+    return toDTO(savedRecommendation, user);
   } catch (err) {
     if (session) await session.abortTransaction();
     throw err;
@@ -104,7 +102,7 @@ const updateRecommendation = async (
     { new: true }
   );
   if (!recommendation) throw new NotFoundError("Recommendation not found");
-  return recommendation;
+  return toDTO(recommendation, user);
 };
 
 const deleteRecommendation = async (requestId, recommendationId, user) => {
@@ -164,7 +162,7 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
 
     //7. Return result
     const savedRecommendation = await recommendation.save();
-    return savedRecommendation;
+    return toDTO(savedRecommendation, authenticatedUser);
   } catch (err) {
     if (session) session.abortTransaction();
     throw err;
@@ -195,7 +193,8 @@ const unlikeRecommendation = async (recommendationId, user) => {
     //4. Commit transaction
     await session.commitTransaction();
     //5. Return result
-    return await recommendation.save();
+    const newRecommendation = await recommendation.save();
+    return toDTO(newRecommendation, user);
   } catch (err) {
     if (session) session.abortTransaction();
     throw err;

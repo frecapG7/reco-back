@@ -3,6 +3,16 @@ const Recommendation = require("../../model/Recommendation");
 const { NotFoundError } = require("../../errors/error");
 const { ObjectId } = require("mongodb");
 
+const toDTO = async (request) => {
+  const recommendationsCount = await Recommendation.countDocuments({
+    request,
+  });
+  return {
+    ...request.toJSON(),
+    recommendationsCount,
+  };
+};
+
 /**
  * Asynchronous function to get a request by its ID.
  *
@@ -11,9 +21,9 @@ const { ObjectId } = require("mongodb");
  * @param {string} id - The ID of the request.
  */
 const getRequest = async (id) => {
-  const request = await Request.findById(id);
+  const request = await Request.findById(id).populate("author").exec();
   if (!request) throw new NotFoundError("Request not found");
-  return request;
+  return await toDTO(request);
 };
 
 /**
@@ -32,7 +42,12 @@ const createRequest = async (data, user) => {
     tags: data.tags,
     author: user._id,
   });
-  return await request.save();
+  const saveRequest = await request.save();
+
+  return {
+    ...saveRequest.toJSON(),
+    recommendationsCount: 0,
+  };
 };
 
 /**
@@ -61,7 +76,7 @@ const updateRequest = async (id, data, user) => {
 
   if (!savedRequest) throw new NotFoundError("Request not found");
 
-  return savedRequest;
+  return await toDTO(savedRequest);
 };
 
 /**
@@ -99,20 +114,7 @@ const search = async ({ filters, pageSize, pageNumber }) => {
     .exec();
 
   const paginatedResults = await Promise.all(
-    results.map(async (result) => {
-      const recommendationsCount = await Recommendation.countDocuments({
-        request_id: result._id,
-      });
-      const unseenRecommendationsCount = await Recommendation.countDocuments({
-        request_id: result._id,
-        seen: false,
-      });
-      return {
-        ...result.toJSON(),
-        recommendationsCount,
-        unseenRecommendationsCount,
-      };
-    })
+    results.map(async (result) => toDTO(result))
   );
 
   return {

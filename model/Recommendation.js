@@ -36,10 +36,6 @@ const RecommendationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  seen: {
-    type: Boolean,
-    default: false,
-  },
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -52,8 +48,14 @@ const RecommendationSchema = new mongoose.Schema({
     required: false,
   },
   provider: {
-    type: String,
-    required: false,
+    name: {
+      type: String,
+      required: true,
+    },
+    icon: {
+      type: String,
+      required: false,
+    },
   },
   // Use for search
   requestType: {
@@ -70,6 +72,7 @@ RecommendationSchema.methods.toJSON = function () {
       id: this.user._id,
       name: this.user.name,
       title: this.user.title,
+      avatar: this.user.avatar,
     },
     field1: this.field1,
     field2: this.field2,
@@ -78,6 +81,11 @@ RecommendationSchema.methods.toJSON = function () {
     url: this.url,
     type: this.requestType,
     created_at: this.created_at,
+    provider: {
+      name: this.provider?.name,
+      icon: this.provider?.icon,
+    },
+    likes: this.likes.length,
   };
 };
 
