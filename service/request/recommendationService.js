@@ -4,22 +4,73 @@ const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const creditService = require("../market/creditService");
 const notificationService = require("../user/notificationService");
 const mongoose = require("mongoose");
+const ObjectId = require("mongoose").Types.ObjectId;
 
-const toDTO = (recommendation, user) => {
-  return {
-    ...recommendation.toJSON(),
-    liked: recommendation.likes?.includes(user?._id),
-  };
+const getSort = (sort) => {
+  if (sort === "likes") return { likesCount: -1 };
+  else if (sort === "createdAt") return { createdAt: -1 };
+  else return { likesCount: -1 };
 };
 
-const getRecommendations = async (requestId, user) => {
-  const recommendations = await Recommendation.find({
-    request: String(requestId),
-  })
-    .populate("user")
-    .exec();
+const getRecommendations = async ({
+  requestId,
+  sorted,
+  pageSize,
+  pageNumber,
+  authenticatedUser,
+}) => {
+  const skip = pageSize * (pageNumber - 1);
+  const limit = pageSize;
+  const sort = getSort(sorted);
+  const match = { request: new ObjectId(requestId) };
 
-  return recommendations.map((recommendation) => toDTO(recommendation, user));
+  const totalResults = await Recommendation.countDocuments(match);
+  const recommendations = await Recommendation.aggregate([
+    {
+      $addFields: {
+        liked: { $in: [authenticatedUser?._id, "$likes"] },
+        likesCount: { $size: "$likes" },
+      },
+    },
+    {
+      $match: match,
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $skip: skip,
+    },
+    {
+      $limit: limit,
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]).exec();
+
+  return {
+    pagination: {
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalResults / pageSize),
+      totalResults,
+    },
+    results: recommendations,
+  };
 };
 
 /**
@@ -27,12 +78,20 @@ const getRecommendations = async (requestId, user) => {
  * @param {String} recommendationId
  * @returns Recommendation
  */
-const getRecommendation = async (recommendationId, user) => {
+const getRecommendation = async ({ recommendationId, authenticatedUser }) => {
   const recommendation = await Recommendation.findById(recommendationId)
-    .populate("user")
+    .populate("author")
     .exec();
+
   if (!recommendation) throw new NotFoundError("Recommendation not found");
-  return toDTO(recommendation, user);
+
+  return {
+    ...recommendation,
+    liked: authenticatedUser
+      ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
+      : false,
+    likesCount: recommendation.likes.length,
+  };
 };
 
 /**
@@ -41,10 +100,10 @@ const getRecommendation = async (recommendationId, user) => {
  * @param {Object} the authenticated user
  * @param {JSON} data
  */
-const createRecommendation = async (requestId, data, user) => {
+const createRecommendation = async ({ requestId, data, authenticatedUser }) => {
   const request = await Request.findById(requestId);
   if (!request) throw new NotFoundError("Request not found");
-  if (request.author._id.equals(user._id))
+  if (request.author._id.equals(authenticatedUser._id))
     throw new ForbiddenError(
       "User cannot create a recommendation for his own request"
     );
@@ -55,11 +114,11 @@ const createRecommendation = async (requestId, data, user) => {
 
     session.startTransaction();
 
-    await creditService.removeCredit(5, user);
+    await creditService.removeCredit(5, authenticatedUser);
 
     const newRecommendation = new Recommendation({
       request: request,
-      user: user,
+      user: authenticatedUser,
       field1: String(data.field1),
       field2: String(data.field2),
       field3: String(data.field3),
@@ -73,7 +132,11 @@ const createRecommendation = async (requestId, data, user) => {
 
     await session.commitTransaction();
 
-    return toDTO(savedRecommendation, user);
+    return {
+      ...savedRecommendation,
+      liked: false,
+      likesCount: 0,
+    };
   } catch (err) {
     if (session) await session.abortTransaction();
     throw err;
@@ -82,16 +145,16 @@ const createRecommendation = async (requestId, data, user) => {
   }
 };
 
-const updateRecommendation = async (
+const updateRecommendation = async ({
   requestId,
   recommendationId,
   data,
-  user
-) => {
+  authenticatedUser,
+}) => {
   const recommendation = await Recommendation.findOneAndUpdate(
     {
       _id: String(recommendationId),
-      user: user._id,
+      user: authenticatedUser._id,
       request: String(requestId),
     },
     {
@@ -102,7 +165,14 @@ const updateRecommendation = async (
     { new: true }
   );
   if (!recommendation) throw new NotFoundError("Recommendation not found");
-  return toDTO(recommendation, user);
+
+  return {
+    ...recommendation,
+    liked: authenticatedUser
+      ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
+      : false,
+    likesCount: recommendation.likes.length,
+  };
 };
 
 const deleteRecommendation = async (requestId, recommendationId, user) => {
@@ -116,7 +186,7 @@ const deleteRecommendation = async (requestId, recommendationId, user) => {
 };
 
 // Function to like a recommendation
-const likeRecommendation = async (recommendationId, authenticatedUser) => {
+const likeRecommendation = async ({ recommendationId, authenticatedUser }) => {
   // 1.a Check if recommendation exists
   const recommendation = await Recommendation.findById(recommendationId)
     .populate("request", "author")
@@ -162,7 +232,11 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
 
     //7. Return result
     const savedRecommendation = await recommendation.save();
-    return toDTO(savedRecommendation, authenticatedUser);
+    return {
+      ...savedRecommendation,
+      liked: true,
+      likesCount: savedRecommendation.likes.length,
+    };
   } catch (err) {
     if (session) session.abortTransaction();
     throw err;
@@ -172,7 +246,10 @@ const likeRecommendation = async (recommendationId, authenticatedUser) => {
 };
 
 // Function to unlike a recommendation
-const unlikeRecommendation = async (recommendationId, user) => {
+const unlikeRecommendation = async ({
+  recommendationId,
+  authenticatedUser,
+}) => {
   // 1. Find recommendation
   const recommendation = await Recommendation.findById(recommendationId);
   if (!recommendation) throw new NotFoundError("Recommendation not found");
@@ -186,7 +263,7 @@ const unlikeRecommendation = async (recommendationId, user) => {
 
     //2. Remove like
     recommendation.likes = recommendation.likes.filter(
-      (like) => like !== user._id
+      (like) => like !== authenticatedUser._id
     );
     //3. Remove credit ?
 
@@ -194,7 +271,11 @@ const unlikeRecommendation = async (recommendationId, user) => {
     await session.commitTransaction();
     //5. Return result
     const newRecommendation = await recommendation.save();
-    return toDTO(newRecommendation, user);
+    return {
+      ...newRecommendation,
+      liked: false,
+      likesCount: newRecommendation.likes.length,
+    };
   } catch (err) {
     if (session) session.abortTransaction();
     throw err;
