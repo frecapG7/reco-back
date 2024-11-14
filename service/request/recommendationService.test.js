@@ -10,51 +10,174 @@ const { ObjectId } = require("mongodb");
 
 describe("Test getRecommendations function", () => {
   let recommendationStub;
+  let countDocumentsStub;
 
   beforeEach(() => {
-    recommendationStub = sinon.stub(Recommendation, "find");
+    recommendationStub = sinon.stub(Recommendation, "aggregate");
+    countDocumentsStub = sinon.stub(Recommendation, "countDocuments");
   });
   afterEach(() => {
     recommendationStub.restore();
+    countDocumentsStub.restore();
   });
 
-  it("Should return a list of recommendations", async () => {
+  it("Should return a list of recommendations with no logged user", async () => {
     const expected = {
-      _id: "1",
-      request: {
-        _id: "123",
-      },
-      user: {
-        _id: "123",
-        name: "name",
-      },
-      field1: "field1",
-      field2: "field2",
-      field3: "field3",
-      created_at: new Date(),
+      toJSON: () => ({
+        _id: "1",
+        request: {
+          _id: "123",
+        },
+        user: {
+          _id: "123",
+          name: "name",
+        },
+        field1: "field1",
+        field2: "field2",
+        field3: "field3",
+        created_at: new Date(),
+      }),
     };
 
-    recommendationStub.withArgs({ request: "123" }).returns({
-      populate: sinon
-        .stub()
-        .withArgs("user", "name")
-        .returns({
-          exec: sinon.stub().resolves([
+    recommendationStub.returns({
+      exec: sinon.stub().resolves([expected]),
+    });
+    countDocumentsStub.resolves(8);
+
+    const result = await recommendationService.getRecommendations({
+      requestId: "6638fee1d4a68803bfdc7539",
+      sorted: "likes",
+      pageSize: 10,
+      pageNumber: 1,
+    });
+
+    expect(result).toBeDefined();
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toEqual(1);
+    expect(result.pagination.totalPages).toEqual(1);
+    expect(result.pagination.totalResults).toEqual(8);
+
+    expect(result.results).toBeDefined;
+    expect(result.results.length).toEqual(1);
+
+    // How pretentious haha
+    sinon.assert.calledWith(recommendationStub, [
+      {
+        $addFields: {
+          liked: { $in: [undefined, "$likes"] },
+          likesCount: { $size: "$likes" },
+        },
+      },
+      {
+        $match: { request: new ObjectId("6638fee1d4a68803bfdc7539") },
+      },
+      {
+        $sort: { likesCount: -1 },
+      },
+      {
+        $skip: 0,
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [
             {
-              _id: "1",
-              toJSON: sinon.stub().returns(expected),
-              likes: ["123", "456"],
+              $project: {
+                _id: 1,
+                name: 1,
+                avatar: 1,
+              },
             },
-          ]),
-        }),
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("Should return a list of recommendations with a logged user", async () => {
+    const expected = {
+      toJSON: () => ({
+        _id: "1",
+        request: {
+          _id: "123",
+        },
+        user: {
+          _id: "123",
+          name: "name",
+        },
+        field1: "field1",
+        field2: "field2",
+        field3: "field3",
+        created_at: new Date(),
+      }),
+    };
+
+    recommendationStub.returns({
+      exec: sinon.stub().resolves([expected]),
+    });
+    countDocumentsStub.resolves(8);
+
+    const result = await recommendationService.getRecommendations({
+      requestId: "6638fee1d4a68803bfdc7539",
+      sorted: "likes",
+      pageSize: 10,
+      pageNumber: 1,
+      authenticatedUser: { _id: "123" },
     });
 
-    const result = await recommendationService.getRecommendations("123", {
-      _id: "123",
-    });
+    expect(result).toBeDefined();
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toEqual(1);
+    expect(result.pagination.totalPages).toEqual(1);
+    expect(result.pagination.totalResults).toEqual(8);
 
-    expect(result.length).toEqual(1);
-    expect(result[0].liked).toEqual(true);
+    expect(result.results).toBeDefined;
+    expect(result.results.length).toEqual(1);
+
+    // How pretentious haha
+    sinon.assert.calledWith(recommendationStub, [
+      {
+        $addFields: {
+          liked: { $in: ["123", "$likes"] },
+          likesCount: { $size: "$likes" },
+        },
+      },
+      {
+        $match: { request: new ObjectId("6638fee1d4a68803bfdc7539") },
+      },
+      {
+        $sort: { likesCount: -1 },
+      },
+      {
+        $skip: 0,
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                avatar: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
   });
 });
 
@@ -72,29 +195,30 @@ describe("Test getRecommendation function", () => {
     recommendationStub.returns({
       populate: sinon
         .stub()
-        .withArgs("user", "name")
+        .withArgs("author")
         .returns({
           exec: sinon.stub().resolves(null),
         }),
     });
 
     await expect(
-      recommendationService.getRecommendation("123")
+      recommendationService.getRecommendation({
+        recommendationId: "6638fee1d4a68803bfdc7539",
+      })
     ).rejects.toThrow(NotFoundError);
   });
 
   it("Should return a recommendation", async () => {
-    const expected = new Recommendation();
+    const expected = {
+      toJSON: jest.fn(),
+      likes: ["123", "678"],
+    };
     recommendationStub.returns({
       populate: sinon
         .stub()
-        .withArgs("user", "name")
+        .withArgs("author")
         .returns({
-          exec: sinon.stub().resolves({
-            _id: "1",
-            toJSON: sinon.stub().returns(expected),
-            likes: ["123", "456"],
-          }),
+          exec: sinon.stub().resolves(expected),
         }),
     });
 
@@ -102,6 +226,9 @@ describe("Test getRecommendation function", () => {
 
     expect(result).toBeDefined();
     expect(result.liked).toEqual(false);
+    expect(result.likesCount).toEqual(2);
+
+    expect(expected.toJSON).toHaveBeenCalled();
   });
 });
 
@@ -129,7 +256,11 @@ describe("Test createRecommendation function", () => {
     requestStub.resolves(null);
 
     await expect(
-      recommendationService.createRecommendation("123", {}, { _id: "678" })
+      recommendationService.createRecommendation({
+        requestId: "123",
+        data: {},
+        authenticatedUser: { _id: "678" },
+      })
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -139,11 +270,13 @@ describe("Test createRecommendation function", () => {
     });
 
     await expect(
-      recommendationService.createRecommendation(
-        "123",
-        {},
-        { _id: "678354154544" }
-      )
+      recommendationService.createRecommendation({
+        requestId: "123",
+        data: {},
+        authenticatedUser: {
+          _id: "678354154544",
+        },
+      })
     ).rejects.toThrow(ForbiddenError);
   });
 
@@ -163,15 +296,15 @@ describe("Test createRecommendation function", () => {
 
     recommendationStub.throws();
     await expect(
-      recommendationService.createRecommendation(
-        "123",
-        {
+      recommendationService.createRecommendation({
+        requestId: "123",
+        data: {
           field1: "field1",
           field2: "field2",
           field3: "field3",
         },
-        { _id: "678" }
-      )
+        authenticatedUser: { _id: "678" },
+      })
     ).rejects.toThrow();
 
     // Verify credit was called
@@ -200,22 +333,24 @@ describe("Test createRecommendation function", () => {
     mongooseStub.resolves(sessionStub);
 
     const expected = {
-      toJSON: sinon.stub().returnsThis(),
+      toJSON: jest.fn(),
     };
     recommendationStub.resolves(expected);
-    const result = await recommendationService.createRecommendation(
-      "123",
-      {
+    const result = await recommendationService.createRecommendation({
+      requestId: "123",
+      data: {
         field1: "field1",
         field2: "field2",
         field3: "field3",
       },
-      {
+      authenticatedUser: {
         _id: "678",
-      }
-    );
+      },
+    });
 
-    expect(result).toEqual(expected);
+    expect(result).toBeDefined();
+    expect(result.likesCount).toEqual(0);
+    expect(result.liked).toEqual(false);
 
     sinon.assert.calledOnce(recommendationStub);
     const savedArgs = recommendationStub.getCall(0).thisValue;
@@ -232,6 +367,8 @@ describe("Test createRecommendation function", () => {
     expect(sessionStub.commitTransaction).toHaveBeenCalled();
     expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
     expect(sessionStub.endSession).toHaveBeenCalled();
+
+    expect(expected.toJSON).toHaveBeenCalled();
   });
 });
 
@@ -249,40 +386,41 @@ describe("Test updateRecommendation function", () => {
     recommendationStub.resolves(null);
 
     await expect(
-      recommendationService.updateRecommendation(
-        "123",
-        "678",
-        {},
-        { _id: "789" }
-      )
+      recommendationService.updateRecommendation({
+        requestId: "123",
+        recommendationId: "456",
+        data: {},
+        authenticatedUser: { _id: "userId" },
+      })
     ).rejects.toThrow(NotFoundError);
   });
 
   it("Should return updated recommendation", async () => {
     const expected = {
+      likes: ["65df6cc757b41fec4d7c3055"],
       toJSON: sinon.stub().returnsThis(),
     };
     recommendationStub.resolves(expected);
 
-    const result = await recommendationService.updateRecommendation(
-      "123",
-      "recommendationId",
-      {
+    const result = await recommendationService.updateRecommendation({
+      requestId: "123",
+      recommendationId: "456",
+      data: {
         field1: "field1",
         field2: "field2",
         field3: "field3",
       },
-      {
-        _id: "userId",
-      }
-    );
+      authenticatedUser: {
+        _id: "65df6cc757b41fec4d7c3055",
+      },
+    });
 
-    expect(result).toEqual(expected);
+    expect(result).toBeDefined();
     sinon.assert.calledWith(
       recommendationStub,
       {
-        _id: "recommendationId",
-        user: "userId",
+        _id: "456",
+        user: "65df6cc757b41fec4d7c3055",
         request: "123",
       },
       {
@@ -292,6 +430,9 @@ describe("Test updateRecommendation function", () => {
       },
       { new: true }
     );
+
+    expect(result.liked).toEqual(false);
+    expect(result.likesCount).toEqual(1);
   });
 });
 
@@ -362,7 +503,10 @@ describe("Test likeRecommendation function", () => {
     });
 
     await expect(
-      recommendationService.likeRecommendation("123", { _id: "userId" })
+      recommendationService.likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -379,7 +523,10 @@ describe("Test likeRecommendation function", () => {
     });
 
     await expect(
-      recommendationService.likeRecommendation("123", { _id: "userId" })
+      recommendationService.likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
     ).rejects.toThrow(ForbiddenError);
   });
 
@@ -399,7 +546,10 @@ describe("Test likeRecommendation function", () => {
     });
 
     await expect(
-      recommendationService.likeRecommendation("123", { _id: "678354154544" })
+      recommendationService.likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "678354154544" },
+      })
     ).rejects.toThrow(ForbiddenError);
   });
 
@@ -419,7 +569,10 @@ describe("Test likeRecommendation function", () => {
         }),
     });
     await expect(
-      recommendationService.likeRecommendation("123", { _id: "userId" })
+      recommendationService.likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -454,7 +607,10 @@ describe("Test likeRecommendation function", () => {
     creditServiceStub.throws();
 
     await expect(
-      recommendationService.likeRecommendation("123", { _id: "userId" })
+      recommendationService.likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
     ).rejects.toThrow();
 
     //Verify transaction
@@ -500,8 +656,11 @@ describe("Test likeRecommendation function", () => {
     creditServiceStub.resolves();
     notificationServiceStub.resolves();
 
-    const result = await recommendationService.likeRecommendation("123", {
-      _id: "userId",
+    const result = await recommendationService.likeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "userId",
+      },
     });
 
     expect(result).toBeDefined();
@@ -564,8 +723,11 @@ describe("Test likeRecommendation function", () => {
     creditServiceStub.resolves();
     notificationServiceStub.resolves();
 
-    const result = await recommendationService.likeRecommendation("123", {
-      _id: "666666666666",
+    const result = await recommendationService.likeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "666666666666",
+      },
     });
 
     expect(result).toBeDefined();
@@ -607,7 +769,10 @@ describe("Test unlikeRecommendation function", () => {
     recommendationStub.resolves(null);
 
     await expect(
-      recommendationService.unlikeRecommendation("123", { _id: "678" })
+      recommendationService.unlikeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "678" },
+      })
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -628,7 +793,10 @@ describe("Test unlikeRecommendation function", () => {
     mongooseStub.resolves(sessionStub);
 
     await expect(
-      recommendationService.unlikeRecommendation("123", "678")
+      recommendationService.unlikeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "678" },
+      })
     ).rejects.toThrow();
 
     expect(sessionStub.startTransaction).toHaveBeenCalled();
@@ -654,8 +822,9 @@ describe("Test unlikeRecommendation function", () => {
     };
     mongooseStub.resolves(sessionStub);
 
-    const result = await recommendationService.unlikeRecommendation("123", {
-      _id: "678",
+    const result = await recommendationService.unlikeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: { _id: "678" },
     });
 
     expect(sessionStub.startTransaction).toHaveBeenCalled();
