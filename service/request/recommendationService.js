@@ -69,7 +69,25 @@ const getRecommendations = async ({
       totalPages: Math.ceil(totalResults / pageSize),
       totalResults,
     },
-    results: recommendations,
+    results: recommendations?.map((recommendation) => ({
+      id: recommendation._id,
+      user: {
+        id: recommendation.user[0]._id,
+        name: recommendation.user[0].name,
+        avatar: recommendation.user[0].avatar,
+      },
+      field1: recommendation.field1,
+      field2: recommendation.field2,
+      field3: recommendation.field3,
+      html: recommendation.html,
+      created_at: recommendation.created_at,
+      provider: {
+        name: recommendation.provider?.name,
+        icon: recommendation.provider?.icon,
+      },
+      likesCount: recommendation.likesCount,
+      liked: recommendation.liked,
+    })),
   };
 };
 
@@ -86,7 +104,7 @@ const getRecommendation = async ({ recommendationId, authenticatedUser }) => {
   if (!recommendation) throw new NotFoundError("Recommendation not found");
 
   return {
-    ...recommendation,
+    ...recommendation.toJSON(),
     liked: authenticatedUser
       ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
       : false,
@@ -133,7 +151,7 @@ const createRecommendation = async ({ requestId, data, authenticatedUser }) => {
     await session.commitTransaction();
 
     return {
-      ...savedRecommendation,
+      ...savedRecommendation.toJSON(),
       liked: false,
       likesCount: 0,
     };
@@ -167,7 +185,7 @@ const updateRecommendation = async ({
   if (!recommendation) throw new NotFoundError("Recommendation not found");
 
   return {
-    ...recommendation,
+    ...recommendation.toJSON(),
     liked: authenticatedUser
       ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
       : false,
@@ -227,13 +245,14 @@ const likeRecommendation = async ({ recommendationId, authenticatedUser }) => {
     // 5. Add like
     recommendation.likes.push(authenticatedUser._id);
 
-    // 6. Commit transaction
+    //6. Return result
+    const savedRecommendation = await recommendation.save();
+
+    // 7. Commit transaction
     await session.commitTransaction();
 
-    //7. Return result
-    const savedRecommendation = await recommendation.save();
     return {
-      ...savedRecommendation,
+      ...savedRecommendation.toJSON(),
       liked: true,
       likesCount: savedRecommendation.likes.length,
     };
@@ -272,7 +291,7 @@ const unlikeRecommendation = async ({
     //5. Return result
     const newRecommendation = await recommendation.save();
     return {
-      ...newRecommendation,
+      ...newRecommendation.toJSON(),
       liked: false,
       likesCount: newRecommendation.likes.length,
     };

@@ -23,18 +23,20 @@ describe("Test getRecommendations function", () => {
 
   it("Should return a list of recommendations with no logged user", async () => {
     const expected = {
-      _id: "1",
-      request: {
-        _id: "123",
-      },
-      user: {
-        _id: "123",
-        name: "name",
-      },
-      field1: "field1",
-      field2: "field2",
-      field3: "field3",
-      created_at: new Date(),
+      toJSON: () => ({
+        _id: "1",
+        request: {
+          _id: "123",
+        },
+        user: {
+          _id: "123",
+          name: "name",
+        },
+        field1: "field1",
+        field2: "field2",
+        field3: "field3",
+        created_at: new Date(),
+      }),
     };
 
     recommendationStub.returns({
@@ -100,18 +102,20 @@ describe("Test getRecommendations function", () => {
 
   it("Should return a list of recommendations with a logged user", async () => {
     const expected = {
-      _id: "1",
-      request: {
-        _id: "123",
-      },
-      user: {
-        _id: "123",
-        name: "name",
-      },
-      field1: "field1",
-      field2: "field2",
-      field3: "field3",
-      created_at: new Date(),
+      toJSON: () => ({
+        _id: "1",
+        request: {
+          _id: "123",
+        },
+        user: {
+          _id: "123",
+          name: "name",
+        },
+        field1: "field1",
+        field2: "field2",
+        field3: "field3",
+        created_at: new Date(),
+      }),
     };
 
     recommendationStub.returns({
@@ -206,6 +210,7 @@ describe("Test getRecommendation function", () => {
 
   it("Should return a recommendation", async () => {
     const expected = {
+      toJSON: jest.fn(),
       likes: ["123", "678"],
     };
     recommendationStub.returns({
@@ -222,6 +227,8 @@ describe("Test getRecommendation function", () => {
     expect(result).toBeDefined();
     expect(result.liked).toEqual(false);
     expect(result.likesCount).toEqual(2);
+
+    expect(expected.toJSON).toHaveBeenCalled();
   });
 });
 
@@ -325,7 +332,9 @@ describe("Test createRecommendation function", () => {
 
     mongooseStub.resolves(sessionStub);
 
-    const expected = {};
+    const expected = {
+      toJSON: jest.fn(),
+    };
     recommendationStub.resolves(expected);
     const result = await recommendationService.createRecommendation({
       requestId: "123",
@@ -358,6 +367,8 @@ describe("Test createRecommendation function", () => {
     expect(sessionStub.commitTransaction).toHaveBeenCalled();
     expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
     expect(sessionStub.endSession).toHaveBeenCalled();
+
+    expect(expected.toJSON).toHaveBeenCalled();
   });
 });
 

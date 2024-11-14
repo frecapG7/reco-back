@@ -8,8 +8,8 @@ router.get("", async (req, res, next) => {
     const result = await recommendationService.getRecommendations({
       requestId: req.params.requestId,
       sorted: req.query.sort || "likes",
-      pageSize: req.query.pageSize || 10,
-      pageNumber: req.query.pageNumber || 1,
+      pageSize: Number(req.query.pageSize) || 10,
+      pageNumber: Number(req.query.pageNumber) || 1,
       authenticatedUser: req.user,
     });
     res.status(200).json(result);
