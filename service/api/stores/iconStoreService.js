@@ -1,7 +1,4 @@
 const marketService = require("../../market/marketService");
-const creditService = require("../../market/creditService");
-const { IconPurchase } = require("../../../model/purchase/IconPurchase");
-const mongoose = require("mongoose");
 const { UnSupportedTypeError } = require("../../../errors/error");
 
 const getRecentsIcon = async ({ value, page, pageSize }) => {

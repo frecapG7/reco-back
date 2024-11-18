@@ -3,6 +3,7 @@ const supertest = require("supertest");
 
 const User = require("../../model/User");
 const userService = require("../../service/user/userService");
+const signup = require("../../service/api/users/signup");
 const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 
@@ -33,39 +34,35 @@ app.use("/users", require("./users"));
 app.use(handleError);
 
 describe("POST /users", () => {
-  let userServiceStub;
+  let signupStub;
   beforeEach(() => {
-    userServiceStub = sinon.stub(userService, "createUser");
+    signupStub = sinon.stub(signup, "signup");
   });
   afterEach(() => {
-    userServiceStub.restore();
+    signupStub.restore();
   });
 
   it("should return 201", async () => {
-    userServiceStub.resolves(
+    signupStub.resolves(
       new User({
         email: "test",
         name: "test",
       })
     );
 
-    const response = await supertest(app).post("/users?token=123").send({
-      email: "test",
+    const response = await supertest(app).post("/users/signup").send({
       name: "test",
       password: "test",
+      token: "123",
     });
 
     expect(response.status).toBe(201);
 
-    sinon.assert.calledWith(
-      userServiceStub,
-      {
-        email: "test",
-        name: "test",
-        password: "test",
-      },
-      String("123")
-    );
+    sinon.assert.calledWith(signupStub, {
+      name: "test",
+      password: "test",
+      token: "123",
+    });
   });
 });
 
