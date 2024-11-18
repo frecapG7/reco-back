@@ -3,6 +3,7 @@ const tokenService = require("../../token/tokenService");
 const mongoose = require("mongoose");
 const { ForbiddenError } = require("../../../errors/error");
 const userService = require("../../user/userService");
+const marketService = require("../../market/marketService");
 
 const signup = async ({ data }) => {
   //1 - a check token validity
@@ -40,6 +41,18 @@ const signup = async ({ data }) => {
   }
 };
 
+const getAvatars = async () => {
+  const page = await marketService.searchItems({
+    type: "IconItem",
+    additional: {
+      freeOnSignup: true,
+    },
+  });
+
+  return page?.results;
+};
+
 module.exports = {
   signup,
+  getAvatars,
 };

@@ -342,4 +342,55 @@ describe("Test searchItems", () => {
     expect(result.results).toBeDefined();
     expect(result.results.length).toEqual(1);
   });
+
+  it("Should return items with all arguments", async () => {
+    countDocumentsStub.resolves(10);
+    findStub.returns({
+      skip: () => ({
+        limit: () => ({
+          populate: sinon
+            .stub()
+            .withArgs("created_by")
+            .returns({
+              exec: () => [
+                {
+                  name: "name",
+                  label: "label",
+                  title: "title",
+                  description: "description",
+                  price: 10,
+                  disable: false,
+                  created_by: "12345",
+                },
+              ],
+            }),
+        }),
+      }),
+    });
+
+    const result = await searchItems({
+      value: "name",
+      type: "type",
+      freeOnSignup: true,
+      page: 2,
+      pageSize: 10,
+    });
+
+    expect(result).toBeDefined();
+    expect(result.pagination.currentPage).toEqual(2);
+    expect(result.pagination.totalPages).toEqual(1);
+    expect(result.pagination.totalResults).toEqual(10);
+    expect(result.results).toBeDefined();
+    expect(result.results.length).toEqual(1);
+
+    sinon.assert.calledWith(findStub, {
+      $or: [
+        { name: { $regex: "name", $options: "i" } },
+        { label: { $regex: "name", $options: "i" } },
+        { tags: { $in: ["name"] } },
+      ],
+      type: "type",
+      freeOnSignup: true,
+    });
+  });
 });

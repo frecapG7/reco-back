@@ -2,8 +2,10 @@ const tokenValidation = require("../../validation/tokenValidation");
 const tokenService = require("../../token/tokenService");
 const mongoose = require("mongoose");
 const userService = require("../../user/userService");
+const marketService = require("../../market/marketService");
+
 const sinon = require("sinon");
-const { signup } = require("./signup");
+const { signup, getAvatars } = require("./signup");
 
 describe("Test signup", () => {
   let validateTokenStub;
@@ -112,5 +114,43 @@ describe("Test signup", () => {
     expect(sessionStub.startTransaction).toHaveBeenCalled();
     expect(sessionStub.commitTransaction).toHaveBeenCalled();
     expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("Test getAvatars", () => {
+  let searchItemsStub;
+
+  beforeEach(() => {
+    searchItemsStub = sinon.stub(marketService, "searchItems");
+  });
+
+  afterEach(() => {
+    searchItemsStub.restore();
+  });
+
+  it("Should return results", async () => {
+    searchItemsStub.resolves({
+      pagination: {
+        page: 1,
+        totalPages: 1,
+        totalResults: 1,
+      },
+      results: [
+        {
+          _id: "3354az",
+          type: "IconItem",
+          url: "test",
+        },
+      ],
+    });
+
+    const results = await getAvatars();
+
+    expect(results?.length).toEqual(1);
+    expect(results[0]).toEqual({
+      _id: "3354az",
+      type: "IconItem",
+      url: "test",
+    });
   });
 });

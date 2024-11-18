@@ -82,6 +82,11 @@ const MarketIcon = MarketItem.discriminator(
       type: String,
       required: true,
     },
+    // If the icon is available on signup
+    freeOnSignup: {
+      type: Boolean,
+      default: false,
+    },
   }),
   options
 );

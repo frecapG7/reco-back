@@ -10,4 +10,5 @@ router.use(
 
 router.use("/:userId/purchases", require("./purchases"));
 
+router.use("/signup", require("./signup"));
 module.exports = router;

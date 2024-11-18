@@ -32,6 +32,11 @@ const PurchaseItemSchema = new mongoose.Schema(
         immutable: true,
         index: true,
       },
+      details: {
+        type: String,
+        required: false,
+        immutable: true,
+      },
     },
   },
   {

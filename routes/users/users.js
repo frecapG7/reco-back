@@ -9,17 +9,6 @@ const { ForbiddenError } = require("../../errors/error");
 const signup = require("../../service/api/users/signup");
 const passport = require("../../auth");
 
-/**
- * POST /user to create new user
- */
-router.post("/signup", async (req, res, next) => {
-  try {
-    const savedUser = await signup.signup(req.body);
-    return res.status(201).json(savedUser);
-  } catch (err) {
-    next(err);
-  }
-});
 
 /**
  * GET /user to get user by id
