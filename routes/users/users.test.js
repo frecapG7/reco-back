@@ -24,7 +24,7 @@ const passportStub = sinon
   .callsFake((strategy, options, callback) => {
     return (req, res, next) => {
       req.user = {
-        _id: new ObjectId("123456789123"),
+        _id: new ObjectId("65df6cc757b41fec4d7c3055"),
       };
       next();
     };
@@ -81,10 +81,12 @@ describe("PUT /users/:id", () => {
       id: 1,
     });
 
-    const response = await supertest(app).put("/users/123456789123").send({
-      email: "test",
-      name: "test",
-    });
+    const response = await supertest(app)
+      .put("/users/65df6cc757b41fec4d7c3055")
+      .send({
+        email: "test",
+        name: "test",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.id).toEqual(1);
@@ -114,7 +116,9 @@ describe("GET /users/:id/settings", () => {
       notifications: true,
     });
 
-    const response = await supertest(app).get("/users/123456789123/settings");
+    const response = await supertest(app).get(
+      "/users/65df6cc757b41fec4d7c3055/settings"
+    );
 
     expect(response.status).toBe(200);
     expect(response.body.lang).toEqual("en");
@@ -151,7 +155,7 @@ describe("PATCH /users/:id/settings", () => {
     });
 
     const response = await supertest(app)
-      .patch("/users/123456789123/settings")
+      .patch("/users/65df6cc757b41fec4d7c3055/settings")
       .send({
         lang: "en",
         theme: "light",
@@ -186,7 +190,7 @@ describe("DELETE /users/:id/settings", () => {
     });
 
     const response = await supertest(app)
-      .delete("/users/123456789123/settings")
+      .delete("/users/65df6cc757b41fec4d7c3055/settings")
       .send();
 
     expect(response.status).toBe(200);

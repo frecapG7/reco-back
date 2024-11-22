@@ -3,18 +3,14 @@ const User = require("../../../model/User");
 
 const purchaseService = require("../../market/purchaseService");
 
+const { verifySelfOrAdmin } = require("../../validation/privilegeValidation");
+
 const getPurchases = async ({ id, query, authenticatedUser }) => {
-  // 1 - Find user
+  // 1 - Verify authorization
+  verifySelfOrAdmin({ userId: id, authenticatedUser });
+  // 2 - Find user
   const user = await User.findById(id);
-
   if (!user) throw new NotFoundError(`Cannot find user with id ${id}`);
-
-  // 2 - Verify authorization
-  if (
-    !user._id.equals(authenticatedUser?.id) &&
-    user.settings.privacy.privateRequests
-  )
-    throw new ForbiddenError("User purchases are private");
 
   // 3 - Get purchases
   const results = await purchaseService.searchPurchases({
@@ -34,10 +30,7 @@ const getPurchases = async ({ id, query, authenticatedUser }) => {
 
 const getPurchase = async ({ id, purchaseId, authenticatedUser }) => {
   // 1 - Verify authorization
-  if (!authenticatedUser?._id.equals(id) && authenticatedUser?.role !== "ADMIN")
-    throw new ForbiddenError(
-      `User ${authenticatedUser?._id} is not allowed to see this purchase`
-    );
+  verifySelfOrAdmin({ userId: id, authenticatedUser });
 
   // 2 - Get Purchase
   const purchase = await purchaseService.getPurchase({
@@ -53,10 +46,7 @@ const getPurchase = async ({ id, purchaseId, authenticatedUser }) => {
 
 const redeemPurchase = async ({ id, purchaseId, authenticatedUser }) => {
   // 1 - Verify authorization
-  if (!authenticatedUser._id?.equals(id))
-    throw new ForbiddenError(
-      `User ${authenticatedUser._id} is not allowed to redeem this purchase`
-    );
+  verifySelfOrAdmin({ userId: id, authenticatedUser });
 
   // 2 - Get Purchase
   const purchase = await purchaseService.getPurchase({

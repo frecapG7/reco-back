@@ -17,45 +17,28 @@ describe("Test getPurchases", () => {
     findByIdStub.restore();
   });
 
+  it("Should return ForbiddenError", async () => {
+    await expect(getPurchases({ id: "123" })).rejects.toThrow(
+      "You are not authorized to perform this action"
+    );
+  });
+
   it("Should return NotFoundError", async () => {
     findByIdStub.returns(null);
 
     await expect(
       getPurchases({
         id: "123",
+        authenticatedUser: {
+          role: "ADMIN",
+        },
       })
     ).rejects.toThrow("Cannot find user with id 123");
   });
 
-  it("Should return ForbiddenError", async () => {
-    findByIdStub.returns({
-      _id: new ObjectId("123456789123"),
-      settings: {
-        privacy: {
-          privateRequests: true,
-        },
-      },
-    });
-
-    await expect(
-      getPurchases({
-        id: "123",
-        authenticatedUser: {
-          id: "456",
-        },
-      })
-    ).rejects.toThrow("User purchases are private");
-  });
-
-  it("Should return purchases", async () => {
-    findByIdStub.returns({
-      _id: new ObjectId("123456789123"),
-      settings: {
-        privacy: {
-          privateRequests: false,
-        },
-      },
-    });
+  it("Should return purchases with default values", async () => {
+    const user = sinon.mock();
+    findByIdStub.returns(user);
 
     const searchPurchases = sinon.stub(purchaseService, "searchPurchases");
 
@@ -63,7 +46,6 @@ describe("Test getPurchases", () => {
       pagination: {},
       results: [
         {
-          _id: "123",
           name: "Krishna the Wise",
           price: 10,
           url: "https://thisIsValidUrl.com",
@@ -74,13 +56,69 @@ describe("Test getPurchases", () => {
     const result = await getPurchases({
       id: "123",
       authenticatedUser: {
-        id: "123456789123",
+        role: "ADMIN",
       },
     });
 
     expect(result).toBeDefined();
     expect(result.results[0].name).toBe("Krishna the Wise");
     expect(result.results[0].price).toBe(10);
+
+    sinon.assert.calledWith(searchPurchases, {
+      user,
+      filters: {},
+      page: 1,
+      pageSize: 10,
+    });
+
+    searchPurchases.restore();
+  });
+
+  it("Should return purchases with all args", async () => {
+    const user = sinon.mock();
+    findByIdStub.returns(user);
+
+    const searchPurchases = sinon.stub(purchaseService, "searchPurchases");
+
+    searchPurchases.returns({
+      pagination: {},
+      results: [
+        {
+          name: "Krishna the Wise",
+          price: 10,
+          url: "https://thisIsValidUrl.com",
+        },
+      ],
+    });
+
+    const result = await getPurchases({
+      id: "123",
+      query: {
+        name: "Krishna the Wise",
+        status: "active,pending",
+        type: "subscription",
+        page: 1,
+        pageSize: 10,
+      },
+      authenticatedUser: {
+        role: "ADMIN",
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.results[0].name).toBe("Krishna the Wise");
+    expect(result.results[0].price).toBe(10);
+
+    sinon.assert.calledWith(searchPurchases, {
+      user,
+      filters: {
+        name: "Krishna the Wise",
+        status: ["active", "pending"],
+        type: ["subscription"],
+      },
+      page: 1,
+      pageSize: 10,
+    });
 
     searchPurchases.restore();
   });
@@ -96,14 +134,8 @@ describe("Test getPurchase", () => {
       getPurchase({
         id: "123",
         purchaseId: "456",
-        authenticatedUser: {
-          _id: new ObjectId("123456789123"),
-          role: "USER",
-        },
       })
-    ).rejects.toThrow(
-      "User 313233343536373839313233 is not allowed to see this purchase"
-    );
+    ).rejects.toThrow("You are not authorized to perform this action");
   });
 
   it("Should return purchase", async () => {
@@ -120,7 +152,6 @@ describe("Test getPurchase", () => {
       id: "123",
       purchaseId: "456",
       authenticatedUser: {
-        _id: new ObjectId("123456789123"),
         role: "ADMIN",
       },
     });
@@ -142,11 +173,8 @@ describe("Test redeemPurchase", () => {
       redeemPurchase({
         id: "123",
         purchaseId: "456",
-        authenticatedUser: {
-          _id: new ObjectId("123456789123"),
-        },
       })
-    ).rejects.toThrow("User 313233343536373839313233 is not allowed to redeem this purchase");
+    ).rejects.toThrow("You are not authorized to perform this action");
   });
 
   it("Should return NotFoundError", async () => {
@@ -157,7 +185,7 @@ describe("Test redeemPurchase", () => {
         id: "123456789123",
         purchaseId: "456",
         authenticatedUser: {
-          _id: new ObjectId("123456789123"),
+          role: "ADMIN",
         },
       })
     ).rejects.toThrow("Cannot find purchase with id 456");
@@ -174,7 +202,7 @@ describe("Test redeemPurchase", () => {
       id: "123456789123",
       purchaseId: "456",
       authenticatedUser: {
-        _id: new ObjectId("123456789123"),
+        role: "ADMIN",
       },
     });
 

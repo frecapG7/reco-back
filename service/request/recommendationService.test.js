@@ -266,7 +266,7 @@ describe("Test createRecommendation function", () => {
 
   it("Should throw a Forbidden", async () => {
     requestStub.resolves({
-      author: new ObjectId("678354154544"),
+      author: new ObjectId("65df6cc757b41fec4d7c3055"),
     });
 
     await expect(
@@ -274,7 +274,7 @@ describe("Test createRecommendation function", () => {
         requestId: "123",
         data: {},
         authenticatedUser: {
-          _id: "678354154544",
+          _id: "65df6cc757b41fec4d7c3055",
         },
       })
     ).rejects.toThrow(ForbiddenError);
@@ -282,7 +282,7 @@ describe("Test createRecommendation function", () => {
 
   it("Should rollback transaction", async () => {
     requestStub.resolves({
-      author: new ObjectId("678354154544"),
+      author: new ObjectId("65df6cc757b41fec4d7c3055"),
     });
 
     const sessionStub = {
@@ -319,7 +319,7 @@ describe("Test createRecommendation function", () => {
   it("Should create a recommendation", async () => {
     requestStub.resolves({
       _id: "123",
-      author: new ObjectId("678354154544"),
+      author: new ObjectId("65df6cc757b41fec4d7c3055"),
       requestType: "BOOK",
     });
 
@@ -539,7 +539,7 @@ describe("Test likeRecommendation function", () => {
           exec: sinon.stub().resolves({
             likes: ["anotherUserId"],
             user: {
-              _id: new ObjectId("678354154544"),
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
             },
           }),
         }),
@@ -548,7 +548,7 @@ describe("Test likeRecommendation function", () => {
     await expect(
       recommendationService.likeRecommendation({
         recommendationId: "123",
-        authenticatedUser: { _id: "678354154544" },
+        authenticatedUser: { _id: "65df6cc757b41fec4d7c3055" },
       })
     ).rejects.toThrow(ForbiddenError);
   });
@@ -563,7 +563,7 @@ describe("Test likeRecommendation function", () => {
             _id: "123",
             likes: ["anotherUserId"],
             user: {
-              _id: new ObjectId("678354154544"),
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
             },
           }),
         }),
@@ -586,7 +586,7 @@ describe("Test likeRecommendation function", () => {
             _id: "123",
             likes: ["anotherUserId"],
             user: {
-              _id: new ObjectId("678354154544"),
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
             },
             request: {
               _id: "requestId",
@@ -625,12 +625,12 @@ describe("Test likeRecommendation function", () => {
       _id: "123",
       likes: ["anotherUserId"],
       user: {
-        _id: new ObjectId("678354154544"),
+        _id: new ObjectId("65df6cc757b41fec4d7c3055"),
       },
       request: {
         _id: "requestId",
         author: {
-          _id: new ObjectId("666666666666"),
+          _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
         },
       },
       save: sinon.stub().resolvesThis(),
@@ -667,7 +667,7 @@ describe("Test likeRecommendation function", () => {
 
     sinon.assert.calledOnce(creditServiceStub);
     sinon.assert.calledWith(creditServiceStub, 1, {
-      _id: new ObjectId("678354154544"),
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
     });
 
     sinon.assert.calledOnce(notificationServiceStub);
@@ -699,12 +699,12 @@ describe("Test likeRecommendation function", () => {
             _id: "123",
             likes: ["anotherUserId"],
             user: {
-              _id: new ObjectId("678354154544"),
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
             },
             request: {
               _id: "requestId",
               author: {
-                _id: new ObjectId("666666666666"),
+                _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
               },
             },
             save: sinon.stub().resolvesThis(),
@@ -726,7 +726,7 @@ describe("Test likeRecommendation function", () => {
     const result = await recommendationService.likeRecommendation({
       recommendationId: "123",
       authenticatedUser: {
-        _id: "666666666666",
+        _id: "64dc8e5b6f16b11238c6f9a0",
       },
     });
 
@@ -734,13 +734,13 @@ describe("Test likeRecommendation function", () => {
 
     sinon.assert.calledOnce(creditServiceStub);
     sinon.assert.calledWith(creditServiceStub, 5, {
-      _id: new ObjectId("678354154544"),
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
     });
 
     sinon.assert.calledOnce(notificationServiceStub);
 
     expect(result.likes.length).toEqual(2);
-    expect(result.likes[1]).toEqual("666666666666");
+    expect(result.likes[1]).toEqual("64dc8e5b6f16b11238c6f9a0");
     expect(result.liked).toEqual(true);
 
     //Verify transaction
