@@ -7,6 +7,16 @@ const verifyAdmin = (user) => {
     );
 };
 
+const verifySelfOrAdmin = ({ userId, authenticatedUser }) => {
+  if (
+    !authenticatedUser?._id?.equals(userId) &&
+    authenticatedUser?.role !== "ADMIN"
+  )
+    throw new UnAuthorizedError(
+      "You are not authorized to perform this action"
+    );
+};
 module.exports = {
   verifyAdmin,
+  verifySelfOrAdmin,
 };

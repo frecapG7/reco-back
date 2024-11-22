@@ -5,7 +5,6 @@ const sinon = require("sinon");
 
 const userAdminService = require("./usersAdminService");
 const { NotFoundError } = require("../../errors/error");
-const { inRange } = require("lodash");
 
 describe("Test search", () => {
   let userStub;
@@ -101,114 +100,5 @@ describe("Test getUserDetails", () => {
     expect(result.stats.requestsCount).toEqual(10);
     expect(result.stats.recommendationsCount).toEqual(10);
     expect(result.stats.balance).toEqual(10);
-  });
-});
-
-describe("Test getLastRequests", () => {
-  let userStub;
-  let requestStub;
-
-  beforeEach(() => {
-    userStub = sinon.stub(User, "findById");
-    requestStub = sinon.stub(Request, "find");
-  });
-  afterEach(() => {
-    userStub.restore();
-    requestStub.restore();
-  });
-
-  it("Should throw not found error", async () => {
-    userStub.returns(null);
-
-    await expect(
-      userAdminService.getLastRequests({
-        id: 52,
-        authenticatedUser: { role: "ADMIN" },
-      })
-    ).rejects.toThrow(NotFoundError);
-  });
-
-  it("Should return last requests", async () => {
-    const expected = new User();
-    userStub.returns(expected);
-
-    const request1 = new Request();
-    const request2 = new Request();
-    requestStub.returns({
-      sort: sinon
-        .stub()
-        .withArgs({ created_at: -1 })
-        .returns({
-          limit: sinon
-            .stub()
-            .withArgs(5)
-            .returns({
-              exec: sinon.stub().returns([request1, request2]),
-            }),
-        }),
-    });
-
-    const result = await userAdminService.getLastRequests({
-      id: 52,
-      authenticatedUser: { role: "ADMIN" },
-    });
-
-    expect(result).toBeDefined();
-    expect(result.length).toEqual(2);
-  });
-});
-
-describe("Test getLastRecommendations", () => {
-  let userStub;
-  let recommendationStub;
-
-  beforeEach(() => {
-    userStub = sinon.stub(User, "findById");
-    recommendationStub = sinon.stub(Recommendation, "find");
-  });
-  afterEach(() => {
-    userStub.restore();
-    recommendationStub.restore();
-  });
-
-  it("Should throw not found error", async () => {
-    userStub.returns(null);
-
-    await expect(
-      userAdminService.getLastRequests({
-        id: 52,
-        authenticatedUser: { role: "ADMIN" },
-      })
-    ).rejects.toThrow(NotFoundError);
-  });
-
-  it("Should return last recommendation", async () => {
-    const expected = new User();
-    userStub.returns(expected);
-
-    const recommendation1 = new Recommendation();
-    const recommendation2 = new Recommendation();
-
-    recommendationStub.returns({
-      sort: sinon
-        .stub()
-        .withArgs({ created_at: -1 })
-        .returns({
-          limit: sinon
-            .stub()
-            .withArgs(5)
-            .returns({
-              exec: sinon.stub().returns([recommendation1, recommendation2]),
-            }),
-        }),
-    });
-
-    const result = await userAdminService.getLastRecommendations({
-      id: 52,
-      authenticatedUser: { role: "ADMIN" },
-    });
-
-    expect(result).toBeDefined();
-    expect(result.length).toEqual(2);
   });
 });

@@ -4,6 +4,7 @@ const RequestSchema = new mongoose.Schema({
   requestType: {
     type: String,
     required: true,
+    enum: ["BOOK", "SONG", "MOVIE"],
   },
   title: {
     type: String,

@@ -6,7 +6,7 @@ const userService = require("../../service/user/userService");
 
 const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
-
+const metrics = require("../../service/api/users/metrics");
 const passport = require("../../auth");
 const ObjectId = require("mongoose").Types.ObjectId;
 
@@ -32,7 +32,6 @@ const passportStub = sinon
 
 app.use("/users", require("./users"));
 app.use(handleError);
-
 
 describe("GET /users/:id", () => {
   let usersStub;
@@ -189,6 +188,52 @@ describe("DELETE /users/:id/settings", () => {
     const response = await supertest(app)
       .delete("/users/123456789123/settings")
       .send();
+
+    expect(response.status).toBe(200);
+  });
+});
+
+describe("GET /users/:id/metrics", () => {
+  let getMetricsStub;
+
+  beforeEach(() => {
+    getMetricsStub = sinon.stub(metrics, "getMetrics");
+  });
+
+  afterEach(() => {
+    getMetricsStub.restore();
+  });
+
+  it("Should return metrics", async () => {
+    getMetricsStub.resolves({
+      metrics: [],
+    });
+
+    const response = await supertest(app).get("/users/123456789123/metrics");
+
+    expect(response.status).toBe(200);
+  });
+});
+
+describe("GET /users/:id/balance", () => {
+  let getBalanceStub;
+
+  beforeEach(() => {
+    getBalanceStub = sinon.stub(metrics, "getBalance");
+  });
+
+  afterEach(() => {
+    getBalanceStub.restore();
+  });
+
+  it("Should return balance", async () => {
+    getBalanceStub.resolves({
+      balance: 52,
+    });
+
+    const response = await supertest(app).get(
+      "/users/123456789123/balance?detailled=true"
+    );
 
     expect(response.status).toBe(200);
   });

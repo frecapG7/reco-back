@@ -1,5 +1,4 @@
 const { NotFoundError, ForbiddenError } = require("../../../errors/error");
-const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 const User = require("../../../model/User");
 
 const purchaseService = require("../../market/purchaseService");

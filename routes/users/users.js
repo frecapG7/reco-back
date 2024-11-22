@@ -6,9 +6,9 @@ const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 const { ForbiddenError } = require("../../errors/error");
 
-const signup = require("../../service/api/users/signup");
-const passport = require("../../auth");
+const metrics = require("../../service/api/users/metrics");
 
+const passport = require("../../auth");
 
 /**
  * GET /user to get user by id
@@ -101,9 +101,13 @@ router.get(
   passport.authenticate(["bearer", "anonymous"], { session: false }),
   async (req, res, next) => {
     try {
-      const requests = await users.getLastRequests({
+      const requests = await users.getRequests({
         id: req.params.id,
         authenticatedUser: req.user,
+        search: req.query?.search,
+        type: req.query?.type,
+        pageSize: Number(req.query?.pageSize) || 10,
+        pageNumber: Number(req.query?.pageNumber) || 1,
       });
       return res.json(requests);
     } catch (err) {
@@ -117,11 +121,47 @@ router.get(
   passport.authenticate(["bearer", "anonymous"], { session: false }),
   async (req, res, next) => {
     try {
-      const recommendations = await users.getLastRecommendations({
+      const recommendations = await users.getRecommendations({
+        id: req.params.id,
+        authenticatedUser: req.user,
+        search: req.query?.search,
+        type: req.query?.type,
+        pageSize: Number(req.query?.pageSize) || 10,
+        pageNumber: Number(req.query?.pageNumber) || 1,
+      });
+      return res.json(recommendations);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/:id/metrics",
+  passport.authenticate(["bearer"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const result = await metrics.getMetrics({
         id: req.params.id,
         authenticatedUser: req.user,
       });
-      return res.json(recommendations);
+      return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+router.get(
+  "/:id/balance",
+  passport.authenticate(["bearer"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const result = await metrics.getBalance({
+        id: req.params.id,
+        detailled: req.query?.detailled,
+        authenticatedUser: req.user,
+      });
+      return res.json(result);
     } catch (err) {
       next(err);
     }

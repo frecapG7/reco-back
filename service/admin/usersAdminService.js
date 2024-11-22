@@ -47,17 +47,6 @@ const getUserDetails = async ({ userId, authenticatedUser }) => {
   };
 };
 
-const getLastRequests = async ({ id, authenticatedUser }) => {
-  verifyAdmin(authenticatedUser);
-
-  const user = await getUser(id);
-
-  return Request.find({ author: user._id })
-    .sort({ created_at: -1 })
-    .limit(5)
-    .exec();
-};
-
 const getLastRecommendations = async ({ id, authenticatedUser }) => {
   verifyAdmin(authenticatedUser);
 
@@ -104,6 +93,5 @@ const getUser = async (userId) => {
 module.exports = {
   search,
   getUserDetails,
-  getLastRequests,
   getLastRecommendations,
 };
