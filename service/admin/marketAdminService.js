@@ -80,7 +80,13 @@ const getMarketItem = async ({ itemId, authenticatedUser }) => {
  * @param {Number} page - page number
  * @param {Number} pageSize - page size
  */
-const searchItems = async ({ value, type, page = 1, pageSize = 25 }) => {
+const searchItems = async ({
+  value,
+  type,
+  freeOnSignup,
+  page = 1,
+  pageSize = 25,
+}) => {
   const query = {
     ...(value && {
       $or: [
@@ -90,6 +96,7 @@ const searchItems = async ({ value, type, page = 1, pageSize = 25 }) => {
       ],
     }),
     ...(type && { type }),
+    ...(!isNaN(freeOnSignup) && { freeOnSignup }),
   };
 
   const totalResults = await MarketItem.countDocuments(query);

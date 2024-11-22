@@ -23,20 +23,20 @@ describe("Test getRecommendations function", () => {
 
   it("Should return a list of recommendations with no logged user", async () => {
     const expected = {
-      toJSON: () => ({
-        _id: "1",
-        request: {
-          _id: "123",
-        },
-        user: {
+      _id: "1",
+      request: {
+        _id: "123",
+      },
+      field1: "field1",
+      field2: "field2",
+      field3: "field3",
+      created_at: new Date(),
+      user: [
+        {
           _id: "123",
           name: "name",
         },
-        field1: "field1",
-        field2: "field2",
-        field3: "field3",
-        created_at: new Date(),
-      }),
+      ],
     };
 
     recommendationStub.returns({
@@ -102,20 +102,20 @@ describe("Test getRecommendations function", () => {
 
   it("Should return a list of recommendations with a logged user", async () => {
     const expected = {
-      toJSON: () => ({
-        _id: "1",
-        request: {
-          _id: "123",
-        },
-        user: {
+      _id: "1",
+      request: {
+        _id: "123",
+      },
+      user: [
+        {
           _id: "123",
           name: "name",
         },
-        field1: "field1",
-        field2: "field2",
-        field3: "field3",
-        created_at: new Date(),
-      }),
+      ],
+      field1: "field1",
+      field2: "field2",
+      field3: "field3",
+      created_at: new Date(),
     };
 
     recommendationStub.returns({

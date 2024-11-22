@@ -17,7 +17,13 @@ const getItem = async ({ id }) => {
   return item;
 };
 
-const searchItems = async ({ value, type, page = 1, pageSize = 10 }) => {
+const searchItems = async ({
+  value,
+  type,
+  additional,
+  page = 1,
+  pageSize = 10,
+}) => {
   const query = {
     ...(value && {
       $or: [
@@ -27,6 +33,7 @@ const searchItems = async ({ value, type, page = 1, pageSize = 10 }) => {
       ],
     }),
     ...(type && { type }),
+    ...(additional && { ...additional }),
     enabled: true,
   };
 

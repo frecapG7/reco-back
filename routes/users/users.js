@@ -6,19 +6,9 @@ const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 const { ForbiddenError } = require("../../errors/error");
 
+const signup = require("../../service/api/users/signup");
 const passport = require("../../auth");
 
-/**
- * POST /user to create new user
- */
-router.post("", async (req, res, next) => {
-  try {
-    const savedUser = await userService.createUser(req.body, req.query?.token);
-    return res.status(201).json(savedUser);
-  } catch (err) {
-    next(err);
-  }
-});
 
 /**
  * GET /user to get user by id

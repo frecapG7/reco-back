@@ -44,6 +44,7 @@ router.get("/", async (req, res, next) => {
     const result = await marketAdminService.searchItems({
       value: req.query.value,
       type: req.query.type,
+      freeOnSignup: req.query.freeOnSignup,
       page: parseInt(req.query.page),
       pageSize: parseInt(req.query.pageSize),
     });

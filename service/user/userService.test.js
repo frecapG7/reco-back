@@ -2,146 +2,100 @@ const sinon = require("sinon");
 const User = require("../../model/User");
 const userService = require("./userService");
 const { NotFoundError, ForbiddenError } = require("../../errors/error");
-const mongoose = require("mongoose");
-const tokenValidation = require("../validation/tokenValidation");
-const tokenService = require("../token/tokenService");
 const userValidation = require("../validation/userValidation");
+const marketService = require("../market/marketService");
+const IconPurchase = require("../../model/purchase/IconPurchase");
 
 describe("Test createUser", () => {
-  let validateEmailStub;
   let validateUsernameStub;
-  let validateTokenStub;
-  let mongooseStub;
-  let getTokenStub;
-  let flagAsUsedStub;
   let userSaveStub;
+  let getItemStub;
+  let iconSaveStub;
 
   beforeEach(() => {
-    validateEmailStub = sinon.stub(userValidation, "validateEmailUnicity");
     validateUsernameStub = sinon.stub(
       userValidation,
       "validateUsernameUnicity"
     );
-    validateTokenStub = sinon.stub(tokenValidation, "validateToken");
-    mongooseStub = sinon.stub(mongoose, "startSession");
-    getTokenStub = sinon.stub(tokenService, "getToken");
-    flagAsUsedStub = sinon.stub(tokenService, "flagAsUsed");
     userSaveStub = sinon.stub(User.prototype, "save");
+    getItemStub = sinon.stub(marketService, "getItem");
+    iconSaveStub = sinon.stub(IconPurchase.prototype, "save");
   });
   afterEach(() => {
-    validateEmailStub.restore();
     validateUsernameStub.restore();
-    validateTokenStub.restore();
-    mongooseStub.restore();
-    getTokenStub.restore();
-    flagAsUsedStub.restore();
     userSaveStub.restore();
+    getItemStub.restore();
+    iconSaveStub.restore();
   });
 
-  it("Should reject on invalid token", async () => {
-    validateEmailStub.resolves();
-    validateUsernameStub.resolves();
-    validateTokenStub.resolves();
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
-
-    getTokenStub
-      .withArgs("3354az")
-      .resolves({ _id: "3354az", type: "INVALID" });
+  it("Should reject on invalid username", async () => {
+    validateUsernameStub.throws(new ForbiddenError("test"));
 
     await expect(
       userService.createUser(
         {
           name: "test",
-          email: "test",
           password: "test",
         },
         "3354az"
       )
     ).rejects.toThrow(ForbiddenError);
-
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
   });
 
-  it("Should rollback transaction", async () => {
-    validateEmailStub.resolves();
+  it("Should reject on password mismatch", async () => {
     validateUsernameStub.resolves();
-    validateTokenStub.resolves();
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
-
-    getTokenStub.resolves({ _id: "3354az", type: "ACCOUNT_CREATION" });
-    flagAsUsedStub.withArgs({ _id: "3354az" }).resolves();
-
-    userSaveStub.throws(new Error("test"));
 
     await expect(
       userService.createUser(
         {
           name: "test",
-          email: "test",
           password: "test",
+          confirmPassword: "test2",
         },
         "3354az"
       )
-    ).rejects.toThrow(Error);
+    ).rejects.toThrow(ForbiddenError);
+  });
 
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
+  it("Should reject on invalid icon", async () => {
+    validateUsernameStub.resolves();
+
+    getItemStub.resolves({
+      type: "ConsumableItem",
+      enabled: false,
+      freeOnSignup: false,
+    });
+
+    await expect(
+      userService.createUser({
+        name: "test",
+        password: "test",
+        confirmPassword: "test",
+        icon_id: "123",
+      })
+    ).rejects.toThrow("Invalid icon");
   });
 
   it("Should test happy path", async () => {
-    validateEmailStub.resolves();
     validateUsernameStub.resolves();
-    validateTokenStub.resolves();
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
-
-    getTokenStub.resolves({ _id: "3354az", type: "ACCOUNT_CREATION" });
-    flagAsUsedStub.withArgs({ _id: "3354az" }).resolves();
-
-    userSaveStub.resolves({ _id: "123" });
-
-    const result = await userService.createUser(
-      {
-        name: "test",
-        email: "test",
-        password: "test",
-      },
-      "3354az"
-    );
-
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
-
-    expect(result).toEqual({
-      _id: "123",
+    getItemStub.resolves({
+      type: "IconItem",
+      enabled: true,
+      freeOnSignup: true,
+      url: "test",
     });
+
+    userSaveStub.resolvesThis();
+    iconSaveStub.resolvesThis();
+
+    const result = await userService.createUser({
+      name: "test",
+      password: "test",
+      confirmPassword: "test",
+      icon_id: "123",
+    });
+
+    expect(result).toBeDefined();
   });
 });
 

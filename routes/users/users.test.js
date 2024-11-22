@@ -3,6 +3,7 @@ const supertest = require("supertest");
 
 const User = require("../../model/User");
 const userService = require("../../service/user/userService");
+
 const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 
@@ -32,42 +33,6 @@ const passportStub = sinon
 app.use("/users", require("./users"));
 app.use(handleError);
 
-describe("POST /users", () => {
-  let userServiceStub;
-  beforeEach(() => {
-    userServiceStub = sinon.stub(userService, "createUser");
-  });
-  afterEach(() => {
-    userServiceStub.restore();
-  });
-
-  it("should return 201", async () => {
-    userServiceStub.resolves(
-      new User({
-        email: "test",
-        name: "test",
-      })
-    );
-
-    const response = await supertest(app).post("/users?token=123").send({
-      email: "test",
-      name: "test",
-      password: "test",
-    });
-
-    expect(response.status).toBe(201);
-
-    sinon.assert.calledWith(
-      userServiceStub,
-      {
-        email: "test",
-        name: "test",
-        password: "test",
-      },
-      String("123")
-    );
-  });
-});
 
 describe("GET /users/:id", () => {
   let usersStub;

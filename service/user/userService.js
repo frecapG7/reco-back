@@ -2,49 +2,47 @@ const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const User = require("../../model/User");
 
 const userValidation = require("../validation/userValidation");
-const tokenValidation = require("../validation/tokenValidation");
+const marketService = require("../market/marketService");
+const IconPurchase = require("../../model/purchase/IconPurchase");
 
-const tokenService = require("../token/tokenService");
+const createUser = async ({ name, password, confirmPassword, icon_id }) => {
+  // 1 - a verify username is unique
+  await userValidation.validateUsernameUnicity(name);
+  // 1 - b verify password match
+  if (password !== confirmPassword)
+    throw new ForbiddenError("password do not match");
 
-const mongoose = require("mongoose");
+  // 1 - c verify icon
+  const iconItem = await marketService.getItem({ id: icon_id });
+  if (
+    iconItem.type !== "IconItem" ||
+    !iconItem.enabled ||
+    !iconItem.freeOnSignup
+  )
+    throw new ForbiddenError("Invalid icon");
 
-const historyService = require("./usersHistoryService");
+  // 2 - Create user
+  const newUser = new User({
+    name,
+    avatar: iconItem.url,
+  });
+  newUser.setPassword(password);
+  const savedUser = await newUser.save();
 
-const createUser = async (data, tokenValue) => {
-  //1 - Apply validations
-  await Promise.all([
-    userValidation.validateEmailUnicity(data.email),
-    userValidation.validateUsernameUnicity(data.name),
-    tokenValidation.validateToken(tokenValue),
-  ]);
+  // 3 - Attach purchase
+  const purchase = new IconPurchase({
+    name: iconItem.name,
+    user: savedUser._id,
+    item: iconItem._id,
+    icon: iconItem.url,
+    payment_details: {
+      price: 0,
+      details: "Free on signup",
+    },
+  });
+  await purchase.save();
 
-  // 2 - Open transaction
-  let session;
-  try {
-    session = await mongoose.startSession();
-    session.startTransaction();
-
-    // 3 - a - Burn token
-    const token = await tokenService.getToken(tokenValue);
-    if (token.type !== "ACCOUNT_CREATION")
-      throw new ForbiddenError("Invalid token");
-    await tokenService.flagAsUsed(token);
-
-    const newUser = new User({
-      name: data.name,
-      email: data.email,
-    });
-    // 3 - b - Create user
-    newUser.setPassword(data.password);
-    const savedUser = await newUser.save();
-    await session.commitTransaction();
-    return savedUser;
-  } catch (err) {
-    await session?.abortTransaction();
-    throw err;
-  } finally {
-    await session?.endSession();
-  }
+  return savedUser;
 };
 
 const updateUser = async (id, data) => {
