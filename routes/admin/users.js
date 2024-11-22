@@ -3,7 +3,6 @@ const router = express.Router({ mergeParams: true });
 const {
   search,
   getUserDetails,
-  getLastRequests,
   getLastRecommendations,
 } = require("../../service/admin/usersAdminService");
 const passport = require("../../auth");
@@ -44,29 +43,5 @@ router.get(
     }
   }
 );
-
-router.get("/:userId/requests", async (req, res, next) => {
-  try {
-    const request = await getLastRequests({
-      id: req.params.userId,
-      authenticatedUser: req.user,
-    });
-    return res.status(200).json(request);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get("/:userId/recommendations", async (req, res, next) => {
-  try {
-    const recommendation = await getLastRecommendations({
-      id: req.params.userId,
-      authenticatedUser: req.user,
-    });
-    return res.status(200).json(recommendation);
-  } catch (error) {
-    next(error);
-  }
-});
 
 module.exports = router;

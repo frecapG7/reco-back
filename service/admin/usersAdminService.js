@@ -47,17 +47,6 @@ const getUserDetails = async ({ userId, authenticatedUser }) => {
   };
 };
 
-const getLastRecommendations = async ({ id, authenticatedUser }) => {
-  verifyAdmin(authenticatedUser);
-
-  const user = await getUser(id);
-
-  return Recommendation.find({ user: user._id })
-    .sort({ created_at: -1 })
-    .limit(5)
-    .exec();
-};
-
 /********************************************************
  *                   PROTECTED FUNCTIONS                *
  * ***************************************************
@@ -93,5 +82,4 @@ const getUser = async (userId) => {
 module.exports = {
   search,
   getUserDetails,
-  getLastRecommendations,
 };
