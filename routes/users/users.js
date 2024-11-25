@@ -123,13 +123,21 @@ router.get(
     try {
       const recommendations = await users.getRecommendations({
         id: req.params.id,
+        query: req.query,
         authenticatedUser: req.user,
-        search: req.query?.search,
-        type: req.query?.type,
-        pageSize: Number(req.query?.pageSize) || 10,
-        pageNumber: Number(req.query?.pageNumber) || 1,
       });
       return res.json(recommendations);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/:id/purchases",
+  passport.authenticate(["bearer"], { session: false }),
+  async (req, res, next) => {
+    try {
     } catch (err) {
       next(err);
     }

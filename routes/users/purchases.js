@@ -4,7 +4,7 @@ const purchase = require("../../service/api/users/purchases");
 
 router.get(
   "",
-  passport.authenticate(["bearer", "anonymous"], { session: false }),
+  passport.authenticate(["bearer"], { session: false }),
   async (req, res, next) => {
     try {
       const result = await purchase.getPurchases({

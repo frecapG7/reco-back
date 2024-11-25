@@ -14,7 +14,7 @@ const searchRecommendations = async ({
   pageNumber = 1,
   sort = { created_at: -1 },
 }) => {
-  const results = await Recommendation.find({
+  const filters = {
     ...(!showDuplicates && { duplicate_from: null }),
     $or: [
       { field1: { $regex: search, $options: "i" } },
@@ -23,21 +23,34 @@ const searchRecommendations = async ({
     ],
     ...(user && { user }),
     ...(requestType && { requestType }),
-  })
+  };
+
+  const totalResults = await Recommendation.countDocuments(filters);
+  const pageResult = await Recommendation.find(filters)
     .skip((pageNumber - 1) * pageSize)
     .limit(pageSize)
     .sort(sort)
     .exec();
 
-  return results.map((result) => ({
-    id: result._id,
-    field1: result.field1,
-    field2: result.field2,
-    field3: result.field3,
-    html: result.html,
-    displayName: `${result.field1} - ${result.field2}`,
-    provider: result.provider,
-  }));
+  return {
+    pagination: {
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalResults / pageSize),
+      totalResults,
+    },
+    results: pageResult.map((result) => ({
+      id: result._id,
+      field1: result.field1,
+      field2: result.field2,
+      field3: result.field3,
+      html: result.html,
+      displayName: `${result.field1} - ${result.field2}`,
+      provider: result.provider,
+      createdAt: result.created_at,
+      requestType: result.requestType,
+      likes: result.likes?.length || 0,
+    })),
+  };
 };
 
 module.exports = {

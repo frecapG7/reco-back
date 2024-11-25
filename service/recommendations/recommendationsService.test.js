@@ -5,16 +5,20 @@ const sinon = require("sinon");
 const { search } = require("../request/requestService");
 
 describe("Validate searchRecommendations", () => {
+  let countStub;
   let findStub;
 
   beforeEach(() => {
+    countStub = sinon.stub(Recommendation, "countDocuments");
     findStub = sinon.stub(Recommendation, "find");
   });
   afterEach(() => {
+    countStub.restore();
     findStub.restore();
   });
 
   it("Should test with default value", async () => {
+    countStub.returns(1);
     findStub.returns({
       skip: sinon
         .stub()
@@ -42,16 +46,20 @@ describe("Validate searchRecommendations", () => {
         }),
     });
 
-    const results = await searchRecommendations({
+    const pageResult = await searchRecommendations({
       requestType: "requestType",
     });
 
-    expect(results.length).toEqual(1);
-    expect(results[0].id).toEqual("123");
-    expect(results[0].field1).toEqual("field1");
-    expect(results[0].field2).toEqual("field2");
-    expect(results[0].field3).toEqual("field3");
-    expect(results[0].html).toEqual("html");
+    expect(pageResult.pagination.currentPage).toEqual(1);
+    expect(pageResult.pagination.totalPages).toEqual(1);
+    expect(pageResult.pagination.totalResults).toEqual(1);
+
+    expect(pageResult.results.length).toEqual(1);
+    expect(pageResult.results[0].id).toEqual("123");
+    expect(pageResult.results[0].field1).toEqual("field1");
+    expect(pageResult.results[0].field2).toEqual("field2");
+    expect(pageResult.results[0].field3).toEqual("field3");
+    expect(pageResult.results[0].html).toEqual("html");
 
     sinon.assert.calledWith(findStub, {
       duplicate_from: null,
@@ -65,6 +73,7 @@ describe("Validate searchRecommendations", () => {
   });
 
   it("Should test with all args value", async () => {
+    countStub.returns(1);
     findStub.returns({
       skip: sinon
         .stub()
@@ -94,7 +103,7 @@ describe("Validate searchRecommendations", () => {
 
     const user = sinon.mock();
 
-    const results = await searchRecommendations({
+    const pageResult = await searchRecommendations({
       requestType: "requestType",
       search: "search",
       showDuplicates: true,
@@ -103,12 +112,16 @@ describe("Validate searchRecommendations", () => {
       pageNumber: 2,
     });
 
-    expect(results.length).toEqual(1);
-    expect(results[0].id).toEqual("123");
-    expect(results[0].field1).toEqual("field1");
-    expect(results[0].field2).toEqual("field2");
-    expect(results[0].field3).toEqual("field3");
-    expect(results[0].html).toEqual("html");
+    expect(pageResult.pagination.currentPage).toEqual(2);
+    expect(pageResult.pagination.totalPages).toEqual(1);
+    expect(pageResult.pagination.totalResults).toEqual(1);
+
+    expect(pageResult.results.length).toEqual(1);
+    expect(pageResult.results[0].id).toEqual("123");
+    expect(pageResult.results[0].field1).toEqual("field1");
+    expect(pageResult.results[0].field2).toEqual("field2");
+    expect(pageResult.results[0].field3).toEqual("field3");
+    expect(pageResult.results[0].html).toEqual("html");
 
     sinon.assert.calledWith(findStub, {
       $or: [

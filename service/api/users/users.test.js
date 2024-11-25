@@ -242,7 +242,7 @@ describe("Test getRecommendations", () => {
     );
   });
 
-  it("Should return recommendations", async () => {
+  it("Should return recommendations with no args", async () => {
     const user = new User({
       _id: "123",
       settings: {
@@ -264,8 +264,6 @@ describe("Test getRecommendations", () => {
 
     const result = await getRecommendations({
       id: "123",
-      pageSize: 10,
-      pageNumber: 1,
     });
 
     expect(result).toBeDefined();
@@ -275,10 +273,58 @@ describe("Test getRecommendations", () => {
     sinon.assert.calledWith(searchRecommendationsStub, {
       requestType: undefined,
       search: undefined,
+      showDuplicates: true,
       user,
-      isDuplicate: true,
-      pageSize: 10,
+      pageSize: NaN,
+      pageNumber: NaN,
+      sort: { created_at: -1 },
+    });
+  });
+  it("Should return recommendations with query", async () => {
+    const user = new User({
+      _id: "123",
+      settings: {
+        privacy: {
+          privateRequests: false,
+        },
+      },
+    });
+    userFindByIdStub.resolves(user);
+
+    searchRecommendationsStub.returns({
+      pagination: {
+        total: 0,
+        pageSize: 10,
+        pageNumber: 1,
+      },
+      results: [],
+    });
+
+    const result = await getRecommendations({
+      id: "123",
+      query: {
+        pageSize: 10,
+        pageNumber: 1,
+        search: "test",
+        type: "test",
+        pageNumber: 1,
+        pageSize: 58,
+        sort: "likes_asc",
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.pagination.total).toEqual(0);
+
+    sinon.assert.calledWith(userFindByIdStub, "123");
+    sinon.assert.calledWith(searchRecommendationsStub, {
+      requestType: "test",
+      search: "test",
+      showDuplicates: true,
+      user,
+      pageSize: 58,
       pageNumber: 1,
+      sort: { likes: 1 },
     });
   });
 });

@@ -197,6 +197,35 @@ describe("DELETE /users/:id/settings", () => {
   });
 });
 
+describe("GET /users/:id/recommendations", () => {
+  let getRecommendationsStub;
+
+  beforeEach(() => {
+    getRecommendationsStub = sinon.stub(users, "getRecommendations");
+  });
+
+  afterEach(() => {
+    getRecommendationsStub.restore();
+  });
+
+  it("Should return recommendations", async () => {
+    getRecommendationsStub.resolves({
+      pagination: {},
+      results: [
+        {
+          id: 1,
+        },
+      ],
+    });
+
+    const response = await supertest(app).get(
+      "/users/123456789123/recommendations"
+    );
+
+    expect(response.status).toBe(200);
+  });
+});
+
 describe("GET /users/:id/metrics", () => {
   let getMetricsStub;
 

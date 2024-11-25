@@ -60,16 +60,7 @@ const getRequests = async ({
   return page;
 };
 
-const getRecommendations = async ({
-  id,
-  pageSize,
-  pageNumber,
-  search,
-  type,
-  sort,
-  query,
-  authenticatedUser,
-}) => {
+const getRecommendations = async ({ id, query, authenticatedUser }) => {
   // 1 - Get user
   const user = await User.findById(id);
   if (!user) throw new NotFoundError("User not found");
@@ -83,13 +74,22 @@ const getRecommendations = async ({
 
   // 2 - Get last requests
   return await recommendationsService.searchRecommendations({
-    requestType: type,
-    search,
+    requestType: query?.type,
+    search: query?.search,
+    showDuplicates: true,
     user,
-    isDuplicate: true,
-    pageSize,
-    pageNumber,
+    pageSize: parseInt(query?.pageSize),
+    pageNumber: parseInt(query?.pageNumber),
+    sort: getSort(query?.sort),
   });
+};
+
+const getSort = (sort) => {
+  if (sort === "likes_asc") return { likes: 1 };
+  if (sort === "likes_desc") return { likes: -1 };
+  if (sort === "created_asc") return { created_at: 1 };
+  if (sort === "created_desc") return { created_at: -1 };
+  return { created_at: -1 };
 };
 
 module.exports = {
