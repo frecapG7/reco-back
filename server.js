@@ -16,7 +16,7 @@ app.use(cors());
 // app.use(pino());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use("/", routes);
+app.use("/api", routes);
 app.use(handleError);
 
 // Passport will manage authentication
