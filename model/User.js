@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const crypto = require("crypto");
 
 const constants = require("../constants");
+const Follow = require("./users/Follow");
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -67,6 +68,7 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  follows: [Follow],
 });
 
 // Method to set salt and hash password for user
@@ -97,6 +99,11 @@ UserSchema.methods.toJSON = function () {
     avatar: this.avatar,
     balance: this.balance,
     created: this.created,
+    privacy: {
+      privateRequests: this.settings.privacy.privateRequests,
+      privateRecommendations: this.settings.privacy.privateRecommendations,
+      privateFollows: this.settings.privacy.privateFollows,
+    },
   };
 };
 

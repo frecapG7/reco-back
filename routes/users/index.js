@@ -7,6 +7,11 @@ router.use(
   passport.authenticate("bearer", { session: false }),
   require("./notifications")
 );
+router.use(
+  "/:userId/follows",
+  passport.authenticate("bearer", { session: false }),
+  require("./follows")
+);
 
 router.use("/:userId/purchases", require("./purchases"));
 
