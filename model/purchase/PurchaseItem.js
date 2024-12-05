@@ -45,6 +45,33 @@ const PurchaseItemSchema = new mongoose.Schema(
   }
 );
 
+PurchaseItemSchema.methods.toJSON = function () {
+  return {
+    id: this._id,
+    name: this.name,
+    ...(this.populated("item") && {
+      item: {
+        id: this.item._id,
+        name: this.item.name,
+        label: this.item.label,
+        type: this.item.type,
+        description: this.item.description,
+      },
+    }),
+    type: this.type, // This is the discriminator key
+    ...(this.type === "IconPurchase" && {
+      icon: this.icon,
+    }),
+    ...(this.type === "ConsumablePurchase" && {
+      used: this.used,
+      used_at: this.used_at,
+    }),
+    payment_details: this.payment_details,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+  };
+};
+
 const PurchaseItem = mongoose.model("PurchaseItem", PurchaseItemSchema);
 
 module.exports = PurchaseItem;

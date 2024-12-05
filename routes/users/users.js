@@ -133,16 +133,6 @@ router.get(
   }
 );
 
-router.get(
-  "/:id/purchases",
-  passport.authenticate(["bearer"], { session: false }),
-  async (req, res, next) => {
-    try {
-    } catch (err) {
-      next(err);
-    }
-  }
-);
 
 router.get(
   "/:id/metrics",

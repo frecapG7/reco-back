@@ -146,6 +146,7 @@ describe("Test getPurchase", () => {
         price: 10,
         purchased_at: new Date(),
       },
+      populate: sinon.stub().resolvesThis(),
     });
 
     const result = await getPurchase({
@@ -160,6 +161,8 @@ describe("Test getPurchase", () => {
     expect(result.name).toBe("Krishna the Wise");
     expect(result.payment_details).toBeDefined();
     expect(result.payment_details.price).toBe(10);
+
+    sinon.assert.calledWith(result.populate, "item");
   });
 });
 

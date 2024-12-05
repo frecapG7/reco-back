@@ -40,6 +40,8 @@ const getPurchase = async ({ id, purchaseId, authenticatedUser }) => {
 
   if (!purchase)
     throw new NotFoundError(`Cannot find purchase with id ${purchaseId}`);
+  // 3 - Populate item field
+  await purchase.populate("item");
 
   return purchase;
 };
