@@ -1,9 +1,14 @@
 const sinon = require("sinon");
 const User = require("../../../model/User");
-const ObjectId = require("mongoose").Types.ObjectId;
 
-const { getPurchases, getPurchase, redeemPurchase } = require("./purchases");
+const {
+  getPurchases,
+  getPurchase,
+  redeemPurchase,
+  createPurchase,
+} = require("./purchases");
 const purchaseService = require("../../market/purchaseService");
+const marketService = require("../../market/marketService");
 const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 
 const getPurchaseStub = sinon.stub(purchaseService, "getPurchase");
@@ -215,5 +220,101 @@ describe("Test redeemPurchase", () => {
     });
 
     redeemStub.restore();
+  });
+});
+
+describe("Test createPurchase", () => {
+  let findByIdStub;
+  let getItemStub;
+  beforeEach(() => {
+    findByIdStub = sinon.stub(User, "findById");
+    getItemStub = sinon.stub(marketService, "getItem");
+  });
+  afterEach(() => {
+    findByIdStub.restore();
+    getItemStub.restore();
+  });
+
+  it("Should return ForbiddenError", async () => {
+    await expect(createPurchase({ id: "123" })).rejects.toThrow(
+      "You are not authorized to perform this action"
+    );
+  });
+
+  it("Should return NotFoundError", async () => {
+    findByIdStub.returns(null);
+
+    await expect(
+      createPurchase({
+        id: "123",
+        authenticatedUser: {
+          role: "ADMIN",
+        },
+      })
+    ).rejects.toThrow("Cannot find user with id 123");
+  });
+
+  it("Should return a market item not found error", async () => {
+    findByIdStub.returns({});
+
+    getItemStub.returns({
+      enabled: false,
+    });
+    await expect(
+      createPurchase({
+        id: "123",
+        purchase: {
+          item: {
+            id: "456",
+          },
+        },
+        authenticatedUser: {
+          role: "ADMIN",
+        },
+      })
+    ).rejects.toThrow("Cannot find store item with id 456");
+
+    sinon.assert.calledWith(getItemStub, {
+      id: "456",
+    });
+  });
+
+  it("Should return a new purchase", async () => {
+    findByIdStub.returns({});
+
+    getItemStub.returns({
+      enabled: true,
+    });
+
+    const buyItemStub = sinon.stub(marketService, "buyItem").resolves({
+      name: "Krishna the Wise",
+      price: 10,
+      quantity: 1,
+    });
+
+    const result = await createPurchase({
+      id: "123",
+      purchase: {
+        item: {
+          id: "456",
+        },
+        quantity: 1,
+      },
+      authenticatedUser: {
+        role: "ADMIN",
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.name).toBe("Krishna the Wise");
+    expect(result.quantity).toBe(1);
+
+    sinon.assert.calledWith(buyItemStub, {
+      marketItem: {
+        enabled: true,
+      },
+      quantity: 1,
+      user: {},
+    });
   });
 });

@@ -7,12 +7,10 @@ const mongoose = require("mongoose");
 const creditService = require("./creditService");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
+const PurchaseItem = require("../../model/purchase/PurchaseItem");
 const getItem = async ({ id }) => {
   const item = await MarketItem.findById(id);
   if (!item) throw new NotFoundError("Cannot find market item");
-
-  if (!item?.enabled)
-    throw new UnprocessableEntityError("Cannot read disabled item");
 
   return item;
 };
@@ -53,16 +51,22 @@ const searchItems = async ({
   };
 };
 
-const buyItem = async ({ marketItem, user }) => {
+const buyItem = async ({ marketItem, quantity = 1, user }) => {
   let session;
   try {
     session = await mongoose.startSession();
 
     session.startTransaction();
 
-    await creditService.removeCredit(marketItem.price, user);
+    await creditService.removeCredit(quantity * marketItem.price, user);
 
-    const purchase = buildPurchaseItem(marketItem, user);
+    let purchase = await PurchaseItem.find({
+      user: user,
+      item: marketItem,
+    });
+    if (!purchase) purchase = buildPurchaseItem(marketItem, user);
+
+    purchase.quantity += quantity;
 
     const savedPurchase = await purchase.save();
 
@@ -80,8 +84,8 @@ const buyItem = async ({ marketItem, user }) => {
 const buildPurchaseItem = (marketItem, user) => {
   const basePurchase = {
     name: marketItem.name,
-    user: user._id,
-    item: marketItem._id,
+    user: user,
+    item: marketItem,
     payment_details: {
       price: marketItem.price,
     },

@@ -2,7 +2,8 @@ const sinon = require("sinon");
 
 const marketService = require("../../market/marketService");
 
-const { getRecentsIcon, buyIcon } = require("./iconStoreService");
+const { getRecentsIcon, getIcon } = require("./iconStoreService");
+const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 
 describe("Test getRecentsIcon", () => {
   let searchItemsStub;
@@ -35,18 +36,15 @@ describe("Test getRecentsIcon", () => {
   });
 });
 
-describe("Test buyIcon", () => {
+describe("Test getIcon", () => {
   let getItemStub;
-  let buyItemStub;
 
   beforeEach(() => {
     getItemStub = sinon.stub(marketService, "getItem");
-    buyItemStub = sinon.stub(marketService, "buyItem");
   });
 
   afterEach(() => {
     getItemStub.restore();
-    buyItemStub.restore();
   });
 
   it("Should throw a UnSupportedTypeError", async () => {
@@ -55,62 +53,97 @@ describe("Test buyIcon", () => {
         id: "123",
       })
       .returns({
+        _id: "123",
         type: "NotIconItem",
       });
 
     await expect(
-      buyIcon({
+      getIcon({
         id: "123",
       })
     ).rejects.toThrow("Item 123 is not an IconItem");
   });
 
-  it("Should buy icon", async () => {
+  it("Should thrown UnprocessableEntityError", async () => {
     getItemStub
       .withArgs({
         id: "123",
       })
       .returns({
-        _id: "12345qs4365465345",
+        _id: "123",
         type: "IconItem",
-        name: "Krishna the Wise",
-        price: 10,
-        url: "https://thisIsValidUrl.com",
+        enabled: false,
       });
 
-    buyItemStub
+    await expect(
+      getIcon({
+        id: "123",
+      })
+    ).rejects.toThrow("Cannot read disabled icon");
+  });
+
+  it("Should test happy path with no authenticated user", async () => {
+    getItemStub
       .withArgs({
-        marketItem: {
-          _id: "12345qs4365465345",
-          type: "IconItem",
-          name: "Krishna the Wise",
-          price: 10,
-          url: "https://thisIsValidUrl.com",
-        },
-        user: {
-          _id: "536476465478458aefze",
-        },
+        id: "123",
       })
       .returns({
-        _id: "12345qs4365465345",
-        type: "IconPurchase",
-        name: "Krishna the Wise",
-        icon: "https://thisIsValidUrl.com",
-        payment_details: {
+        _id: "123",
+        type: "IconItem",
+        enabled: true,
+        toJSON: sinon.stub().returns({
+          name: "name",
+          label: "label",
+          title: "title",
+          description: "description",
           price: 10,
-          purchased_at: new Date(),
-        },
+        }),
       });
 
-    const result = await buyIcon({
+    const result = await getIcon({
       id: "123",
-      user: {
-        _id: "536476465478458aefze",
+    });
+
+    expect(result).toBeDefined();
+    expect(result.name).toEqual("name");
+    expect(result.hasPurchased).toEqual(false);
+    expect(result.hasQuantity).toEqual(0);
+  });
+
+  it("Should test happy path with an authenticated user", async () => {
+    getItemStub
+      .withArgs({
+        id: "123",
+      })
+      .returns({
+        _id: "123",
+        type: "IconItem",
+        enabled: true,
+        toJSON: sinon.stub().returns({
+          name: "name",
+          label: "label",
+          title: "title",
+          description: "description",
+          price: 10,
+        }),
+      });
+
+    sinon.stub(PurchaseItem, "findOne").resolves({
+      quantity: 10,
+    });
+
+    const result = await getIcon({
+      id: "123",
+      authenticatedUser: {
+        _id: "123",
       },
     });
 
     expect(result).toBeDefined();
-    expect(result.name).toBe("Krishna the Wise");
-    expect(result.icon).toBe("https://thisIsValidUrl.com");
+    expect(result.name).toEqual("name");
+    expect(result.hasPurchased).toEqual(true);
+    expect(result.hasQuantity).toEqual(10);
+
+    PurchaseItem.findOne.restore();
   });
 });

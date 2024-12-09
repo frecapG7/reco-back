@@ -9,9 +9,16 @@ const ConsumablePurchase = PurchaseItem.discriminator(
       used: {
         type: Boolean,
         default: false,
+        deprecated: true,
       },
+      // Deprecated
       used_at: {
         type: Date,
+        deprecated: true, // Custom option to mark as deprecated
+      },
+      quantity: {
+        type: Number,
+        required: true,
       },
     },
     {

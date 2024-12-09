@@ -27,20 +27,16 @@ router.get("", async (req, res, next) => {
   }
 });
 
-router.post(
-  "/:id/buy",
-  passport.authenticate("bearer", { session: false }),
-  async (req, res, next) => {
-    try {
-      const result = await iconStoreService.buyIcon({
-        id: req.params.id,
-        user: req.user,
-      });
-      return res.status(201).json(result);
-    } catch (err) {
-      next(err);
-    }
+router.get("/:id", async (req, res, next) => {
+  try {
+    const result = await iconStoreService.getIcon({
+      id: req.params.id,
+      authenticatedUser: req.user,
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 module.exports = router;

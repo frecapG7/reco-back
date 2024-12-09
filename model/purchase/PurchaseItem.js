@@ -19,6 +19,11 @@ const PurchaseItemSchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
+    quantity: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     payment_details: {
       price: {
         type: Number,

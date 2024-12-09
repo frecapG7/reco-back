@@ -13,6 +13,7 @@ const createUser = async ({ name, password, confirmPassword, icon_id }) => {
     throw new ForbiddenError("password do not match");
 
   // 1 - c verify icon
+  //TODO: use default field in the model
   const iconItem = await marketService.getItem({ id: icon_id });
   if (
     iconItem.type !== "IconItem" ||
