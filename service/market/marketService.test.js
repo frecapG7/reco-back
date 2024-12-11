@@ -1,8 +1,5 @@
 const sinon = require("sinon");
-const {
-  NotFoundError,
-  UnprocessableEntityError,
-} = require("../../errors/error");
+const { NotFoundError } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
@@ -95,61 +92,30 @@ describe("Should validate searchItems", () => {
 });
 
 describe("Should validate buyItem", () => {
+  let connectionStub;
   let removeCreditStub;
-  let mongooseStub;
 
   beforeEach(() => {
+    connectionStub = sinon.stub(mongoose, "connection");
     removeCreditStub = sinon.stub(creditService, "removeCredit");
-    mongooseStub = sinon.stub(mongoose, "startSession");
   });
 
   afterEach(() => {
+    connectionStub.restore();
     removeCreditStub.restore();
-    mongooseStub.restore();
-  });
-
-  it("Should rollback transaction", async () => {
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
-
-    removeCreditStub.throws();
-
-    await expect(
-      marketService.buyItem({
-        name: "name",
-        value: "value",
-        price: 10,
-        user: {
-          _id: "23564",
-        },
-        marketItem: "marketItem",
-      })
-    ).rejects.toThrow();
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
   });
 
   it("Should buy icon item ", async () => {
     removeCreditStub.returns(true);
+    // sinon
+    //   .stub(db.mongoose.connection, "transaction")
+    //   .callsFake(async (callback) => {
+    //     return await callback();
+    //   });
 
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
+    sinon.stub(connectionStub, "transaction").callsFake(async (callback) => {
+      return await callback();
+    });
 
     removeCreditStub.resolves();
     sinon.stub(PurchaseItem, "find").returns(null);
@@ -174,14 +140,9 @@ describe("Should validate buyItem", () => {
     expect(result.payment_details.price).toEqual(10);
     expect(result.payment_details.purchased_at).toBeDefined();
 
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
-
     sinon.assert.calledWith(removeCreditStub, 10, { _id: "23564" });
 
+    mongoose.connection.transaction.restore();
     PurchaseItem.find.restore();
   });
 

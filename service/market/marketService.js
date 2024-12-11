@@ -1,16 +1,17 @@
 const {
   NotFoundError,
   UnprocessableEntityError,
+  InternalServerError,
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-const mongoose = require("mongoose");
+const { connection } = require("../../db");
 const creditService = require("./creditService");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 const PurchaseItem = require("../../model/purchase/PurchaseItem");
 const getItem = async ({ id }) => {
   const item = await MarketItem.findById(id);
-  if (!item) throw new NotFoundError("Cannot find market item");
+  if (!item) throw new NotFoundError(`Cannot find market item with id ${id}`);
 
   return item;
 };
@@ -52,19 +53,16 @@ const searchItems = async ({
 };
 
 const buyItem = async ({ marketItem, quantity = 1, user }) => {
-  let session;
+  const session = await connection.startSession();
+  session.startTransaction();
   try {
-    session = await mongoose.startSession();
-
-    session.startTransaction();
-
     await creditService.removeCredit(quantity * marketItem.price, user);
 
-    let purchase = await PurchaseItem.find({
+    let purchase = await PurchaseItem.findOne({
       user: user,
       item: marketItem,
     });
-    if (!purchase) purchase = buildPurchaseItem(marketItem, user);
+    if (!purchase) purchase = await buildPurchaseItem(marketItem, user);
 
     purchase.quantity += quantity;
 
@@ -74,14 +72,14 @@ const buyItem = async ({ marketItem, quantity = 1, user }) => {
 
     return savedPurchase;
   } catch (err) {
-    if (session) await session.abortTransaction();
-    throw err;
+    await session?.abortTransaction();
+    throw new InternalServerError("Transaction failed", err);
   } finally {
-    if (session) await session.endSession();
+    await session?.endSession();
   }
 };
 
-const buildPurchaseItem = (marketItem, user) => {
+const buildPurchaseItem = async (marketItem, user) => {
   const basePurchase = {
     name: marketItem.name,
     user: user,

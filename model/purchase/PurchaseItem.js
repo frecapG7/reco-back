@@ -68,9 +68,9 @@ PurchaseItemSchema.methods.toJSON = function () {
       icon: this.icon,
     }),
     ...(this.type === "ConsumablePurchase" && {
-      used: this.used,
-      used_at: this.used_at,
+      icon: this.item?.icon,
     }),
+    quantity: this.quantity,
     payment_details: this.payment_details,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,

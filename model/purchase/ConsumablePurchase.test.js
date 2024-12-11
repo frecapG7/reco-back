@@ -1,3 +1,4 @@
+const { MarketConsumable } = require("../market/MarketItem");
 const ConsumablePurchase = require("./ConsumablePurchase");
 
 describe("Test ConsumablePurchase methods", () => {
@@ -5,18 +6,18 @@ describe("Test ConsumablePurchase methods", () => {
     const consumable = new ConsumablePurchase({
       _id: "64f6db09096d83b20116e62f",
       name: "John",
-      item: {
+      item: new MarketConsumable({
         _id: "64f6db09096d83b20116e62f",
         name: "Item",
         label: "Item",
         type: "Item",
-      },
+        icon: "icon",
+      }),
       payment_details: {
         price: 20,
         purchased_at: new Date(),
       },
-      used: false,
-      used_at: null,
+      quantity: 1,
     });
 
     const result = consumable.toJSON();
@@ -25,16 +26,14 @@ describe("Test ConsumablePurchase methods", () => {
     expect(result.id).toBeDefined();
     expect(result.name).toEqual("John");
     expect(result.type).toEqual("ConsumablePurchase");
-    // expect(result.item).toBeDefined();
-    // expect(result.item.id).toBeDefined();
-    // expect(result.item.name).toEqual("Item");
-    // expect(result.item.label).toEqual("Item");
-    // expect(result.item.type).toEqual("ConsumablePurchase");
-    expect(result.payment_details).toBeDefined();
-    expect(result.payment_details.price).toEqual(20);
+    expect(result.item).toBeDefined();
+    expect(result.item.id).toBeDefined();
+    expect(result.item.name).toEqual("Item");
+    expect(result.item.label).toEqual("Item");
+    expect(result.item.type).toEqual("ConsumableItem");
 
-    expect(result.used).toBeDefined();
-    expect(result.used).toEqual(false);
-    expect(result.used_at).toBeDefined();
+    expect(result.icon).toBeDefined();
+    expect(result.icon).toEqual("icon");
+    expect(result.quantity).toEqual(1);
   });
 });

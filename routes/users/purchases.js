@@ -43,12 +43,12 @@ router.post("/:purchaseId/redeem", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    await purchase.createPurchase({
+    const result = await purchase.createPurchase({
       id: req.params.userId,
       purchase: req.body,
       authenticatedUser: req.user,
     });
-    return res.status(201).send();
+    return res.status(201).json(result);
   } catch (err) {
     next(err);
   }

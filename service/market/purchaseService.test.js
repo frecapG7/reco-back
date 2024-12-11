@@ -36,7 +36,12 @@ describe("Validate searchPurchases", () => {
                 .stub()
                 .withArgs(10)
                 .returns({
-                  exec: sinon.stub().returns(expectedResults),
+                  populate: sinon
+                    .stub()
+                    .withArgs("item")
+                    .returns({
+                      exec: sinon.stub().returns(expectedResults),
+                    }),
                 }),
             }),
         }),
@@ -72,7 +77,12 @@ describe("Validate searchPurchases", () => {
                 .stub()
                 .withArgs(10)
                 .returns({
-                  exec: sinon.stub().returns(expectedResults),
+                  populate: sinon
+                    .stub()
+                    .withArgs("item")
+                    .returns({
+                      exec: sinon.stub().returns(expectedResults),
+                    }),
                 }),
             }),
         }),

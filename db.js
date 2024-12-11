@@ -1,13 +1,27 @@
 const mongoose = require("mongoose");
-const config = require("config");
+require("dotenv");
+mongoose.set("transactionAsyncLocalStorage", true);
 
-const database = config.get("db");
+connect = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverApi: { version: "1", strict: true, deprecationErrors: true },
+    });
+    console.log("Connected to MongoDB...");
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-mongoose
-  .connect(
-    `mongodb+srv://${database.username}:${database.password}@${database.schema}`
-  )
-  .then(() => console.log("Connected to MongoDB..."))
-  .catch((err) => console.error(err));
+mongoose.connection.on("error", (err) => {
+  console.error(err);
+});
 
-module.exports = mongoose;
+mongoose.connection.on("disconnected", () => {
+  console.log("MongoDB disconnected");
+});
+
+module.exports = {
+  connect,
+  mongoose,
+};
