@@ -4,7 +4,7 @@ const {
   InternalServerError,
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-const { connection } = require("../../db");
+const { mongoose } = require("../../db");
 const creditService = require("./creditService");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
@@ -53,7 +53,7 @@ const searchItems = async ({
 };
 
 const buyItem = async ({ marketItem, quantity = 1, user }) => {
-  const session = await connection.startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
   try {
     await creditService.removeCredit(quantity * marketItem.price, user);

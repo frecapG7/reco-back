@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const routes = require("./routes/routes");
-const { connection, connect } = require("./db");
+const { mongoose, connect } = require("./db");
 const pino = require("pino-http");
 const handleError = require("./middleware/errorMiddleware");
 const cors = require("cors");
@@ -28,7 +28,7 @@ app.use(passport.session());
 
 connect();
 
-connection.once("open", () => {
+mongoose.connection.once("open", () => {
   app.listen(process.env.PORT, "0.0.0.0", () => {
     console.log("Example app listening on port 3000!");
   });

@@ -60,7 +60,6 @@ PurchaseItemSchema.methods.toJSON = function () {
         name: this.item.name,
         label: this.item.label,
         type: this.item.type,
-        description: this.item.description,
       },
     }),
     type: this.type, // This is the discriminator key
