@@ -72,8 +72,9 @@ const buyItem = async ({ marketItem, quantity = 1, user }) => {
 
     return savedPurchase;
   } catch (err) {
+    console.error(err);
     await session?.abortTransaction();
-    throw new InternalServerError("Transaction failed", err);
+    throw err;
   } finally {
     await session?.endSession();
   }

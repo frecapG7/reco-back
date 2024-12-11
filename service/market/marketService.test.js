@@ -6,7 +6,7 @@ const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 
 const marketService = require("./marketService");
 
-const mongoose = require("mongoose");
+const { mongoose } = require("../../db");
 const creditService = require("./creditService");
 const PurchaseItem = require("../../model/purchase/PurchaseItem");
 
@@ -92,33 +92,29 @@ describe("Should validate searchItems", () => {
 });
 
 describe("Should validate buyItem", () => {
-  let connectionStub;
+  const sessionStub = {
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn(),
+    abortTransaction: jest.fn(),
+    endSession: jest.fn(),
+  };
+  sinon.stub(mongoose, "startSession").returns(sessionStub);
+
   let removeCreditStub;
 
   beforeEach(() => {
-    connectionStub = sinon.stub(mongoose, "connection");
     removeCreditStub = sinon.stub(creditService, "removeCredit");
   });
 
   afterEach(() => {
-    connectionStub.restore();
     removeCreditStub.restore();
   });
 
   it("Should buy icon item ", async () => {
     removeCreditStub.returns(true);
-    // sinon
-    //   .stub(db.mongoose.connection, "transaction")
-    //   .callsFake(async (callback) => {
-    //     return await callback();
-    //   });
-
-    sinon.stub(connectionStub, "transaction").callsFake(async (callback) => {
-      return await callback();
-    });
 
     removeCreditStub.resolves();
-    sinon.stub(PurchaseItem, "find").returns(null);
+    sinon.stub(PurchaseItem, "findOne").returns(null);
     sinon.stub(IconPurchase.prototype, "save").returnsThis();
 
     const result = await marketService.buyItem({
@@ -140,27 +136,21 @@ describe("Should validate buyItem", () => {
     expect(result.payment_details.price).toEqual(10);
     expect(result.payment_details.purchased_at).toBeDefined();
 
+    expect(sessionStub.startTransaction).toHaveBeenCalled();
+    expect(sessionStub.commitTransaction).toHaveBeenCalled();
+    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
+    expect(sessionStub.endSession).toHaveBeenCalled();
+
     sinon.assert.calledWith(removeCreditStub, 10, { _id: "23564" });
 
-    mongoose.connection.transaction.restore();
-    PurchaseItem.find.restore();
+    PurchaseItem.findOne.restore();
   });
 
   it("Should buy consumable item with no existing item ", async () => {
     removeCreditStub.returns(true);
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
-
     removeCreditStub.resolves();
 
-    sinon.stub(PurchaseItem, "find").returns(null);
+    sinon.stub(PurchaseItem, "findOne").returns(null);
     sinon.stub(ConsumablePurchase.prototype, "save").returnsThis();
 
     const result = await marketService.buyItem({
@@ -191,24 +181,14 @@ describe("Should validate buyItem", () => {
 
     sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
 
-    PurchaseItem.find.restore();
+    PurchaseItem.findOne.restore();
   });
 
   it("Should buy consumable item with an existing item ", async () => {
     removeCreditStub.returns(true);
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
-
     removeCreditStub.resolves();
 
-    sinon.stub(PurchaseItem, "find").returns({
+    sinon.stub(PurchaseItem, "findOne").returns({
       name: "name",
       quantity: 2,
       save: () => sinon.stub().resolvesThis(),
@@ -238,6 +218,6 @@ describe("Should validate buyItem", () => {
 
     sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
 
-    PurchaseItem.find.restore();
+    PurchaseItem.findOne.restore();
   });
 });
