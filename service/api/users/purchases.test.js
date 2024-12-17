@@ -143,15 +143,18 @@ describe("Test getPurchase", () => {
     ).rejects.toThrow("You are not authorized to perform this action");
   });
 
-  it("Should return purchase", async () => {
+  it("Should return non icon purchase", async () => {
     getPurchaseStub.returns({
       _id: "123",
-      name: "Krishna the Wise",
-      payment_details: {
-        price: 10,
-        purchased_at: new Date(),
-      },
-      populate: sinon.stub().resolvesThis(),
+      type: "NonIconPurchase",
+      populate: sinon.stub().withArgs("item").resolvesThis(),
+      toJSON: () => ({
+        name: "Krishna the Wise",
+        payment_details: {
+          price: 10,
+          purchased_at: new Date(),
+        },
+      }),
     });
 
     const result = await getPurchase({
@@ -167,7 +170,39 @@ describe("Test getPurchase", () => {
     expect(result.payment_details).toBeDefined();
     expect(result.payment_details.price).toBe(10);
 
-    sinon.assert.calledWith(result.populate, "item");
+    expect(result.hasEquipped).toBeUndefined();
+  });
+
+  it("Should return equipped icon purchase", async () => {
+    getPurchaseStub.returns({
+      _id: "123",
+      type: "IconPurchase",
+      icon: "toto",
+      populate: sinon.stub().withArgs("item").resolvesThis(),
+      toJSON: () => ({
+        name: "Krishna the Wise",
+        payment_details: {
+          price: 10,
+          purchased_at: new Date(),
+        },
+      }),
+    });
+
+    const result = await getPurchase({
+      id: "123",
+      purchaseId: "456",
+      authenticatedUser: {
+        role: "ADMIN",
+        avatar: "toto",
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.name).toBe("Krishna the Wise");
+    expect(result.payment_details).toBeDefined();
+    expect(result.payment_details.price).toBe(10);
+
+    expect(result.hasEquipped).toBe(true);
   });
 });
 

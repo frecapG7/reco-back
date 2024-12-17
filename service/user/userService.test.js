@@ -141,3 +141,30 @@ describe("Test updateUser", () => {
     // expect(result).toEqual(expected);
   });
 });
+
+describe("Test getUser", () => {
+  let findByIdStub;
+
+  beforeEach(() => {
+    findByIdStub = sinon.stub(User, "findById");
+  });
+
+  afterEach(() => {
+    findByIdStub.restore();
+  });
+
+  it("Should throw a not found error", async () => {
+    findByIdStub.resolves(null);
+
+    await expect(userService.getUser("123")).rejects.toThrow(NotFoundError);
+  });
+
+  it("Should return the user", async () => {
+    const expected = new User();
+    findByIdStub.resolves(expected);
+
+    const result = await userService.getUser("123");
+
+    expect(result).toEqual(expected);
+  });
+});

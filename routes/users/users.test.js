@@ -3,6 +3,7 @@ const supertest = require("supertest");
 
 const User = require("../../model/User");
 const userService = require("../../service/user/userService");
+const userApiService = require("../../service/api/users/users");
 
 const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
@@ -90,6 +91,38 @@ describe("PUT /users/:id", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.id).toEqual(1);
+  });
+});
+
+describe("PUT /users/:id/avatar", () => {
+  let userServiceStub;
+
+  beforeEach(() => {
+    userServiceStub = sinon.stub(userApiService, "updateAvatar");
+  });
+  afterEach(() => {
+    userServiceStub.restore();
+  });
+
+  it("should return updated user", async () => {
+    userServiceStub.resolves({
+      id: 1,
+    });
+
+    const response = await supertest(app)
+      .put("/users/65df6cc757b41fec4d7c3055/avatar")
+      .send({
+        avatar: "test",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toEqual(1);
+
+    sinon.assert.calledOnce(userServiceStub);
+    sinon.assert.calledWith(userServiceStub, {
+      id: "65df6cc757b41fec4d7c3055",
+      avatar: "test",
+    });
   });
 });
 

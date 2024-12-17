@@ -44,7 +44,12 @@ const getPurchase = async ({ id, purchaseId, authenticatedUser }) => {
   // 3 - Populate item field
   await purchase.populate("item");
 
-  return purchase;
+  return {
+    ...purchase.toJSON(),
+    ...(purchase.type === "IconPurchase" && {
+      hasEquipped: purchase?.icon === authenticatedUser.avatar,
+    }),
+  };
 };
 
 const redeemPurchase = async ({ id, purchaseId, authenticatedUser }) => {

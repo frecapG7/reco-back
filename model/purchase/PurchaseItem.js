@@ -47,6 +47,7 @@ const PurchaseItemSchema = new mongoose.Schema(
   {
     discriminatorKey: "type",
     timestamps: true,
+    toJSON: { virtuals: true },
   }
 );
 

@@ -13,7 +13,7 @@ const oauth = require("./oauth2");
 const embed = require("./embed");
 
 const stores = require("./stores");
-
+const tokens = require("./tokens");
 const passport = require("../auth");
 
 // ********** Routes **********
@@ -48,5 +48,8 @@ router.use("/stores", stores);
 
 // ********** Authentication **********
 router.use("/auth", oauth);
+
+// ********** Tokens **********
+router.use("/tokens", tokens);
 
 module.exports = router;

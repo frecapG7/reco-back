@@ -2,10 +2,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const routes = require("./routes/routes");
-const { mongoose, connect } = require("./db");
+const mongoose = require("./db");
 const pino = require("pino-http");
 const handleError = require("./middleware/errorMiddleware");
 const cors = require("cors");
+require("dotenv");
 
 const { TOKEN_SECRET } = require("./config");
 
@@ -26,8 +27,9 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-connect();
-
+mongoose.connect(process.env.MONGO_URI, {
+  serverApi: { version: "1", strict: true, deprecationErrors: true },
+});
 mongoose.connection.once("open", () => {
   app.listen(process.env.PORT, "0.0.0.0", () => {
     console.log("Example app listening on port 3000!");

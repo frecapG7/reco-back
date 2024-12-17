@@ -1,14 +1,14 @@
 const { NotFoundError, ForbiddenError } = require("../../../errors/error");
 const User = require("../../../model/User");
 
+const userService = require("../../user/userService");
 const requestService = require("../../request/requestService");
 const recommendationsService = require("../../recommendations/recommendationsService");
+const { verifySelfOrAdmin } = require("../../validation/privilegeValidation");
 
 const getUser = async ({ id, authenticatedUser }) => {
   // 1 - Get user
-  const user = await User.findById(id);
-  if (!user) throw new NotFoundError("User not found");
-
+  const user = await userService.getUser(id);
   const isSelf = authenticatedUser && authenticatedUser._id.equals(user._id);
 
   return {
@@ -25,6 +25,18 @@ const getUser = async ({ id, authenticatedUser }) => {
       showPurchaseHistory: isSelf || !user.settings.privacy.privatePurchases,
     },
   };
+};
+
+const updateAvatar = async ({ id, avatar, authenticatedUser }) => {
+  // 1 - Verify user
+  verifySelfOrAdmin({ userId: id, authenticatedUser });
+
+  // 2 - Get user
+  const user = await userService.getUser(id);
+
+  // 3 - Update user
+  user.avatar = avatar;
+  return await user.save();
 };
 
 const getRequests = async ({
@@ -94,6 +106,7 @@ const getSort = (sort) => {
 
 module.exports = {
   getUser,
+  updateAvatar,
   getRequests,
   getRecommendations,
 };

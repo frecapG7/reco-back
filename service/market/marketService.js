@@ -4,11 +4,12 @@ const {
   InternalServerError,
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-const { mongoose } = require("../../db");
+const mongoose = require("mongoose");
 const creditService = require("./creditService");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 const PurchaseItem = require("../../model/purchase/PurchaseItem");
+
 const getItem = async ({ id }) => {
   const item = await MarketItem.findById(id);
   if (!item) throw new NotFoundError(`Cannot find market item with id ${id}`);
@@ -61,7 +62,7 @@ const buyItem = async ({ marketItem, quantity = 1, user }) => {
     let purchase = await PurchaseItem.findOne({
       user: user,
       item: marketItem,
-    });
+    }).session(session);
     if (!purchase) purchase = await buildPurchaseItem(marketItem, user);
 
     purchase.quantity += quantity;
