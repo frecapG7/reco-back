@@ -1,4 +1,8 @@
-const { UnSupportedTypeError } = require("../../../errors/error");
+const {
+  UnSupportedTypeError,
+  UnprocessableEntityError,
+} = require("../../../errors/error");
+const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 const marketService = require("../../market/marketService");
 
 const getConsumableItems = async () => {
@@ -10,20 +14,35 @@ const getConsumableItems = async () => {
   return result;
 };
 
-const buyConsumable = async ({ id, authenticatedUser }) => {
+const getConsumable = async ({ id, authenticatedUser }) => {
   const consumableItem = await marketService.getItem({ id });
+  verifyConsumable(consumableItem);
 
+  let purchasesCount = 0;
+  if (authenticatedUser)
+    purchasesCount = await PurchaseItem.countDocuments({
+      user: authenticatedUser,
+      item: consumableItem,
+    });
+
+  return {
+    ...consumableItem.toJSON(),
+    hasPurchased: purchasesCount > 0,
+    purchasesCount,
+  };
+};
+
+const verifyConsumable = (consumableItem) => {
   if (consumableItem.type !== "ConsumableItem")
-    throw new UnSupportedTypeError(`Item ${id} is not a ConsumableItem`);
+    throw new UnSupportedTypeError(
+      `Item ${consumableItem._id} is not a ConsumableItem`
+    );
 
-  const purchaseItem = await marketService.buyItem({
-    marketItem: consumableItem,
-    user: authenticatedUser,
-  });
-  return purchaseItem;
+  if (!consumableItem?.enabled)
+    throw new UnprocessableEntityError("Cannot read disabled consumable");
 };
 
 module.exports = {
   getConsumableItems,
-  buyConsumable,
+  getConsumable,
 };

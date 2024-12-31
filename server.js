@@ -6,6 +6,7 @@ const mongoose = require("./db");
 const pino = require("pino-http");
 const handleError = require("./middleware/errorMiddleware");
 const cors = require("cors");
+require("dotenv");
 
 const { TOKEN_SECRET } = require("./config");
 
@@ -26,10 +27,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "connection error:"));
-db.once("open", () => {
-  console.log("Connected to MongoDB...");
+mongoose.connect(process.env.MONGO_URI, {
+  serverApi: { version: "1", strict: true, deprecationErrors: true },
+});
+mongoose.connection.once("open", () => {
   app.listen(process.env.PORT, "0.0.0.0", () => {
     console.log("Example app listening on port 3000!");
   });

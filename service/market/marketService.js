@@ -1,18 +1,18 @@
 const {
   NotFoundError,
   UnprocessableEntityError,
+  InternalServerError,
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 const mongoose = require("mongoose");
 const creditService = require("./creditService");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
+const PurchaseItem = require("../../model/purchase/PurchaseItem");
+
 const getItem = async ({ id }) => {
   const item = await MarketItem.findById(id);
-  if (!item) throw new NotFoundError("Cannot find market item");
-
-  if (!item?.enabled)
-    throw new UnprocessableEntityError("Cannot read disabled item");
+  if (!item) throw new NotFoundError(`Cannot find market item with id ${id}`);
 
   return item;
 };
@@ -53,16 +53,19 @@ const searchItems = async ({
   };
 };
 
-const buyItem = async ({ marketItem, user }) => {
-  let session;
+const buyItem = async ({ marketItem, quantity = 1, user }) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    session = await mongoose.startSession();
+    await creditService.removeCredit(quantity * marketItem.price, user);
 
-    session.startTransaction();
+    let purchase = await PurchaseItem.findOne({
+      user: user,
+      item: marketItem,
+    }).session(session);
+    if (!purchase) purchase = await buildPurchaseItem(marketItem, user);
 
-    await creditService.removeCredit(marketItem.price, user);
-
-    const purchase = buildPurchaseItem(marketItem, user);
+    purchase.quantity += quantity;
 
     const savedPurchase = await purchase.save();
 
@@ -70,18 +73,19 @@ const buyItem = async ({ marketItem, user }) => {
 
     return savedPurchase;
   } catch (err) {
-    if (session) await session.abortTransaction();
+    console.error(err);
+    await session?.abortTransaction();
     throw err;
   } finally {
-    if (session) await session.endSession();
+    await session?.endSession();
   }
 };
 
-const buildPurchaseItem = (marketItem, user) => {
+const buildPurchaseItem = async (marketItem, user) => {
   const basePurchase = {
     name: marketItem.name,
-    user: user._id,
-    item: marketItem._id,
+    user: user,
+    item: marketItem,
     payment_details: {
       price: marketItem.price,
     },

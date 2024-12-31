@@ -72,6 +72,33 @@ MarketItemSchema.pre("findOneAndUpdate", function (next) {
   this._update.modified_at = new Date();
   next();
 });
+MarketItemSchema.pre("save", function (next) {
+  this.modified_at = new Date();
+  next();
+});
+
+MarketItemSchema.methods.toJSON = function () {
+  return {
+    id: this._id,
+    name: this.name,
+    label: this.label,
+    description: this.description,
+    price: this.price,
+    tags: this.tags,
+    type: this.type,
+    ...(this.type === "IconItem" && {
+      url: this.url,
+      icon: this.url,
+    }),
+    ...(this.type === "TitleItem" && {
+      titleValue: this.titleValue,
+    }),
+    ...(this.type === "ConsumableItem" && {
+      icon: this.icon,
+      consumableType: this.consumableType,
+    }),
+  };
+};
 
 const MarketItem = mongoose.model("MarketItem", MarketItemSchema);
 

@@ -6,12 +6,10 @@ const ConsumablePurchase = PurchaseItem.discriminator(
   "ConsumablePurchase",
   new mongoose.Schema(
     {
-      used: {
-        type: Boolean,
-        default: false,
-      },
-      used_at: {
-        type: Date,
+      consumableType: {
+        type: String,
+        required: true,
+        enum: ["invitation", "boost"],
       },
     },
     {

@@ -26,6 +26,7 @@ const searchPurchases = async ({
     .sort(sort)
     .skip((page - 1) * pageSize)
     .limit(pageSize)
+    .populate("item")
     .exec();
 
   return {

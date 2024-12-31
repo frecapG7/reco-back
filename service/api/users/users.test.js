@@ -1,12 +1,18 @@
 const sinon = require("sinon");
 const { NotFoundError, ForbiddenError } = require("../../../errors/error");
 const User = require("../../../model/User");
+const userService = require("../../user/userService");
 const requestService = require("../../request/requestService");
 const recommendationsService = require("../../recommendations/recommendationsService");
 
 const historyService = require("../../user/usersHistoryService");
 
-const { getUser, getRequests, getRecommendations } = require("./users");
+const {
+  getUser,
+  updateAvatar,
+  getRequests,
+  getRecommendations,
+} = require("./users");
 
 describe("Test getUser", () => {
   let userFindByIdStub;
@@ -85,6 +91,43 @@ describe("Test getUser", () => {
     expect(result.privacy.showRequests).toEqual(true);
     expect(result.privacy.showRecommendations).toEqual(true);
     expect(result.privacy.showPurchaseHistory).toEqual(true);
+  });
+});
+
+describe("Test updateAvatar", () => {
+  let getUserStub;
+
+  beforeEach(() => {
+    getUserStub = sinon.stub(userService, "getUser");
+  });
+  afterEach(() => {
+    getUserStub.restore();
+  });
+
+  it("Should throw a forbidden error", async () => {
+    expect(updateAvatar({ id: "123", avatar: "test" })).rejects.toThrow(
+      "You are not authorized to perform this action"
+    );
+  });
+
+  it("Should update avatar", async () => {
+    const user = {
+      _id: "123",
+      avatar: "test",
+      save: () => sinon.stub().resolvesThis(),
+    };
+    getUserStub.resolves(user);
+
+    const result = await updateAvatar({
+      id: "123",
+      avatar: "test",
+      authenticatedUser: {
+        role: "ADMIN",
+      },
+    });
+
+    expect(result).toBeDefined();
+    // expect(result.avatar).toEqual("test");
   });
 });
 

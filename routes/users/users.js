@@ -3,6 +3,7 @@ const router = express.Router();
 const userService = require("../../service/user/userService");
 
 const users = require("../../service/api/users/users");
+const tokensApiService = require("../../service/api/tokens/tokensApiService");
 const userSettingsService = require("../../service/user/userSettingsService");
 const { ForbiddenError } = require("../../errors/error");
 
@@ -39,6 +40,22 @@ router.put(
     try {
       verifyUser(req.params.id, req.user);
       const user = await userService.updateUser(req.params.id, req.body);
+      return res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.put(
+  "/:id/avatar",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const user = await users.updateAvatar({
+        id: req.params.id,
+        avatar: req.body.avatar,
+      });
       return res.json(user);
     } catch (err) {
       next(err);
@@ -134,17 +151,6 @@ router.get(
 );
 
 router.get(
-  "/:id/purchases",
-  passport.authenticate(["bearer"], { session: false }),
-  async (req, res, next) => {
-    try {
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-
-router.get(
   "/:id/metrics",
   passport.authenticate(["bearer"], { session: false }),
   async (req, res, next) => {
@@ -170,6 +176,23 @@ router.get(
         authenticatedUser: req.user,
       });
       return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/:id/tokens",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const tokens = await tokensApiService.getUserTokens({
+        userId: req.params.id,
+        query: req.query,
+        authenticatedUser: req.user,
+      });
+      return res.json(tokens);
     } catch (err) {
       next(err);
     }

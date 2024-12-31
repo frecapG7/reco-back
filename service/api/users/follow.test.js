@@ -135,6 +135,7 @@ describe("Get follows", () => {
   it("Should returns follows ", async () => {
     const user = {
       follows: [{ user: "456" }, { user: "124" }],
+      populate: sinon.stub().resolvesThis(),
     };
 
     userFindByIdStub.withArgs("123").returns(user);
@@ -157,7 +158,10 @@ describe("Get follows", () => {
 
     expect(result.results).toBeDefined();
     expect(result.results.length).toBe(2);
-    expect(result.results[0]).toEqual(follow1);
+
+    
+
+    sinon.assert.calledWith(user.populate, "follows.user");
   });
 });
 

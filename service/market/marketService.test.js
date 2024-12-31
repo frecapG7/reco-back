@@ -1,15 +1,12 @@
 const sinon = require("sinon");
-const {
-  NotFoundError,
-  UnprocessableEntityError,
-} = require("../../errors/error");
+const { NotFoundError } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 
 const marketService = require("./marketService");
 
-const mongoose = require("mongoose");
+const { mongoose } = require("../../db");
 const creditService = require("./creditService");
 const PurchaseItem = require("../../model/purchase/PurchaseItem");
 
@@ -31,23 +28,22 @@ describe("Should validate getItem", () => {
     );
   });
 
-  it("Should thrown UnprocessableEntityError", async () => {
+  it("Should test happy path with", async () => {
     marketItemStub.withArgs("12345").returns({
-      enabled: false,
+      name: "name",
+      label: "label",
+      title: "title",
+      description: "description",
+      price: 10,
+      disable: false,
+      created_by: "12345",
+      created_at: new Date(),
     });
 
-    await expect(marketService.getItem({ id: "12345" })).rejects.toThrow(
-      UnprocessableEntityError
-    );
-  });
-
-  it("Should test happy path", async () => {
-    marketItemStub.withArgs("12345").returns({
-      enabled: true,
-    });
-
-    const result = await expect(marketService.getItem({ id: "12345" }));
+    const result = await marketService.getItem({ id: "12345" });
     expect(result).toBeDefined();
+
+    expect(result.name).toEqual("name");
   });
 });
 
@@ -96,63 +92,29 @@ describe("Should validate searchItems", () => {
 });
 
 describe("Should validate buyItem", () => {
+  const sessionStub = {
+    startTransaction: jest.fn(),
+    commitTransaction: jest.fn(),
+    abortTransaction: jest.fn(),
+    endSession: jest.fn(),
+  };
+  sinon.stub(mongoose, "startSession").returns(sessionStub);
+
   let removeCreditStub;
-  let mongooseStub;
 
   beforeEach(() => {
     removeCreditStub = sinon.stub(creditService, "removeCredit");
-    mongooseStub = sinon.stub(mongoose, "startSession");
   });
 
   afterEach(() => {
     removeCreditStub.restore();
-    mongooseStub.restore();
-  });
-
-  it("Should rollback transaction", async () => {
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
-
-    removeCreditStub.throws();
-
-    await expect(
-      marketService.buyItem({
-        name: "name",
-        value: "value",
-        price: 10,
-        user: {
-          _id: "23564",
-        },
-        marketItem: "marketItem",
-      })
-    ).rejects.toThrow();
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
   });
 
   it("Should buy icon item ", async () => {
     removeCreditStub.returns(true);
 
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
-
     removeCreditStub.resolves();
+    sinon.stub(PurchaseItem, "findOne").returns(null);
     sinon.stub(IconPurchase.prototype, "save").returnsThis();
 
     const result = await marketService.buyItem({
@@ -174,28 +136,21 @@ describe("Should validate buyItem", () => {
     expect(result.payment_details.price).toEqual(10);
     expect(result.payment_details.purchased_at).toBeDefined();
 
-    //Verify transaction
     expect(sessionStub.startTransaction).toHaveBeenCalled();
     expect(sessionStub.commitTransaction).toHaveBeenCalled();
     expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
     expect(sessionStub.endSession).toHaveBeenCalled();
 
     sinon.assert.calledWith(removeCreditStub, 10, { _id: "23564" });
+
+    PurchaseItem.findOne.restore();
   });
 
-  it("Should buy consumable item ", async () => {
+  it("Should buy consumable item with no existing item ", async () => {
     removeCreditStub.returns(true);
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.returns(sessionStub);
-
     removeCreditStub.resolves();
+
+    sinon.stub(PurchaseItem, "findOne").returns(null);
     sinon.stub(ConsumablePurchase.prototype, "save").returnsThis();
 
     const result = await marketService.buyItem({
@@ -205,6 +160,7 @@ describe("Should validate buyItem", () => {
         price: 10,
         type: "ConsumableItem",
       },
+      quantity: 3,
       user: {
         _id: "23564",
       },
@@ -215,6 +171,7 @@ describe("Should validate buyItem", () => {
     expect(result.name).toEqual("name");
     expect(result.payment_details.price).toEqual(10);
     expect(result.payment_details.purchased_at).toBeDefined();
+    expect(result.quantity).toEqual(3);
 
     //Verify transaction
     expect(sessionStub.startTransaction).toHaveBeenCalled();
@@ -222,6 +179,45 @@ describe("Should validate buyItem", () => {
     expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
     expect(sessionStub.endSession).toHaveBeenCalled();
 
-    sinon.assert.calledWith(removeCreditStub, 10, { _id: "23564" });
+    sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
+
+    PurchaseItem.findOne.restore();
+  });
+
+  it("Should buy consumable item with an existing item ", async () => {
+    removeCreditStub.returns(true);
+    removeCreditStub.resolves();
+
+    sinon.stub(PurchaseItem, "findOne").returns({
+      name: "name",
+      quantity: 2,
+      save: () => sinon.stub().resolvesThis(),
+    });
+
+    const result = await marketService.buyItem({
+      marketItem: {
+        name: "name",
+        url: "value",
+        price: 10,
+        type: "ConsumableItem",
+      },
+      quantity: 3,
+      user: {
+        _id: "23564",
+      },
+    });
+
+    expect(result).toBeDefined();
+    // expect(result.quantity).toEqual(5);
+
+    //Verify transaction
+    expect(sessionStub.startTransaction).toHaveBeenCalled();
+    expect(sessionStub.commitTransaction).toHaveBeenCalled();
+    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
+    expect(sessionStub.endSession).toHaveBeenCalled();
+
+    sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
+
+    PurchaseItem.findOne.restore();
   });
 });

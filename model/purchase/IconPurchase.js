@@ -8,6 +8,12 @@ const IconPurchase = PurchaseItem.discriminator(
       type: String,
       required: true,
     },
+    // Virtual field ?
+    // equipped: {
+    //   type: Boolean,
+    //   required: true,
+    //   default: false,
+    // },
   }),
   {
     discriminatorKey: "type",

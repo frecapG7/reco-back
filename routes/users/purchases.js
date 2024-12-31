@@ -1,57 +1,57 @@
 const router = require("express").Router({ mergeParams: true });
-const passport = require("passport");
 const purchase = require("../../service/api/users/purchases");
 
-router.get(
-  "",
-  passport.authenticate(["bearer"], { session: false }),
-  async (req, res, next) => {
-    try {
-      const result = await purchase.getPurchases({
-        id: req.params.userId,
-        query: req.query,
-        authenticatedUser: req.user,
-      });
-      return res.json(result);
-    } catch (err) {
-      next(err);
-    }
+router.get("", async (req, res, next) => {
+  try {
+    const result = await purchase.getPurchases({
+      id: req.params.userId,
+      query: req.query,
+      authenticatedUser: req.user,
+    });
+    return res.json(result);
+  } catch (err) {
+    next(err);
   }
-);
+});
 
-router.get(
-  "/:purchaseId",
-  passport.authenticate("bearer", { session: false }),
-  async (req, res, next) => {
-    try {
-      const result = await purchase.getPurchase({
-        id: req.params.userId,
-        purchaseId: req.params.purchaseId,
-        authenticatedUser: req.user,
-      });
+router.get("/:purchaseId", async (req, res, next) => {
+  try {
+    const result = await purchase.getPurchase({
+      id: req.params.userId,
+      purchaseId: req.params.purchaseId,
+      authenticatedUser: req.user,
+    });
 
-      return res.json(result);
-    } catch (err) {
-      next(err);
-    }
+    return res.json(result);
+  } catch (err) {
+    next(err);
   }
-);
+});
 
-router.post(
-  "/:purchaseId/redeem",
-  passport.authenticate("bearer", { session: false }),
-  async (req, res, next) => {
-    try {
-      await purchase.redeemPurchase({
-        id: req.params.userId,
-        purchaseId: req.params.purchaseId,
-        authenticatedUser: req.user,
-      });
-      return res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
+router.post("/:purchaseId/redeem", async (req, res, next) => {
+  try {
+    await purchase.redeemPurchase({
+      id: req.params.userId,
+      purchaseId: req.params.purchaseId,
+      authenticatedUser: req.user,
+    });
+    return res.status(204).send();
+  } catch (err) {
+    next(err);
   }
-);
+});
+
+router.post("/", async (req, res, next) => {
+  try {
+    const result = await purchase.createPurchase({
+      id: req.params.userId,
+      purchase: req.body,
+      authenticatedUser: req.user,
+    });
+    return res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;

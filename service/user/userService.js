@@ -13,6 +13,7 @@ const createUser = async ({ name, password, confirmPassword, icon_id }) => {
     throw new ForbiddenError("password do not match");
 
   // 1 - c verify icon
+  //TODO: use default field in the model
   const iconItem = await marketService.getItem({ id: icon_id });
   if (
     iconItem.type !== "IconItem" ||
@@ -46,20 +47,21 @@ const createUser = async ({ name, password, confirmPassword, icon_id }) => {
 };
 
 const updateUser = async (id, data) => {
-  const updatedUser = await User.findByIdAndUpdate(
-    id,
-    {
-      name: data.name,
-      email: data.email,
-    },
-    { new: true }
-  );
+  const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
   if (!updatedUser) throw new NotFoundError("User not found");
 
   return updatedUser;
 };
 
+const getUser = async (id) => {
+  // 1 - Get user
+  const user = await User.findById(id);
+  if (!user) throw new NotFoundError("User not found");
+  return user;
+};
+
 module.exports = {
   createUser,
   updateUser,
+  getUser,
 };

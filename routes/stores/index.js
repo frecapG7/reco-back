@@ -1,17 +1,15 @@
 const router = require("express").Router();
+const passport = require("passport");
 
-const marketService = require("../../service/market/marketService");
+router.use(
+  "/icons",
+  passport.authenticate("anonymous", { session: false }),
+  require("./icons")
+);
 
-router.use("/icons", require("./icons"));
-
-router.get("/items/:id", async (req, res, next) => {
-  try {
-    const result = await marketService.getItem({ id: req.params.id });
-    return res.status(200).json(result);
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.use("/consumables", require("./consumables"));
+router.use(
+  "/consumables",
+  passport.authenticate("anonymous", { session: false }),
+  require("./consumables")
+);
 module.exports = router;

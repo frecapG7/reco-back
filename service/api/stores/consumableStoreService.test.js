@@ -1,10 +1,10 @@
 const sinon = require("sinon");
 
+const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 const {
   getConsumableItems,
-  buyConsumable,
+  getConsumable,
 } = require("./consumableStoreService");
-const { UnSupportedTypeError } = require("../../../errors/error");
 
 const marketService = require("../../market/marketService");
 
@@ -34,18 +34,15 @@ describe("Test getConsumableItems", () => {
   });
 });
 
-describe("Test buyConsumable", () => {
+describe("Test getConsumable", () => {
   let getItemStub;
-  let buyItemStub;
 
   beforeEach(() => {
     getItemStub = sinon.stub(marketService, "getItem");
-    buyItemStub = sinon.stub(marketService, "buyItem");
   });
 
   afterEach(() => {
     getItemStub.restore();
-    buyItemStub.restore();
   });
 
   it("Should throw a UnSupportedTypeError", async () => {
@@ -54,57 +51,95 @@ describe("Test buyConsumable", () => {
         id: "123",
       })
       .returns({
+        _id: "123",
         type: "NotConsumableItem",
       });
 
     await expect(
-      buyConsumable({
+      getConsumable({
         id: "123",
       })
     ).rejects.toThrow("Item 123 is not a ConsumableItem");
   });
 
-  it("Should buy consumable", async () => {
-    const item = {
-      _id: "12345qs4365465345",
-      type: "ConsumableItem",
-      name: "Krishna the Wise",
-      price: 10,
-      icon: "toto",
-      consumableType: "invitation",
-    };
-
+  it("Should thrown UnprocessableEntityError", async () => {
     getItemStub
       .withArgs({
         id: "123",
       })
-      .returns(item);
+      .returns({
+        _id: "123",
+        type: "ConsumableItem",
+        enabled: false,
+      });
 
-    buyItemStub.returns({
-      _id: "12345qs4365465345",
-      type: "ConsumablePurchase",
-      name: "Krishna the Wise",
-      payment_details: {
-        price: 10,
-        purchased_at: new Date(),
-      },
+    await expect(
+      getConsumable({
+        id: "123",
+      })
+    ).rejects.toThrow("Cannot read disabled consumable");
+  });
+
+  it("Should test happy path with no authenticated user", async () => {
+    getItemStub
+      .withArgs({
+        id: "123",
+      })
+      .returns({
+        _id: "123",
+        type: "ConsumableItem",
+        enabled: true,
+        toJSON: sinon.stub().returns({
+          name: "name",
+          label: "label",
+          title: "title",
+          description: "description",
+          price: 10,
+        }),
+      });
+
+    const result = await getConsumable({
+      id: "123",
     });
 
-    const result = await buyConsumable({
+    expect(result).toBeDefined();
+    expect(result.name).toEqual("name");
+    expect(result.hasPurchased).toEqual(false);
+    expect(result.purchasesCount).toEqual(0);
+  });
+
+  it("Should test happy path with an authenticated user", async () => {
+    getItemStub
+      .withArgs({
+        id: "123",
+      })
+      .returns({
+        _id: "123",
+        type: "ConsumableItem",
+        enabled: true,
+        toJSON: sinon.stub().returns({
+          name: "name",
+          label: "label",
+          title: "title",
+          description: "description",
+          price: 10,
+        }),
+      });
+
+    sinon.stub(PurchaseItem, "countDocuments").returns(10);
+
+    const result = await getConsumable({
       id: "123",
-      user: {
-        _id: "536476465478458aefze",
+      authenticatedUser: {
+        _id: "123",
       },
     });
 
     expect(result).toBeDefined();
-    expect(result.name).toBe("Krishna the Wise");
+    expect(result.name).toEqual("name");
+    expect(result.hasPurchased).toEqual(true);
+    expect(result.purchasesCount).toEqual(10);
 
-    // sinon.assert.calledWith(buyItemStub, {
-    //   marketItem: item,
-    //   user: {
-    //     _id: "536476465478458aefze",
-    //   },
-    // });
+    PurchaseItem.countDocuments.restore();
   });
 });

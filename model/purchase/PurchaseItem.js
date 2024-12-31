@@ -19,6 +19,11 @@ const PurchaseItemSchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
+    quantity: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     payment_details: {
       price: {
         type: Number,
@@ -42,8 +47,35 @@ const PurchaseItemSchema = new mongoose.Schema(
   {
     discriminatorKey: "type",
     timestamps: true,
+    toJSON: { virtuals: true },
   }
 );
+
+PurchaseItemSchema.methods.toJSON = function () {
+  return {
+    id: this._id,
+    name: this.name,
+    ...(this.populated("item") && {
+      item: {
+        id: this.item._id,
+        name: this.item.name,
+        label: this.item.label,
+        type: this.item.type,
+      },
+    }),
+    type: this.type, // This is the discriminator key
+    ...(this.type === "IconPurchase" && {
+      icon: this.icon,
+    }),
+    ...(this.type === "ConsumablePurchase" && {
+      icon: this.item?.icon,
+    }),
+    quantity: this.quantity,
+    payment_details: this.payment_details,
+    createdAt: this.createdAt,
+    updatedAt: this.updatedAt,
+  };
+};
 
 const PurchaseItem = mongoose.model("PurchaseItem", PurchaseItemSchema);
 

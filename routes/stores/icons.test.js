@@ -41,26 +41,3 @@ describe("GET /stores/icons", () => {
     expect(response.status).toBe(200);
   });
 });
-
-describe("POST /stores/icons/123/buy", () => {
-  let buyIconStub;
-
-  beforeEach(() => {
-    buyIconStub = sinon.stub(iconStoreService, "buyIcon");
-  });
-
-  afterEach(() => {
-    buyIconStub.restore();
-  });
-
-  it("Should buy IconItem", async () => {
-    buyIconStub.returns({
-      label: "Krishna the Wise",
-      url: "https://thisIsValidUrl.com",
-      price: 45,
-    });
-
-    const response = await supertest(app).post("/stores/icons/123/buy");
-    expect(response.status).toBe(201);
-  });
-});

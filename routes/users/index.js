@@ -13,7 +13,11 @@ router.use(
   require("./follows")
 );
 
-router.use("/:userId/purchases", require("./purchases"));
+router.use(
+  "/:userId/purchases",
+  passport.authenticate("bearer", { session: false }),
+  require("./purchases")
+);
 
 router.use("/signup", require("./signup"));
 module.exports = router;
