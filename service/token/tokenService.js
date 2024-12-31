@@ -17,11 +17,12 @@ const flagAsUsed = async (token) => {
   );
 };
 
-const search = async ({ filters, pageNumber, pageSize }) => {
+const search = async ({ filters, pageNumber, pageSize, populate }) => {
   const totalResults = await Token.countDocuments(filters);
   const page = await Token.find(filters)
     .skip((pageNumber - 1) * pageSize)
     .limit(pageSize)
+    .populate(populate)
     .exec();
 
   return {

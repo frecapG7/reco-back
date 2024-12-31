@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
-require("dotenv");
+
 mongoose.set("transactionAsyncLocalStorage", true);
+// mongoose.set("debug", true);
 
 connect = async () => {
   try {
@@ -21,7 +22,4 @@ mongoose.connection.on("disconnected", () => {
   console.log("MongoDB disconnected");
 });
 
-module.exports = {
-  connect,
-  mongoose,
-};
+module.exports = mongoose;

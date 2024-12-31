@@ -88,6 +88,7 @@ MarketItemSchema.methods.toJSON = function () {
     type: this.type,
     ...(this.type === "IconItem" && {
       url: this.url,
+      icon: this.url,
     }),
     ...(this.type === "TitleItem" && {
       titleValue: this.titleValue,

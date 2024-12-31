@@ -40,7 +40,7 @@ const searchPurchases = async ({
 };
 
 const getPurchase = async ({ userId, purchaseId }) => {
-  const purchase = await PurchaseItem.fin-dOne({
+  const purchase = await PurchaseItem.findOne({
     user: userId,
     _id: purchaseId,
   }).exec();

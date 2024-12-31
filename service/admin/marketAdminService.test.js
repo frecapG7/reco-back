@@ -14,7 +14,6 @@ const {
 } = require("../../errors/error");
 
 const sinon = require("sinon");
-const { before } = require("lodash");
 
 describe("Test createIconItem", () => {
   let existsStub;
@@ -281,7 +280,11 @@ describe("Test getMarketItem", () => {
             .withArgs("modified_by")
             .returns({
               exec: () => ({
-                _id: "expected",
+                created_by: new User({}),
+                modified_by: new User({}),
+                toJSON: () => ({
+                  _id: "expected",
+                }),
               }),
             }),
         }),

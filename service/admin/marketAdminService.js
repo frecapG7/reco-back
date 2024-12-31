@@ -70,7 +70,14 @@ const getMarketItem = async ({ itemId, authenticatedUser }) => {
     .exec();
   if (!item) throw new NotFoundError("Cannot find user");
 
-  return item;
+  return {
+    ...item.toJSON(),
+    enabled: item.enabled,
+    created_by: item.created_by?.toJSON(),
+    modified_by: item.modified_by?.toJSON(),
+    created_at: item.created_at,
+    modified_at: item.modified_at,
+  };
 };
 
 /**

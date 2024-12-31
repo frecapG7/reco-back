@@ -34,4 +34,16 @@ const tokenSchema = new mongoose.Schema({
   },
 });
 
+tokenSchema.methods.toJSON = function () {
+  return {
+    id: this._id,
+    value: this.value,
+    type: this.type,
+    used: this.used,
+    created: this.created,
+    created_by: this.created_by,
+    expiration: this.expiration,
+  };
+};
+
 module.exports = mongoose.model("Token", tokenSchema);

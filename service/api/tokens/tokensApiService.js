@@ -56,6 +56,7 @@ const getTokens = async ({ query, authenticatedUser }) => {
     },
     pageNumber: parseInt(query?.pageNumber) || 1,
     pageSize: parseInt(query?.pageSize) || 10,
+    populate: "created_by",
   });
 };
 
