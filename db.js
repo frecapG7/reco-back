@@ -1,15 +1,14 @@
 const mongoose = require("mongoose");
-const config = require("./config");
+const { db } = require("./config");
 
-// mongoose.set("transactionAsyncLocalStorage", true);
+mongoose.set("transactionAsyncLocalStorage", true);
 mongoose.set("debug", true);
 
-const buildMongoUri = () => {
-  const { uri, user, password } = config.db;
-  return uri.replace("<username>", user).replace("<password>", password);
-};
+const mongoUri = db.uri
+  .replace("<username>", db.user)
+  .replace("<password>", db.password);
 
-mongoose.connect(buildMongoUri(), {
+mongoose.connect(mongoUri, {
   serverApi: { version: "1", strict: true, deprecationErrors: true },
 });
 
