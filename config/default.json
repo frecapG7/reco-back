@@ -1,7 +1,0 @@
-{
-    "db": {
-        "schema": "integration.tf2kpt6.mongodb.net/reco_dev?retryWrites=true&w=majority&appName=integration",
-        "username": "frecap",
-        "password": "admin"
-    }
-}
