@@ -6,25 +6,25 @@ const requestService = require("../../request/requestService");
 const recommendationsService = require("../../recommendations/recommendationsService");
 const { verifySelfOrAdmin } = require("../../validation/privilegeValidation");
 
-const getUser = async ({ id, authenticatedUser }) => {
+const getUser = async ({ id }) => {
   // 1 - Get user
   const user = await userService.getUser(id);
-  const isSelf = authenticatedUser && authenticatedUser._id.equals(user._id);
 
-  return {
-    id: user._id,
-    name: user.name,
-    title: user.title,
-    avatar: user.avatar,
-    balance: user.balance,
-    created: user.created,
-    privacy: {
-      showRequests: isSelf || !user.settings.privacy.privateRequests,
-      showRecommendations:
-        isSelf || !user.settings.privacy.privateRecommendations,
-      showPurchaseHistory: isSelf || !user.settings.privacy.privatePurchases,
-    },
-  };
+  return user;
+};
+
+const updateUser = async ({ id, data, authenticatedUser }) => {
+  // 1 - Verify user
+  verifySelfOrAdmin({ userId: id, authenticatedUser });
+  // 2 - Get User
+  const user = await userService.getUser(id);
+  // 3 - Update User
+
+  user.email = data.email;
+
+  const newUser = await user.save();
+
+  return newUser;
 };
 
 const updateAvatar = async ({ id, avatar, authenticatedUser }) => {
@@ -106,6 +106,7 @@ const getSort = (sort) => {
 
 module.exports = {
   getUser,
+  updateUser,
   updateAvatar,
   getRequests,
   getRecommendations,
