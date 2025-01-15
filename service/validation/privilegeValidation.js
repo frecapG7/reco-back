@@ -16,7 +16,17 @@ const verifySelfOrAdmin = ({ userId, authenticatedUser }) => {
       "You are not authorized to perform this action"
     );
 };
+
+const verifySelf = ({ userId, authenticatedUser }) => {
+  if (!authenticatedUser?._id?.equals(userId)) {
+    throw new UnAuthorizedError(
+      "You are not authorized to perform this action"
+    );
+  }
+};
+
 module.exports = {
   verifyAdmin,
   verifySelfOrAdmin,
+  verifySelf,
 };

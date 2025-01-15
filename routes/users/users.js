@@ -65,6 +65,23 @@ router.put(
   }
 );
 
+router.put(
+  "/:id/password",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const user = await users.updatePassword({
+        id: req.params.id,
+        body: req.body,
+        authenticatedUser: req.user,
+      });
+      return res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 /** SETTINGS ROUTES */
 
 router.get(

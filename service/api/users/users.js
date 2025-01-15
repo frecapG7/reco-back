@@ -4,7 +4,10 @@ const User = require("../../../model/User");
 const userService = require("../../user/userService");
 const requestService = require("../../request/requestService");
 const recommendationsService = require("../../recommendations/recommendationsService");
-const { verifySelfOrAdmin } = require("../../validation/privilegeValidation");
+const {
+  verifySelfOrAdmin,
+  verifySelf,
+} = require("../../validation/privilegeValidation");
 
 const getUser = async ({ id }) => {
   // 1 - Get user
@@ -25,6 +28,22 @@ const updateUser = async ({ id, data, authenticatedUser }) => {
   const newUser = await user.save();
 
   return newUser;
+};
+
+const updatePassword = async ({ id, body, authenticatedUser }) => {
+  // 1 - Verify user
+  verifySelf({ userId: id, authenticatedUser });
+
+  // 2 - Get user
+  const user = await userService.getUser(id);
+
+  // 3 - Verify old password
+  if (!user.validPassword(body.oldPassword))
+    throw new ForbiddenError("Old password is incorrect");
+
+  // 4 - Update password
+  user.setPassword(body.newPassword);
+  return await user.save();
 };
 
 const updateAvatar = async ({ id, avatar, authenticatedUser }) => {
@@ -108,6 +127,7 @@ module.exports = {
   getUser,
   updateUser,
   updateAvatar,
+  updatePassword,
   getRequests,
   getRecommendations,
 };
