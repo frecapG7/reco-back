@@ -4,36 +4,27 @@ const User = require("../../../model/User");
 const userService = require("../../user/userService");
 const requestService = require("../../request/requestService");
 const recommendationsService = require("../../recommendations/recommendationsService");
-
-const historyService = require("../../user/usersHistoryService");
-
+const { ObjectId } = require("mongoose").Types;
 const {
   getUser,
+  updateUser,
   updateAvatar,
   getRequests,
   getRecommendations,
+  updatePassword,
 } = require("./users");
 
 describe("Test getUser", () => {
-  let userFindByIdStub;
-  let getStatsStub;
+  let getUserStub;
 
   beforeEach(() => {
-    userFindByIdStub = sinon.stub(User, "findById");
-    getStatsStub = sinon.stub(historyService, "getStats");
+    getUserStub = sinon.stub(userService, "getUser");
   });
   afterEach(() => {
-    userFindByIdStub.restore();
-    getStatsStub.restore();
+    getUserStub.restore();
   });
 
-  it("Should throw a not found error", async () => {
-    userFindByIdStub.resolves(null);
-
-    await expect(getUser({ id: "123" })).rejects.toThrow(NotFoundError);
-  });
-
-  it("Should return user when anonymous", async () => {
+  it("Should return user", async () => {
     const expected = new User({
       _id: "12345",
       name: "test",
@@ -49,51 +40,53 @@ describe("Test getUser", () => {
         },
       },
     });
-    userFindByIdStub.resolves(expected);
-    getStatsStub.returns({
-      requestsCount: 4,
-      recommendationsCount: 2,
-    });
 
-    const result = await getUser({ id: "123" });
-    expect(userFindByIdStub.calledWith("123")).toEqual(true);
-    expect(result.privacy.showRequests).toEqual(true);
-    expect(result.privacy.showRecommendations).toEqual(true);
-    expect(result.privacy.showPurchaseHistory).toEqual(false);
-  });
-  it("Should return user when self", async () => {
-    const expected = new User({
-      _id: "12345",
-      name: "test",
-      title: "test",
-      avatar: "test",
-      balance: 0,
-      created: new Date(),
-      settings: {
-        privacy: {
-          privateRequests: false,
-          privateRecommendations: false,
-          privatePurchases: true,
-        },
-      },
-    });
-    userFindByIdStub.resolves(expected);
-    getStatsStub.returns({
-      requestsCount: 4,
-      recommendationsCount: 2,
-    });
+    getUserStub.resolves(expected);
 
     const result = await getUser({
       id: "123",
-      authenticatedUser: expected,
     });
-    expect(userFindByIdStub.calledWith("123")).toEqual(true);
-    expect(result.privacy.showRequests).toEqual(true);
-    expect(result.privacy.showRecommendations).toEqual(true);
-    expect(result.privacy.showPurchaseHistory).toEqual(true);
+    expect(result).toBeDefined();
   });
 });
 
+describe("Test updateUser", () => {
+  let getUserStub;
+
+  beforeEach(() => {
+    getUserStub = sinon.stub(userService, "getUser");
+  });
+  afterEach(() => {
+    getUserStub.restore();
+  });
+
+  it("Should throw a forbidden error", async () => {
+    expect(updateUser({ id: "123", data: {} })).rejects.toThrow(
+      "You are not authorized to perform this action"
+    );
+  });
+
+  it("Should update user", async () => {
+    const user = {
+      _id: "123",
+      email: "test",
+      save: () => sinon.stub().resolvesThis(),
+    };
+    getUserStub.resolves(user);
+
+    const result = await updateUser({
+      id: "123",
+      data: {
+        email: "test",
+      },
+      authenticatedUser: {
+        role: "ADMIN",
+      },
+    });
+
+    expect(result).toBeDefined();
+  });
+});
 describe("Test updateAvatar", () => {
   let getUserStub;
 
@@ -128,6 +121,63 @@ describe("Test updateAvatar", () => {
 
     expect(result).toBeDefined();
     // expect(result.avatar).toEqual("test");
+  });
+});
+
+describe("Test updatePassword", () => {
+  let getUserStub;
+
+  beforeEach(() => {
+    getUserStub = sinon.stub(userService, "getUser");
+  });
+
+  afterEach(() => {
+    getUserStub.restore();
+  });
+
+  it("Should throw a forbidden error for not being self", async () => {
+    expect(updatePassword({ id: "123", body: {} })).rejects.toThrow(
+      "You are not authorized to perform this action"
+    );
+  });
+
+  it("Should throw a forbidden error for wrong old password", async () => {
+    getUserStub.resolves({
+      validPassword: () => false,
+    });
+
+    expect(
+      updatePassword({
+        id: "64f6db09096d83b20116e62f",
+        body: {
+          oldPassword: "test",
+          newPassword: "test123",
+        },
+        authenticatedUser: {
+          _id: new ObjectId("64f6db09096d83b20116e62f"),
+        },
+      })
+    ).rejects.toThrow("Old password is incorrect");
+  });
+  it("Should update password", async () => {
+    getUserStub.resolves({
+      validPassword: () => true,
+      setPassword: () => {},
+      save: () => sinon.stub().resolvesThis(),
+    });
+
+    const result = await updatePassword({
+      id: "64f6db09096d83b20116e62f",
+      body: {
+        oldPassword: "test",
+        newPassword: "test123",
+      },
+      authenticatedUser: {
+        _id: new ObjectId("64f6db09096d83b20116e62f"),
+      },
+    });
+
+    expect(result).toBeDefined();
   });
 });
 

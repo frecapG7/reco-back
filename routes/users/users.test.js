@@ -2,7 +2,6 @@ const sinon = require("sinon");
 const supertest = require("supertest");
 
 const User = require("../../model/User");
-const userService = require("../../service/user/userService");
 const userApiService = require("../../service/api/users/users");
 
 const users = require("../../service/api/users/users");
@@ -59,26 +58,17 @@ describe("GET /users/:id", () => {
 });
 
 describe("PUT /users/:id", () => {
-  let userServiceStub;
+  let updateUserStub;
 
   beforeEach(() => {
-    userServiceStub = sinon.stub(userService, "updateUser");
+    updateUserStub = sinon.stub(userApiService, "updateUser");
   });
   afterEach(() => {
-    userServiceStub.restore();
-  });
-
-  it("should return forbiden on invalid user id", async () => {
-    const response = await supertest(app).put("/users/2").send({
-      email: "test",
-      name: "test",
-    });
-
-    expect(response.status).toBe(403);
+    updateUserStub.restore();
   });
 
   it("should return updated user", async () => {
-    userServiceStub.resolves({
+    updateUserStub.resolves({
       id: 1,
     });
 
@@ -94,6 +84,41 @@ describe("PUT /users/:id", () => {
   });
 });
 
+describe("PUT /users/:id/password", () => {
+  let userServiceStub;
+
+  beforeEach(() => {
+    userServiceStub = sinon.stub(userApiService, "updatePassword");
+  });
+  afterEach(() => {
+    userServiceStub.reset();
+  });
+
+  it("should return updated user", async () => {
+    userServiceStub.resolves({
+      id: 1,
+    });
+
+    const response = await supertest(app)
+      .put("/users/65df6cc757b41fec4d7c3055/avatar")
+      .send({
+        newPassword: "56464zad",
+        oldPassword: "test",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toEqual(1);
+
+    sinon.assert.calledOnce(userServiceStub);
+    sinon.assert.calledWith(userServiceStub, {
+      id: "65df6cc757b41fec4d7c3055",
+      body: {
+        newPassword: "56464zad",
+        oldPassword: "test",
+      },
+    });
+  });
+});
 describe("PUT /users/:id/avatar", () => {
   let userServiceStub;
 

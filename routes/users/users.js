@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const userService = require("../../service/user/userService");
 
 const users = require("../../service/api/users/users");
 const tokensApiService = require("../../service/api/tokens/tokensApiService");
@@ -38,8 +37,11 @@ router.put(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      verifyUser(req.params.id, req.user);
-      const user = await userService.updateUser(req.params.id, req.body);
+      const user = await users.updateUser({
+        id: req.params.id,
+        data: req.body,
+        authenticatedUser: req.user,
+      });
       return res.json(user);
     } catch (err) {
       next(err);
@@ -55,6 +57,23 @@ router.put(
       const user = await users.updateAvatar({
         id: req.params.id,
         avatar: req.body.avatar,
+      });
+      return res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.put(
+  "/:id/password",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const user = await users.updatePassword({
+        id: req.params.id,
+        body: req.body,
+        authenticatedUser: req.user,
       });
       return res.json(user);
     } catch (err) {

@@ -95,6 +95,7 @@ UserSchema.methods.toJSON = function () {
   return {
     id: this._id,
     name: this.name,
+    email: this.email,
     title: this.title,
     avatar: this.avatar,
     balance: this.balance,
