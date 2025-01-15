@@ -119,6 +119,7 @@ describe("Test getTokens", () => {
       filters: {},
       pageNumber: 1,
       pageSize: 10,
+      populate: "created_by",
     });
   });
 
@@ -156,6 +157,7 @@ describe("Test getTokens", () => {
       },
       pageNumber: 2,
       pageSize: 5,
+      populate: "created_by",
     });
   });
 });
@@ -214,8 +216,10 @@ describe("Test getUserTokens", () => {
         created_by: {
           _id: "123",
         },
-        type: "invitation",
+        type: "ACCOUNT_CREATION",
       },
+      pageNumber: 1,
+      pageSize: 10,
     });
   });
 });

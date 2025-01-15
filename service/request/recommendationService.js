@@ -3,7 +3,6 @@ const Request = require("../../model/Request");
 const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const creditService = require("../market/creditService");
 const notificationService = require("../user/notificationService");
-const mongoose = require("mongoose");
 const ObjectId = require("mongoose").Types.ObjectId;
 
 const getSort = (sort) => {
@@ -108,7 +107,6 @@ const getRecommendation = async ({ recommendationId, authenticatedUser }) => {
     liked: authenticatedUser
       ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
       : false,
-    likesCount: recommendation.likes.length,
   };
 };
 
@@ -126,41 +124,26 @@ const createRecommendation = async ({ requestId, data, authenticatedUser }) => {
       "User cannot create a recommendation for his own request"
     );
 
-  let session;
-  try {
-    session = await mongoose.startSession();
+  const newRecommendation = new Recommendation({
+    request: request,
+    user: authenticatedUser,
+    field1: String(data.field1),
+    field2: String(data.field2),
+    field3: String(data.field3),
+    html: String(data.html),
+    url: String(data.url),
+    requestType: String(request.requestType),
+    ...(data.duplicate_from && { duplicate_from: data.duplicate_from }),
+    ...(data.provider && { provider: data.provider }),
+  });
 
-    session.startTransaction();
+  await creditService.removeCredit(5, authenticatedUser);
+  const savedRecommendation = await newRecommendation.save();
 
-    await creditService.removeCredit(5, authenticatedUser);
-
-    const newRecommendation = new Recommendation({
-      request: request,
-      user: authenticatedUser,
-      field1: String(data.field1),
-      field2: String(data.field2),
-      field3: String(data.field3),
-      html: String(data.html),
-      url: String(data.url),
-      requestType: String(request.requestType),
-      ...(data.duplicate_from && { duplicate_from: data.duplicate_from }),
-      ...(data.provider && { provider: data.provider }),
-    });
-    const savedRecommendation = await newRecommendation.save();
-
-    await session.commitTransaction();
-
-    return {
-      ...savedRecommendation.toJSON(),
-      liked: false,
-      likesCount: 0,
-    };
-  } catch (err) {
-    if (session) await session.abortTransaction();
-    throw err;
-  } finally {
-    if (session) await session.endSession();
-  }
+  return {
+    ...savedRecommendation.toJSON(),
+    liked: false,
+  };
 };
 
 const updateRecommendation = async ({
@@ -189,7 +172,6 @@ const updateRecommendation = async ({
     liked: authenticatedUser
       ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
       : false,
-    likesCount: recommendation.likes.length,
   };
 };
 
@@ -220,48 +202,30 @@ const likeRecommendation = async ({ recommendationId, authenticatedUser }) => {
   // 2. Find request
   if (!recommendation.request) throw new NotFoundError("Request not found");
 
-  // 2. Start transaction
-  let session;
-  try {
-    session = await mongoose.startSession();
-    session.startTransaction();
+  // 3. Evaluate credit
+  // If the user is the author of the recommendation's request, give 5 credit
+  const credit = recommendation.request.author._id.equals(authenticatedUser._id)
+    ? 5
+    : 1;
+  // 4. Add credit and create notification
+  await Promise.all([
+    creditService.addCredit(Number(credit), recommendation.user),
+    notificationService.createNotification({
+      to: recommendation.user,
+      from: authenticatedUser,
+      type: "like_recommendation",
+    }),
+  ]);
+  // 5. Add like
+  recommendation.likes.push(authenticatedUser._id);
 
-    // 3. Evaluate credit
-    // If the user is the author of the recommendation's request, give 5 credit
-    const credit = recommendation.request.author._id.equals(
-      authenticatedUser._id
-    )
-      ? 5
-      : 1;
-    // 4. Add credit and create notification
-    await Promise.all([
-      creditService.addCredit(Number(credit), recommendation.user),
-      notificationService.createNotification({
-        to: recommendation.user,
-        from: authenticatedUser,
-        type: "like_recommendation",
-      }),
-    ]);
-    // 5. Add like
-    recommendation.likes.push(authenticatedUser._id);
+  //6. Return result
+  const savedRecommendation = await recommendation.save();
 
-    //6. Return result
-    const savedRecommendation = await recommendation.save();
-
-    // 7. Commit transaction
-    await session.commitTransaction();
-
-    return {
-      ...savedRecommendation.toJSON(),
-      liked: true,
-      likesCount: savedRecommendation.likes.length,
-    };
-  } catch (err) {
-    if (session) session.abortTransaction();
-    throw err;
-  } finally {
-    if (session) session.endSession();
-  }
+  return {
+    ...savedRecommendation.toJSON(),
+    liked: true,
+  };
 };
 
 // Function to unlike a recommendation
@@ -273,34 +237,18 @@ const unlikeRecommendation = async ({
   const recommendation = await Recommendation.findById(recommendationId);
   if (!recommendation) throw new NotFoundError("Recommendation not found");
 
-  let session;
+  //2. Remove like
+  recommendation.likes = recommendation.likes.filter(
+    (like) => like !== authenticatedUser._id
+  );
+  //3. Remove credit ?
 
-  // Start transaction
-  try {
-    session = await mongoose.startSession();
-    session.startTransaction();
-
-    //2. Remove like
-    recommendation.likes = recommendation.likes.filter(
-      (like) => like !== authenticatedUser._id
-    );
-    //3. Remove credit ?
-
-    //4. Commit transaction
-    await session.commitTransaction();
-    //5. Return result
-    const newRecommendation = await recommendation.save();
-    return {
-      ...newRecommendation.toJSON(),
-      liked: false,
-      likesCount: newRecommendation.likes.length,
-    };
-  } catch (err) {
-    if (session) session.abortTransaction();
-    throw err;
-  } finally {
-    if (session) session.endSession();
-  }
+  //4. Return result
+  const newRecommendation = await recommendation.save();
+  return {
+    ...newRecommendation.toJSON(),
+    liked: false,
+  };
 };
 
 module.exports = {

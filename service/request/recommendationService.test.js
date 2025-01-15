@@ -1,4 +1,3 @@
-const { mongoose } = require("mongoose");
 const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const Recommendation = require("../../model/Recommendation");
 const Request = require("../../model/Request");
@@ -226,7 +225,6 @@ describe("Test getRecommendation function", () => {
 
     expect(result).toBeDefined();
     expect(result.liked).toEqual(false);
-    expect(result.likesCount).toEqual(2);
 
     expect(expected.toJSON).toHaveBeenCalled();
   });
@@ -236,20 +234,17 @@ describe("Test createRecommendation function", () => {
   let requestStub;
   let recommendationStub;
   let creditServiceStub;
-  let mongooseStub;
 
   beforeEach(() => {
     requestStub = sinon.stub(Request, "findById");
     recommendationStub = sinon.stub(Recommendation.prototype, "save");
     creditServiceStub = sinon.stub(creditService, "removeCredit");
-    mongooseStub = sinon.stub(mongoose, "startSession");
   });
 
   afterEach(() => {
     requestStub.restore();
     recommendationStub.restore();
     creditServiceStub.restore();
-    mongooseStub.restore();
   });
 
   it("Should throw a NotFoundError", async () => {
@@ -261,7 +256,7 @@ describe("Test createRecommendation function", () => {
         data: {},
         authenticatedUser: { _id: "678" },
       })
-    ).rejects.toThrow(NotFoundError);
+    ).rejects.toThrow("Request not found");
   });
 
   it("Should throw a Forbidden", async () => {
@@ -277,24 +272,17 @@ describe("Test createRecommendation function", () => {
           _id: "65df6cc757b41fec4d7c3055",
         },
       })
-    ).rejects.toThrow(ForbiddenError);
+    ).rejects.toThrow(
+      "User cannot create a recommendation for his own request"
+    );
   });
 
-  it("Should rollback transaction", async () => {
+  it("Should prevent save", async () => {
     requestStub.resolves({
       author: new ObjectId("65df6cc757b41fec4d7c3055"),
     });
 
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.resolves(sessionStub);
-
-    recommendationStub.throws();
+    creditServiceStub.throws();
     await expect(
       recommendationService.createRecommendation({
         requestId: "123",
@@ -310,10 +298,7 @@ describe("Test createRecommendation function", () => {
     // Verify credit was called
     sinon.assert.calledWith(creditServiceStub, 5, { _id: "678" });
 
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
+    sinon.assert.notCalled(recommendationStub);
   });
 
   it("Should create a recommendation", async () => {
@@ -322,15 +307,6 @@ describe("Test createRecommendation function", () => {
       author: new ObjectId("65df6cc757b41fec4d7c3055"),
       requestType: "BOOK",
     });
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-
-    mongooseStub.resolves(sessionStub);
 
     const expected = {
       toJSON: jest.fn(),
@@ -349,7 +325,6 @@ describe("Test createRecommendation function", () => {
     });
 
     expect(result).toBeDefined();
-    expect(result.likesCount).toEqual(0);
     expect(result.liked).toEqual(false);
 
     sinon.assert.calledOnce(recommendationStub);
@@ -362,11 +337,6 @@ describe("Test createRecommendation function", () => {
 
     // Verify credit was called
     sinon.assert.calledWith(creditServiceStub, 5, { _id: "678" });
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-
-    expect(sessionStub.commitTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
 
     expect(expected.toJSON).toHaveBeenCalled();
   });
@@ -432,7 +402,6 @@ describe("Test updateRecommendation function", () => {
     );
 
     expect(result.liked).toEqual(false);
-    expect(result.likesCount).toEqual(1);
   });
 });
 
@@ -472,13 +441,11 @@ describe("Test deleteRecommendation function", () => {
 
 describe("Test likeRecommendation function", () => {
   let recommendationStub;
-  let mongooseStub;
   let creditServiceStub;
   let notificationServiceStub;
 
   beforeEach(() => {
     recommendationStub = sinon.stub(Recommendation, "findById");
-    mongooseStub = sinon.stub(mongoose, "startSession");
     creditServiceStub = sinon.stub(creditService, "addCredit");
     notificationServiceStub = sinon.stub(
       notificationService,
@@ -487,7 +454,6 @@ describe("Test likeRecommendation function", () => {
   });
   afterEach(() => {
     recommendationStub.restore();
-    mongooseStub.restore();
     creditServiceStub.restore();
     notificationServiceStub.restore();
   });
@@ -576,50 +542,6 @@ describe("Test likeRecommendation function", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("Should rollback transaction", async () => {
-    recommendationStub.withArgs("123").returns({
-      populate: sinon
-        .stub()
-        .withArgs("request", "author")
-        .returns({
-          exec: sinon.stub().resolves({
-            _id: "123",
-            likes: ["anotherUserId"],
-            user: {
-              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
-            },
-            request: {
-              _id: "requestId",
-            },
-            save: jest.fn(),
-          }),
-        }),
-    });
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
-
-    creditServiceStub.throws();
-
-    await expect(
-      recommendationService.likeRecommendation({
-        recommendationId: "123",
-        authenticatedUser: { _id: "userId" },
-      })
-    ).rejects.toThrow();
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
-  });
-
   it("Should add a like with random author", async () => {
     const expected = {
       _id: "123",
@@ -646,13 +568,6 @@ describe("Test likeRecommendation function", () => {
         }),
     });
 
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
     creditServiceStub.resolves();
     notificationServiceStub.resolves();
 
@@ -681,12 +596,6 @@ describe("Test likeRecommendation function", () => {
     expect(result.likes[1]).toEqual("userId");
     expect(result.liked).toEqual(true);
     // expect(result.save).toHaveBeenCalled();
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
   });
 
   it("Should add a like with request author", async () => {
@@ -713,13 +622,6 @@ describe("Test likeRecommendation function", () => {
         }),
     });
 
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
     creditServiceStub.resolves();
     notificationServiceStub.resolves();
 
@@ -742,27 +644,18 @@ describe("Test likeRecommendation function", () => {
     expect(result.likes.length).toEqual(2);
     expect(result.likes[1]).toEqual("64dc8e5b6f16b11238c6f9a0");
     expect(result.liked).toEqual(true);
-
-    //Verify transaction
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
   });
 });
 
 describe("Test unlikeRecommendation function", () => {
   let recommendationStub;
-  let mongooseStub;
 
   beforeEach(() => {
     recommendationStub = sinon.stub(Recommendation, "findById");
-    mongooseStub = sinon.stub(mongoose, "startSession");
   });
 
   afterEach(() => {
     recommendationStub.restore();
-    mongooseStub.restore();
   });
 
   it("Should thrown a not found error", async () => {
@@ -776,35 +669,6 @@ describe("Test unlikeRecommendation function", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("Should rollback transaction", async () => {
-    const expected = {
-      like: ["123"],
-      save: sinon.stub().resolvesThis(),
-    };
-
-    recommendationStub.resolves(expected);
-
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
-
-    await expect(
-      recommendationService.unlikeRecommendation({
-        recommendationId: "123",
-        authenticatedUser: { _id: "678" },
-      })
-    ).rejects.toThrow();
-
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
-  });
-
   it("Should unlike recommendation", async () => {
     const expected = {
       likes: ["123", "678"],
@@ -814,23 +678,10 @@ describe("Test unlikeRecommendation function", () => {
 
     recommendationStub.resolves(expected);
 
-    const sessionStub = {
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      abortTransaction: jest.fn(),
-      endSession: jest.fn(),
-    };
-    mongooseStub.resolves(sessionStub);
-
     const result = await recommendationService.unlikeRecommendation({
       recommendationId: "123",
       authenticatedUser: { _id: "678" },
     });
-
-    expect(sessionStub.startTransaction).toHaveBeenCalled();
-    expect(sessionStub.commitTransaction).toHaveBeenCalled();
-    expect(sessionStub.abortTransaction).not.toHaveBeenCalled();
-    expect(sessionStub.endSession).toHaveBeenCalled();
 
     expect(result.likes.length).toEqual(1);
     expect(result.likes[0]).toEqual("123");
