@@ -1,10 +1,8 @@
 const {
   NotFoundError,
   UnprocessableEntityError,
-  InternalServerError,
 } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-const mongoose = require("mongoose");
 const creditService = require("./creditService");
 const IconPurchase = require("../../model/purchase/IconPurchase");
 const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
@@ -54,31 +52,20 @@ const searchItems = async ({
 };
 
 const buyItem = async ({ marketItem, quantity = 1, user }) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    await creditService.removeCredit(quantity * marketItem.price, user);
+  let purchase = await PurchaseItem.findOne({
+    user: user,
+    item: marketItem,
+  });
 
-    let purchase = await PurchaseItem.findOne({
-      user: user,
-      item: marketItem,
-    }).session(session);
-    if (!purchase) purchase = await buildPurchaseItem(marketItem, user);
+  if (!purchase) purchase = await buildPurchaseItem(marketItem, user);
 
-    purchase.quantity += quantity;
+  await creditService.removeCredit(quantity * marketItem.price, user);
 
-    const savedPurchase = await purchase.save();
+  purchase.quantity += quantity;
 
-    await session.commitTransaction();
+  const savedPurchase = await purchase.save();
 
-    return savedPurchase;
-  } catch (err) {
-    console.error(err);
-    await session?.abortTransaction();
-    throw err;
-  } finally {
-    await session?.endSession();
-  }
+  return savedPurchase;
 };
 
 const buildPurchaseItem = async (marketItem, user) => {

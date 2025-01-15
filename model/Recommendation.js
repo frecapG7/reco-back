@@ -85,7 +85,7 @@ RecommendationSchema.methods.toJSON = function () {
       name: this.provider?.name,
       icon: this.provider?.icon,
     },
-    likes: this.likes.length,
+    likesCount: this.likes.length,
   };
 };
 
