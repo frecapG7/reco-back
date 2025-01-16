@@ -6,6 +6,7 @@ const sinon = require("sinon");
 const creditService = require("../market/creditService");
 const notificationService = require("../user/notificationService");
 const { ObjectId } = require("mongodb");
+const { remove } = require("lodash");
 
 describe("Test getRecommendations function", () => {
   let recommendationStub;
@@ -649,17 +650,24 @@ describe("Test likeRecommendation function", () => {
 
 describe("Test unlikeRecommendation function", () => {
   let recommendationStub;
+  let removeCreditStub;
 
   beforeEach(() => {
     recommendationStub = sinon.stub(Recommendation, "findById");
+    removeCreditStub = sinon.stub(creditService, "removeCredit");
   });
 
   afterEach(() => {
     recommendationStub.restore();
+    removeCreditStub.restore();
   });
 
   it("Should thrown a not found error", async () => {
-    recommendationStub.resolves(null);
+    recommendationStub.returns({
+      populate: sinon.stub().returns({
+        exec: sinon.stub().resolves(null),
+      }),
+    });
 
     await expect(
       recommendationService.unlikeRecommendation({
@@ -669,21 +677,176 @@ describe("Test unlikeRecommendation function", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("Should unlike recommendation", async () => {
+  it("Should throw an error because user has not liked the recommendation", async () => {
     const expected = {
-      likes: ["123", "678"],
+      _id: "123",
+      likes: [],
+      request: {
+        _id: "requestId",
+        author: {
+          _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+        },
+      },
+    };
+
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(expected),
+        }),
+    });
+
+    await expect(
+      recommendationService.unlikeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: {
+          _id: "userId",
+        },
+      })
+    ).rejects.toThrow("User userId has not liked recommendation 123");
+  });
+
+  it("Should unlike a recommendation by a random user", async () => {
+    const expected = {
+      _id: "123",
+      likes: ["userId"],
+      user: {
+        balance: 50,
+        _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+      },
+      request: {
+        _id: "requestId",
+        author: {
+          _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+        },
+      },
+      populate: sinon.stub().resolvesThis(),
       save: sinon.stub().resolvesThis(),
       toJSON: sinon.stub().returnsThis(),
     };
 
-    recommendationStub.resolves(expected);
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(expected),
+        }),
+    });
+
+    removeCreditStub.resolves();
 
     const result = await recommendationService.unlikeRecommendation({
       recommendationId: "123",
-      authenticatedUser: { _id: "678" },
+      authenticatedUser: {
+        _id: "userId",
+      },
     });
 
-    expect(result.likes.length).toEqual(1);
-    expect(result.likes[0]).toEqual("123");
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(removeCreditStub);
+    sinon.assert.calledWith(removeCreditStub, 1, {
+      balance: 50,
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    expect(result.likes.length).toEqual(0);
+    expect(result.liked).toEqual(false);
+  });
+
+  it("Should unlike a recommendation made by the request author", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            _id: "123",
+            likes: ["64dc8e5b6f16b11238c6f9a0"],
+            user: {
+              balance: 50,
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+            request: {
+              _id: "requestId",
+              author: {
+                _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+              },
+            },
+            populate: sinon.stub().resolvesThis(),
+            save: sinon.stub().resolvesThis(),
+            toJSON: sinon.stub().returnsThis(),
+          }),
+        }),
+    });
+
+    removeCreditStub.resolves();
+
+    const result = await recommendationService.unlikeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "64dc8e5b6f16b11238c6f9a0",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(removeCreditStub);
+    sinon.assert.calledWith(removeCreditStub, 5, {
+      balance: 50,
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    expect(result.likes.length).toEqual(0);
+    expect(result.liked).toEqual(false);
+  });
+  it("Should unlike a recommendation made by the request author but with no enough balance", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            _id: "123",
+            likes: ["64dc8e5b6f16b11238c6f9a0"],
+            user: {
+              balance: 4,
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+            request: {
+              _id: "requestId",
+              author: {
+                _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+              },
+            },
+            populate: sinon.stub().resolvesThis(),
+            save: sinon.stub().resolvesThis(),
+            toJSON: sinon.stub().returnsThis(),
+          }),
+        }),
+    });
+
+    removeCreditStub.resolves();
+
+    const result = await recommendationService.unlikeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "64dc8e5b6f16b11238c6f9a0",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(removeCreditStub);
+    sinon.assert.calledWith(removeCreditStub, 4, {
+      balance: 4,
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    expect(result.likes.length).toEqual(0);
+    expect(result.liked).toEqual(false);
   });
 });
