@@ -4,7 +4,6 @@ const supertest = require("supertest");
 const User = require("../../model/User");
 const userApiService = require("../../service/api/users/users");
 
-const users = require("../../service/api/users/users");
 const userSettingsService = require("../../service/user/userSettingsService");
 const metrics = require("../../service/api/users/metrics");
 const passport = require("../../auth");
@@ -37,7 +36,7 @@ describe("GET /users/:id", () => {
   let usersStub;
 
   beforeEach(() => {
-    usersStub = sinon.stub(users, "getUser");
+    usersStub = sinon.stub(userApiService, "getUser");
   });
   afterEach(() => {
     usersStub.restore();
@@ -94,13 +93,13 @@ describe("PUT /users/:id/password", () => {
     userServiceStub.reset();
   });
 
-  it("should return updated user", async () => {
+  it("should update user password", async () => {
     userServiceStub.resolves({
       id: 1,
     });
 
     const response = await supertest(app)
-      .put("/users/65df6cc757b41fec4d7c3055/avatar")
+      .put("/users/65df6cc757b41fec4d7c3055/password")
       .send({
         newPassword: "56464zad",
         oldPassword: "test",
@@ -116,6 +115,7 @@ describe("PUT /users/:id/password", () => {
         newPassword: "56464zad",
         oldPassword: "test",
       },
+      authenticatedUser: { _id: new ObjectId("65df6cc757b41fec4d7c3055") },
     });
   });
 });
@@ -259,7 +259,7 @@ describe("GET /users/:id/recommendations", () => {
   let getRecommendationsStub;
 
   beforeEach(() => {
-    getRecommendationsStub = sinon.stub(users, "getRecommendations");
+    getRecommendationsStub = sinon.stub(userApiService, "getRecommendations");
   });
 
   afterEach(() => {
