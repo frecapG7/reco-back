@@ -21,7 +21,7 @@ router.get("/:id", async (req, res, next) => {
  */
 router.post(
   "",
-  passport.authenticate("bearer", { session: false }),
+  passport.authenticate(["bearer"], { session: false }),
   async (req, res, next) => {
     try {
       const request = await requestService.createRequest(req.body, req.user);
@@ -57,7 +57,7 @@ router.put(
  */
 router.delete(
   "/:id",
-  passport.authenticate("bearer", { session: false }),
+  passport.authenticate(["bearer"], { session: false }),
   async (req, res) => {
     try {
       const request = requestService.deleteRequest(req.params.id, req.user);

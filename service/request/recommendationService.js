@@ -2,93 +2,7 @@ const Recommendation = require("../../model/Recommendation");
 const Request = require("../../model/Request");
 const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const creditService = require("../market/creditService");
-const notificationService = require("../user/notificationService");
 const ObjectId = require("mongoose").Types.ObjectId;
-
-const getSort = (sort) => {
-  if (sort === "likes") return { likesCount: -1 };
-  else if (sort === "createdAt") return { createdAt: -1 };
-  else return { likesCount: -1 };
-};
-
-const getRecommendations = async ({
-  requestId,
-  sorted,
-  pageSize,
-  pageNumber,
-  authenticatedUser,
-}) => {
-  const skip = pageSize * (pageNumber - 1);
-  const limit = pageSize;
-  const sort = getSort(sorted);
-  const match = { request: new ObjectId(requestId) };
-
-  const totalResults = await Recommendation.countDocuments(match);
-  const recommendations = await Recommendation.aggregate([
-    {
-      $addFields: {
-        liked: { $in: [authenticatedUser?._id, "$likes"] },
-        likesCount: { $size: "$likes" },
-      },
-    },
-    {
-      $match: match,
-    },
-    {
-      $sort: sort,
-    },
-    {
-      $skip: skip,
-    },
-    {
-      $limit: limit,
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "user",
-        foreignField: "_id",
-        as: "user",
-        pipeline: [
-          {
-            $project: {
-              _id: 1,
-              name: 1,
-              avatar: 1,
-            },
-          },
-        ],
-      },
-    },
-  ]).exec();
-
-  return {
-    pagination: {
-      currentPage: pageNumber,
-      totalPages: Math.ceil(totalResults / pageSize),
-      totalResults,
-    },
-    results: recommendations?.map((recommendation) => ({
-      id: recommendation._id,
-      user: {
-        id: recommendation.user[0]._id,
-        name: recommendation.user[0].name,
-        avatar: recommendation.user[0].avatar,
-      },
-      field1: recommendation.field1,
-      field2: recommendation.field2,
-      field3: recommendation.field3,
-      html: recommendation.html,
-      created_at: recommendation.created_at,
-      provider: {
-        name: recommendation.provider?.name,
-        icon: recommendation.provider?.icon,
-      },
-      likesCount: recommendation.likesCount,
-      liked: recommendation.liked,
-    })),
-  };
-};
 
 /**
  * Return Recommendation by id
@@ -169,9 +83,7 @@ const updateRecommendation = async ({
 
   return {
     ...recommendation.toJSON(),
-    liked: authenticatedUser
-      ? recommendation.likes.includes(new ObjectId(authenticatedUser._id))
-      : false,
+    liked: recommendation.isLikedBy(authenticatedUser?._id),
   };
 };
 
@@ -185,113 +97,9 @@ const deleteRecommendation = async (requestId, recommendationId, user) => {
   if (!recommendation) throw new NotFoundError("Recommendation not found");
 };
 
-// Function to like a recommendation
-const likeRecommendation = async ({ recommendationId, authenticatedUser }) => {
-  // 1.a Check if recommendation exists
-  const recommendation = await Recommendation.findById(recommendationId)
-    .populate("request", "author")
-    .exec();
-  if (!recommendation) throw new NotFoundError("Recommendation not found");
-  // 1.b Check if user has already liked the recommendation
-  if (recommendation.likes.includes(authenticatedUser._id))
-    throw new ForbiddenError("User has already liked this recommendation");
-  // 1.c Check if user is not recommendation's author
-  if (recommendation.user._id.equals(authenticatedUser._id))
-    throw new ForbiddenError("User cannot like his own recommendation");
-
-  // 2. Find request
-  if (!recommendation.request) throw new NotFoundError("Request not found");
-
-  // 3. Evaluate credit
-  const credit = getValue({ recommendation, authenticatedUser });
-  // 4. Add credit and create notification
-  await Promise.all([
-    creditService.addCredit(Number(credit), recommendation.user),
-    notificationService.createNotification({
-      to: recommendation.user,
-      from: authenticatedUser,
-      type: "like_recommendation",
-    }),
-  ]);
-  // 5. Add like
-  recommendation.likes.push(authenticatedUser._id);
-
-  //6. Return result
-  const savedRecommendation = await recommendation.save();
-
-  return {
-    ...savedRecommendation.toJSON(),
-    liked: true,
-  };
-};
-
-// Function to unlike a recommendation
-const unlikeRecommendation = async ({
-  recommendationId,
-  authenticatedUser,
-}) => {
-  // 1. Find recommendation
-  const recommendation = await Recommendation.findById(recommendationId)
-    .populate("request", "author")
-    .exec();
-  if (!recommendation) throw new NotFoundError("Recommendation not found");
-  // 1.b Check if user has already liked the recommendation
-  if (!recommendation.likes.includes(authenticatedUser._id))
-    throw new ForbiddenError(`User ${authenticatedUser._id} has not liked recommendation ${recommendation._id}`);
-
-  //2. Remove credit ?
-  await removeCredit({
-    recommendation,
-    value: getValue({ recommendation, authenticatedUser }),
-  });
-
-  //3. Remove like
-  recommendation.likes = recommendation.likes.filter(
-    (like) => like !== authenticatedUser._id
-  );
-
-  //4. Return result
-  const newRecommendation = await recommendation.save();
-  return {
-    ...newRecommendation.toJSON(),
-    liked: false,
-  };
-};
-
-/**
- *
- * If the user is the author of the recommendation's request, give 5 credit
- * @param {Recommendation} recommendation
- * @param {User} authenticatedUser
- * @returns {Number} credit
- */
-const getValue = ({ recommendation, authenticatedUser }) => {
-  return recommendation.request.author._id.equals(authenticatedUser._id)
-    ? 5
-    : 1;
-};
-
-/**
- *
- * @param {Recommendation} recommendation
- * @param {Number} value
- * @returns {Promise}
- */
-const removeCredit = async ({ recommendation, value }) => {
-  await recommendation.populate("user");
-
-  await creditService.removeCredit(
-    value >= recommendation.user.balance ? recommendation.user.balance : value,
-    recommendation.user
-  );
-};
-
 module.exports = {
-  getRecommendations,
   getRecommendation,
   createRecommendation,
   updateRecommendation,
   deletedRecommendation: deleteRecommendation,
-  likeRecommendation,
-  unlikeRecommendation,
 };

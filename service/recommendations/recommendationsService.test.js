@@ -1,8 +1,14 @@
 const Recommendation = require("../../model/Recommendation");
-const { searchRecommendations } = require("./recommendationsService");
-const { NotFoundError } = require("../../errors/error");
+const {
+  searchRecommendations,
+  likeRecommendation,
+  unlikeRecommendation,
+} = require("./recommendationsService");
+const { NotFoundError, ForbiddenError } = require("../../errors/error");
 const sinon = require("sinon");
-const { search } = require("../request/requestService");
+const creditService = require("../market/creditService");
+const notificationService = require("../user/notificationService");
+const { ObjectId } = require("mongodb");
 
 describe("Validate searchRecommendations", () => {
   let countStub;
@@ -32,15 +38,20 @@ describe("Validate searchRecommendations", () => {
                 .stub()
                 .withArgs({ created_at: -1 })
                 .returns({
-                  exec: sinon.stub().returns([
-                    {
-                      _id: "123",
-                      field1: "field1",
-                      field2: "field2",
-                      field3: "field3",
-                      html: "html",
-                    },
-                  ]),
+                  populate: sinon.stub().returns({
+                    exec: sinon.stub().returns([
+                      {
+                        toJSON: sinon.stub().returns({
+                          id: "123",
+                          field1: "field1",
+                          field2: "field2",
+                          field3: "field3",
+                          html: "html",
+                        }),
+                        isLikedBy: sinon.stub().returns(false),
+                      },
+                    ]),
+                  }),
                 }),
             }),
         }),
@@ -60,6 +71,7 @@ describe("Validate searchRecommendations", () => {
     expect(pageResult.results[0].field2).toEqual("field2");
     expect(pageResult.results[0].field3).toEqual("field3");
     expect(pageResult.results[0].html).toEqual("html");
+    expect(pageResult.results[0].liked).toEqual(false);
 
     sinon.assert.calledWith(findStub, {
       duplicate_from: null,
@@ -87,15 +99,20 @@ describe("Validate searchRecommendations", () => {
                 .stub()
                 .withArgs({ created_at: -1 })
                 .returns({
-                  exec: sinon.stub().returns([
-                    {
-                      _id: "123",
-                      field1: "field1",
-                      field2: "field2",
-                      field3: "field3",
-                      html: "html",
-                    },
-                  ]),
+                  populate: sinon.stub().returns({
+                    exec: sinon.stub().returns([
+                      {
+                        toJSON: sinon.stub().returns({
+                          id: "123",
+                          field1: "field1",
+                          field2: "field2",
+                          field3: "field3",
+                          html: "html",
+                        }),
+                        isLikedBy: sinon.stub().returns(true),
+                      },
+                    ]),
+                  }),
                 }),
             }),
         }),
@@ -122,6 +139,7 @@ describe("Validate searchRecommendations", () => {
     expect(pageResult.results[0].field2).toEqual("field2");
     expect(pageResult.results[0].field3).toEqual("field3");
     expect(pageResult.results[0].html).toEqual("html");
+    expect(pageResult.results[0].liked).toEqual(true);
 
     sinon.assert.calledWith(findStub, {
       $or: [
@@ -132,5 +150,422 @@ describe("Validate searchRecommendations", () => {
       user,
       requestType: "requestType",
     });
+  });
+});
+
+describe("Test likeRecommendation function", () => {
+  let recommendationStub;
+  let creditServiceStub;
+  let notificationServiceStub;
+
+  beforeEach(() => {
+    recommendationStub = sinon.stub(Recommendation, "findById");
+    creditServiceStub = sinon.stub(creditService, "addCredit");
+    notificationServiceStub = sinon.stub(
+      notificationService,
+      "createNotification"
+    );
+  });
+  afterEach(() => {
+    recommendationStub.restore();
+    creditServiceStub.restore();
+    notificationServiceStub.restore();
+  });
+
+  it("Should thrown a recommendation not found error", async () => {
+    recommendationStub.returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(null),
+        }),
+    });
+
+    await expect(
+      likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("Should thrown a already like forbidden error", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            isLikedBy: sinon.stub().returns(true),
+          }),
+        }),
+    });
+
+    await expect(
+      likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
+    ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("Should thrown an own recommendation forbidden error", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            isLikedBy: sinon.stub().returns(false),
+            user: {
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+          }),
+        }),
+    });
+
+    await expect(
+      likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "65df6cc757b41fec4d7c3055" },
+      })
+    ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("Should thrown a request not found error", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            _id: "123",
+            isLikedBy: sinon.stub().returns(false),
+            user: {
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+          }),
+        }),
+    });
+    await expect(
+      likeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "userId" },
+      })
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("Should add a like with random author", async () => {
+    const expected = {
+      _id: "123",
+      user: {
+        _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+      },
+      request: {
+        _id: "requestId",
+        author: {
+          _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+        },
+      },
+
+      likes: [],
+      isLikedBy: sinon.stub().returns(false),
+      save: sinon.stub().resolvesThis(),
+      toJSON: sinon.stub().returnsThis(),
+    };
+
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(expected),
+        }),
+    });
+
+    creditServiceStub.resolves();
+    notificationServiceStub.resolves();
+
+    const result = await likeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "userId",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(creditServiceStub);
+    sinon.assert.calledWith(creditServiceStub, 1, {
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    sinon.assert.calledOnce(notificationServiceStub);
+    // sinon.assert.calledWith(notificationServiceStub, {
+    //   to: new ObjectId("666666666666"),
+    //   from: new ObjectId("678354154"),
+    //   type: "like_recommendation",
+    // });
+
+    expect(result.likes.length).toEqual(1);
+    expect(result.likes[0]).toEqual("userId");
+    expect(result.liked).toEqual(true);
+    // expect(result.save).toHaveBeenCalled();
+  });
+
+  it("Should add a like with request author", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            _id: "123",
+            user: {
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+            request: {
+              _id: "requestId",
+              author: {
+                _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+              },
+            },
+            likes: ["64dc8e5b6f16b11238c6f9a0"],
+            isLikedBy: sinon.stub().returns(false),
+            save: sinon.stub().resolvesThis(),
+            toJSON: sinon.stub().returnsThis(),
+          }),
+        }),
+    });
+
+    creditServiceStub.resolves();
+    notificationServiceStub.resolves();
+
+    const result = await likeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "64dc8e5b6f16b11238c6f9a0",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(creditServiceStub);
+    sinon.assert.calledWith(creditServiceStub, 5, {
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    sinon.assert.calledOnce(notificationServiceStub);
+
+    expect(result.likes.length).toEqual(2);
+    expect(result.likes[1]).toEqual("64dc8e5b6f16b11238c6f9a0");
+    expect(result.liked).toEqual(true);
+  });
+});
+
+describe("Test unlikeRecommendation function", () => {
+  let recommendationStub;
+  let removeCreditStub;
+
+  beforeEach(() => {
+    recommendationStub = sinon.stub(Recommendation, "findById");
+    removeCreditStub = sinon.stub(creditService, "removeCredit");
+  });
+
+  afterEach(() => {
+    recommendationStub.restore();
+    removeCreditStub.restore();
+  });
+
+  it("Should thrown a not found error", async () => {
+    recommendationStub.returns({
+      populate: sinon.stub().returns({
+        exec: sinon.stub().resolves(null),
+      }),
+    });
+
+    await expect(
+      unlikeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: { _id: "678" },
+      })
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("Should throw an error because user has not liked the recommendation", async () => {
+    const expected = {
+      _id: "123",
+      isLikedBy: sinon.stub().returns(false),
+      request: {
+        _id: "requestId",
+        author: {
+          _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+        },
+      },
+    };
+
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(expected),
+        }),
+    });
+
+    await expect(
+      unlikeRecommendation({
+        recommendationId: "123",
+        authenticatedUser: {
+          _id: "userId",
+        },
+      })
+    ).rejects.toThrow("User userId has not liked recommendation 123");
+  });
+
+  it("Should unlike a recommendation by a random user", async () => {
+    const expected = {
+      _id: "123",
+      likes: [new ObjectId("62dc8e5b6f16b11238c6f9a0")],
+      user: {
+        balance: 50,
+        _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+      },
+      request: {
+        _id: "requestId",
+        author: {
+          _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+        },
+      },
+      isLikedBy: sinon.stub().returns(true),
+      populate: sinon.stub().resolvesThis(),
+      save: sinon.stub().resolvesThis(),
+      toJSON: sinon.stub().returnsThis(),
+    };
+
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(expected),
+        }),
+    });
+
+    removeCreditStub.resolves();
+
+    const result = await unlikeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "62dc8e5b6f16b11238c6f9a0",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(removeCreditStub);
+    sinon.assert.calledWith(removeCreditStub, 1, {
+      balance: 50,
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    expect(result.likes.length).toEqual(0);
+    expect(result.liked).toEqual(false);
+  });
+
+  it("Should unlike a recommendation made by the request author", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            _id: "123",
+            likes: [new ObjectId("64dc8e5b6f16b11238c6f9a0")],
+            user: {
+              balance: 50,
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+            request: {
+              _id: "requestId",
+              author: {
+                _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+              },
+            },
+            isLikedBy: sinon.stub().returns(true),
+            populate: sinon.stub().resolvesThis(),
+            save: sinon.stub().resolvesThis(),
+            toJSON: sinon.stub().returnsThis(),
+          }),
+        }),
+    });
+
+    removeCreditStub.resolves();
+
+    const result = await unlikeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "64dc8e5b6f16b11238c6f9a0",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(removeCreditStub);
+    sinon.assert.calledWith(removeCreditStub, 5, {
+      balance: 50,
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    expect(result.likes.length).toEqual(0);
+    expect(result.liked).toEqual(false);
+  });
+  it("Should unlike a recommendation made by the request author but with no enough balance", async () => {
+    recommendationStub.withArgs("123").returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves({
+            _id: "123",
+            likes: [new ObjectId("64dc8e5b6f16b11238c6f9a0")],
+            user: {
+              balance: 4,
+              _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+            },
+            request: {
+              _id: "requestId",
+              author: {
+                _id: new ObjectId("64dc8e5b6f16b11238c6f9a0"),
+              },
+            },
+            isLikedBy: sinon.stub().returns(true),
+            populate: sinon.stub().resolvesThis(),
+            save: sinon.stub().resolvesThis(),
+            toJSON: sinon.stub().returnsThis(),
+          }),
+        }),
+    });
+
+    removeCreditStub.resolves();
+
+    const result = await unlikeRecommendation({
+      recommendationId: "123",
+      authenticatedUser: {
+        _id: "64dc8e5b6f16b11238c6f9a0",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(removeCreditStub);
+    sinon.assert.calledWith(removeCreditStub, 4, {
+      balance: 4,
+      _id: new ObjectId("65df6cc757b41fec4d7c3055"),
+    });
+
+    expect(result.likes.length).toEqual(0);
+    expect(result.liked).toEqual(false);
   });
 });

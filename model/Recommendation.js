@@ -89,4 +89,9 @@ RecommendationSchema.methods.toJSON = function () {
   };
 };
 
+RecommendationSchema.methods.isLikedBy = function (userId) {
+  if (!userId) return false;
+  return this.likes.some((like) => like.equals(userId));
+};
+
 module.exports = mongoose.model("Recommendation", RecommendationSchema);

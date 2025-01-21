@@ -1,6 +1,7 @@
 const sinon = require("sinon");
 const supertest = require("supertest");
 const recommendationService = require("../../service/request/recommendationService");
+const requestApiService = require("../../service/api/requests/requestsApiService");
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -30,20 +31,17 @@ app.use("/requests/:requestId/recommendations", recommendation);
 app.use(handleError);
 
 describe("GET /requests/:requestId/recommendations", () => {
-  let recommendationServiceStub;
+  let requestApiServiceStub;
 
   beforeEach(() => {
-    recommendationServiceStub = sinon.stub(
-      recommendationService,
-      "getRecommendations"
-    );
+    requestApiServiceStub = sinon.stub(requestApiService, "getRecommendations");
   });
   afterEach(() => {
-    recommendationServiceStub.restore();
+    requestApiServiceStub.restore();
   });
 
   it("should return recommendations", async () => {
-    recommendationServiceStub.resolves({
+    requestApiServiceStub.resolves({
       items: [{ _id: 1 }],
     });
     const response = await supertest(app).get("/requests/123/recommendations");
