@@ -90,7 +90,7 @@ describe("Should test updateUser function", () => {
 
   it("Should throw a forbidden error", async () => {
     await expect(
-      updateUser({ params: { id: "123" } }, { role: "USER" })
+      updateUser({ params: { id: "123" }, user: { role: "USER" } })
     ).rejects.toThrow("You are not authorized to perform this action");
   });
 
@@ -102,10 +102,11 @@ describe("Should test updateUser function", () => {
     getUserStub.withArgs("123").resolves(mockUser);
     updateUserStub.resolves();
 
-    const result = await updateUser(
-      { params: { id: "123" }, body: { name: "John Doe" } },
-      { role: "ADMIN" }
-    );
+    const result = await updateUser({
+      params: { id: "123" },
+      body: { name: "John Doe" },
+      user: { role: "ADMIN" },
+    });
 
     expect(result).toBeDefined();
 

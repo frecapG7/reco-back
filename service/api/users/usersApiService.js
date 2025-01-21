@@ -25,8 +25,8 @@ const signup = async (req) => {
   return savedUser;
 };
 
-const updateUser = async (req, authenticatedUser) => {
-  verifySelfOrAdmin({ userId: req.params.id, authenticatedUser });
+const updateUser = async (req) => {
+  verifySelfOrAdmin({ userId: req.params.id, authenticatedUser: req.user });
 
   // 1 - Get user
   const user = await userService.getUser(req.params.id);

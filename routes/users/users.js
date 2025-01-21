@@ -47,11 +47,7 @@ router.put(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      const user = await users.updateUser({
-        id: req.params.id,
-        data: req.body,
-        authenticatedUser: req.user,
-      });
+      const user = await userApiService.updateUser(req);
       return res.json(user);
     } catch (err) {
       next(err);

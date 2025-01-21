@@ -50,43 +50,6 @@ describe("Test getUser", () => {
   });
 });
 
-describe("Test updateUser", () => {
-  let getUserStub;
-
-  beforeEach(() => {
-    getUserStub = sinon.stub(userService, "getUser");
-  });
-  afterEach(() => {
-    getUserStub.restore();
-  });
-
-  it("Should throw a forbidden error", async () => {
-    expect(updateUser({ id: "123", data: {} })).rejects.toThrow(
-      "You are not authorized to perform this action"
-    );
-  });
-
-  it("Should update user", async () => {
-    const user = {
-      _id: "123",
-      email: "test",
-      save: () => sinon.stub().resolvesThis(),
-    };
-    getUserStub.resolves(user);
-
-    const result = await updateUser({
-      id: "123",
-      data: {
-        email: "test",
-      },
-      authenticatedUser: {
-        role: "ADMIN",
-      },
-    });
-
-    expect(result).toBeDefined();
-  });
-});
 describe("Test updateAvatar", () => {
   let getUserStub;
 
