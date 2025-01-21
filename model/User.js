@@ -24,6 +24,9 @@ const UserSchema = new mongoose.Schema({
   avatar: {
     type: String,
   },
+  defaultAvatar: {
+    type: String,
+  },
   settings: {
     lang: {
       type: String,
@@ -97,7 +100,7 @@ UserSchema.methods.toJSON = function () {
     name: this.name,
     email: this.email,
     title: this.title,
-    avatar: this.avatar,
+    avatar: this.avatar ? this.avatar : this.defaultAvatar,
     balance: this.balance,
     created: this.created,
     privacy: {
