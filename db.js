@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { db } = require("./config");
 
 mongoose.set("transactionAsyncLocalStorage", true);
-mongoose.set("debug", true);
+mongoose.set("debug", false);
 
 const mongoUri = db.uri
   .replace("<username>", db.user)
