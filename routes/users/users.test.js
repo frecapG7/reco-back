@@ -3,6 +3,7 @@ const supertest = require("supertest");
 
 const User = require("../../model/User");
 const userApiService = require("../../service/api/users/users");
+const usersApiServiceV2 = require("../../service/api/users/usersApiService");
 
 const userSettingsService = require("../../service/user/userSettingsService");
 const metrics = require("../../service/api/users/metrics");
@@ -60,7 +61,7 @@ describe("PUT /users/:id", () => {
   let updateUserStub;
 
   beforeEach(() => {
-    updateUserStub = sinon.stub(userApiService, "updateUser");
+    updateUserStub = sinon.stub(usersApiServiceV2, "updateUser");
   });
   afterEach(() => {
     updateUserStub.restore();

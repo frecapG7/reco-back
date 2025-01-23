@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const users = require("../../service/api/users/users");
+const userApiService = require("../../service/api/users/usersApiService");
 const tokensApiService = require("../../service/api/tokens/tokensApiService");
 const userSettingsService = require("../../service/user/userSettingsService");
 const { ForbiddenError } = require("../../errors/error");
@@ -9,6 +10,15 @@ const { ForbiddenError } = require("../../errors/error");
 const metrics = require("../../service/api/users/metrics");
 
 const passport = require("../../auth");
+
+router.post("", async (req, res, next) => {
+  try {
+    const newUser = await userApiService.signup(req);
+    return res.status(201).json(newUser);
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * GET /user to get user by id
@@ -37,11 +47,7 @@ router.put(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      const user = await users.updateUser({
-        id: req.params.id,
-        data: req.body,
-        authenticatedUser: req.user,
-      });
+      const user = await userApiService.updateUser(req);
       return res.json(user);
     } catch (err) {
       next(err);

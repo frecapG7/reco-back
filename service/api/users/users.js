@@ -16,20 +16,6 @@ const getUser = async ({ id }) => {
   return user;
 };
 
-const updateUser = async ({ id, data, authenticatedUser }) => {
-  // 1 - Verify user
-  verifySelfOrAdmin({ userId: id, authenticatedUser });
-  // 2 - Get User
-  const user = await userService.getUser(id);
-  // 3 - Update User
-
-  user.email = data.email;
-
-  const newUser = await user.save();
-
-  return newUser;
-};
-
 const updatePassword = async ({ id, body, authenticatedUser }) => {
   // 1 - Verify user
   verifySelf({ userId: id, authenticatedUser });
@@ -125,7 +111,6 @@ const getSort = (sort) => {
 
 module.exports = {
   getUser,
-  updateUser,
   updateAvatar,
   updatePassword,
   getRequests,
