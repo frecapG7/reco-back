@@ -9,6 +9,7 @@ const getRecommendations = async ({ requestId, query, authenticatedUser }) => {
   const page = await recommendationsService.searchRecommendations({
     request,
     authenticatedUser,
+    showDuplicates: true,
     pageNumber: Number(query?.pageNumber) || 1,
     pageSize: Number(query?.pageSize) || 5,
   });

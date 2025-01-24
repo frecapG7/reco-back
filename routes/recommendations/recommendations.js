@@ -18,7 +18,6 @@ router.get(
     try {
       if (!Boolean(req.query.requestType))
         throw new Error("requestType is required");
-      if (!Boolean(req.query.search)) throw new Error("search is required");
       const page = await searchRecommendations({
         requestType: req.query.requestType,
         search: req.query.search,

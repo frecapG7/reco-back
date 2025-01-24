@@ -24,6 +24,7 @@ const createUser = async ({
     name: name,
     email: email,
     defaultAvatar: defaultAvatar,
+    avatar: defaultAvatar,
   });
   user.setPassword(password);
   return user;

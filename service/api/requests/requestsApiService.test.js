@@ -41,6 +41,7 @@ describe("Should validate getRecommendations", () => {
     sinon.assert.calledWith(searchRecommendationsStub, {
       request: { _id: "1234" },
       authenticatedUser: undefined,
+      showDuplicates: true,
       pageNumber: 1,
       pageSize: 5,
     });
