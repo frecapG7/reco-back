@@ -10,6 +10,14 @@ const config = {
     user: process.env.MONGODB_USER,
     password: process.env.MONGODB_PASSWORD,
   },
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD,
+  },
+
+  server: process.env.SERVER_URL || "http://localhost:3000",
 };
 
 module.exports = config;

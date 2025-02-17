@@ -37,4 +37,12 @@ router.get(
   }
 );
 
+router.get(":id", async (req, res, next) => {
+  try {
+    const token = await tokensApiService.getToken(req.params);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

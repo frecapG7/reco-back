@@ -1,4 +1,4 @@
-const { ForbiddenError } = require("../../../errors/error");
+const { ForbiddenError, NotFoundError } = require("../../../errors/error");
 const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 const Token = require("../../../model/Token");
 const { generateRandom } = require("../../../utils/utils");
@@ -75,8 +75,17 @@ const getUserTokens = async ({ userId, query, authenticatedUser }) => {
   });
 };
 
+const getToken = async ({ id }) => {
+  const token = await tokenService.getToken(id);
+
+  if (!token) throw new NotFoundError("Token not found");
+
+  return token;
+};
+
 module.exports = {
   createToken,
   getTokens,
   getUserTokens,
+  getToken,
 };

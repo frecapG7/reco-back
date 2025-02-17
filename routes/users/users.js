@@ -10,6 +10,10 @@ const { ForbiddenError } = require("../../errors/error");
 const metrics = require("../../service/api/users/metrics");
 
 const passport = require("../../auth");
+const {
+  resetPassword,
+  forgottenPassword,
+} = require("../../service/api/resetPassword");
 
 router.post("", async (req, res, next) => {
   try {
@@ -55,6 +59,8 @@ router.put(
   }
 );
 
+// Deprecated
+// Use PUT /users/:id
 router.put(
   "/:id/avatar",
   passport.authenticate("bearer", { session: false }),
@@ -87,6 +93,23 @@ router.put(
     }
   }
 );
+
+router.post("/forgotten-password", async (req, res, next) => {
+  try {
+    await forgottenPassword(req.body.email);
+    return res.status(200).send();
+  } catch (err) {
+    next(err);
+  }
+});
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    await resetPassword(req.body.newPassword, req.body.token);
+    return res.status(200).send();
+  } catch (err) {
+    next(err);
+  }
+});
 
 /** SETTINGS ROUTES */
 
