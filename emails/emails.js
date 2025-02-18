@@ -29,7 +29,7 @@ const sendResetPasswordEmail = async (username, to, token) => {
     },
     locals: {
       username,
-      url: `${server}/reset-password?token=${token}`,
+      url: `${server}/redirection?token=${token}`,
     },
   });
 };

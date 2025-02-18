@@ -94,7 +94,7 @@ router.put(
   }
 );
 
-router.post("/forgotten-password", async (req, res, next) => {
+router.post("/forgot-password", async (req, res, next) => {
   try {
     await forgottenPassword(req.body.email);
     return res.status(200).send();

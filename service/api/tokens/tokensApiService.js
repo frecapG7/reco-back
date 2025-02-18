@@ -75,8 +75,8 @@ const getUserTokens = async ({ userId, query, authenticatedUser }) => {
   });
 };
 
-const getToken = async ({ id }) => {
-  const token = await tokenService.getToken(id);
+const getToken = async ({ value }) => {
+  const token = await tokenService.getToken(value);
 
   if (!token) throw new NotFoundError("Token not found");
 
