@@ -1,3 +1,4 @@
+const e = require("cors");
 const { times } = require("lodash");
 const mongoose = require("mongoose");
 
@@ -5,7 +6,6 @@ const RecommendationSchema = new mongoose.Schema({
   request: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Request",
-    required: true,
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -61,6 +61,7 @@ const RecommendationSchema = new mongoose.Schema({
   requestType: {
     type: String,
     required: true,
+    enum: ["BOOK", "SONG", "MOVIE"],
   },
 });
 

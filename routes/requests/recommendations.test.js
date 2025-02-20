@@ -80,19 +80,19 @@ describe("GET /request/:requestId/recommendations/:id", () => {
 });
 
 describe("POST /requests/:requestId/recommendations", () => {
-  let recommendationServiceStub;
+  let createRecommendationStub;
   beforeEach(() => {
-    recommendationServiceStub = sinon.stub(
-      recommendationService,
+    createRecommendationStub = sinon.stub(
+      requestApiService,
       "createRecommendation"
     );
   });
   afterEach(() => {
-    recommendationServiceStub.restore();
+    createRecommendationStub.restore();
   });
 
   it("should return created recommendation", async () => {
-    recommendationServiceStub
+    createRecommendationStub
       .withArgs(
         "123",
         {

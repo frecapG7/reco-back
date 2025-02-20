@@ -7,6 +7,10 @@ const {
   likeRecommendation,
   unlikeRecommendation,
 } = require("../../service/recommendations/recommendationsService");
+const {
+  create,
+  get,
+} = require("../../service/api/recommendations/recommendationsApiService");
 
 /**
  * Search recommendations
@@ -65,5 +69,27 @@ router.delete(
     }
   }
 );
+
+/**
+ * 20/02/2025
+ * V2 endpoints
+ */
+router.get("/:id", async (req, res, next) => {
+  try {
+    const recommendation = await get(req);
+    res.status(200).json(recommendation);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("", async (req, res, next) => {
+  try {
+    const recommendation = await create(req);
+    res.status(200).json(recommendation);
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;

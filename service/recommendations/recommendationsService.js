@@ -52,6 +52,8 @@ const searchRecommendations = async ({
   };
 };
 
+
+
 /**
  * Function to apply like a recommendation
  * @param {ObjectId} recommendationId

@@ -9,11 +9,7 @@ router.get(
   passport.authenticate(["bearer", "anonymous"], { session: false }),
   async (req, res, next) => {
     try {
-      const result = await requestApiService.getRecommendations({
-        requestId: req.params.requestId,
-        query: req.query,
-        authenticatedUser: req.user,
-      });
+      const result = await requestApiService.getRecommendations(req);
       res.status(200).json(result);
     } catch (err) {
       next(err);
@@ -42,11 +38,7 @@ router.post(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      const recommendation = await recommendationService.createRecommendation({
-        requestId: req.params.requestId,
-        data: req.body,
-        authenticatedUser: req.user,
-      });
+      const recommendation = await requestApiService.createRecommendation(req);
       return res.status(201).json(recommendation);
     } catch (err) {
       next(err);

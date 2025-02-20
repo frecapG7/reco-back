@@ -13,6 +13,21 @@ const defaultSettings = {
   },
 };
 
+const acceptedUrls = [
+  "soundcloud",
+  "deezer",
+  "spotify",
+  "youtube",
+  "vimeo",
+  "dailymotion",
+  "twitch",
+  "mixcloud",
+  "bandcamp",
+  "audiomack",
+  "wikipedia",
+];
+
 module.exports = {
   defaultSettings,
+  acceptedUrls,
 };
