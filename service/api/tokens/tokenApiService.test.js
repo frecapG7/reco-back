@@ -2,7 +2,12 @@ const PurchaseItem = require("../../../model/purchase/PurchaseItem");
 const Token = require("../../../model/Token");
 const userService = require("../../user/userService");
 const tokenService = require("../../token/tokenService");
-const { createToken, getTokens, getUserTokens } = require("./tokensApiService");
+const {
+  createToken,
+  getTokens,
+  getUserTokens,
+  getToken,
+} = require("./tokensApiService");
 
 const sinon = require("sinon");
 describe("Test createToken", () => {
@@ -220,6 +225,36 @@ describe("Test getUserTokens", () => {
       },
       pageNumber: 1,
       pageSize: 10,
+    });
+  });
+});
+
+describe("Test getToken", () => {
+  let findBydIdStub;
+
+  beforeEach(() => {
+    findBydIdStub = sinon.stub(tokenService, "getToken");
+  });
+  afterEach(() => {
+    findBydIdStub.restore();
+  });
+
+  it("Should return NotFoundError", async () => {
+    findBydIdStub.resolves(null);
+    await expect(
+      getToken({
+        id: "123",
+      })
+    ).rejects.toThrow("Token not found");
+  });
+
+  it("Should return token", async () => {
+    const token = {};
+
+    findBydIdStub.resolves(token);
+
+    const result = await getToken({
+      id: "123",
     });
   });
 });
