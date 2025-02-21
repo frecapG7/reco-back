@@ -1,5 +1,4 @@
 const Request = require("../../../model/Request");
-const recommendationsService = require("../../recommendations/recommendationsService");
 const recommendationsServiceV2 = require("../../recommendations/recommendationsServiceV2");
 const creditService = require("../../market/creditService");
 const sinon = require("sinon");
@@ -10,19 +9,19 @@ const {
 
 describe("Should validate getRecommendations", () => {
   let requestStub;
-  let searchRecommendationsStub;
+  let paginatedSearchStub;
 
   beforeEach(() => {
     requestStub = sinon.stub(Request, "findById");
-    searchRecommendationsStub = sinon.stub(
-      recommendationsService,
-      "searchRecommendations"
+    paginatedSearchStub = sinon.stub(
+      recommendationsServiceV2,
+      "paginatedSearch"
     );
   });
 
   afterEach(() => {
     requestStub.restore();
-    searchRecommendationsStub.restore();
+    paginatedSearchStub.restore();
   });
 
   it("Should throw error on request not found", async () => {
@@ -34,16 +33,24 @@ describe("Should validate getRecommendations", () => {
   });
 
   it("Should return recommendations with default values", async () => {
+    const expectedRecommendation = {
+      _id: "1234",
+      isLikedBy: sinon.stub(),
+      toJSON: sinon.stub(),
+      populate: sinon.stub(),
+    };
+
     requestStub.resolves({ _id: "1234" });
-    searchRecommendationsStub.resolves({});
+    paginatedSearchStub.resolves({
+      pagination: { pageNumber: 1, pageSize: 5 },
+      results: [expectedRecommendation],
+    });
 
     const result = await getRecommendations({ params: { requestId: "1234" } });
 
-    expect(result).toEqual({});
-    sinon.assert.calledOnce(searchRecommendationsStub);
-    sinon.assert.calledWith(searchRecommendationsStub, {
+    sinon.assert.calledOnce(paginatedSearchStub);
+    sinon.assert.calledWith(paginatedSearchStub, {
       request: { _id: "1234" },
-      authenticatedUser: undefined,
       showDuplicates: true,
       pageNumber: 1,
       pageSize: 5,

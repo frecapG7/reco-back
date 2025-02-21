@@ -1,6 +1,5 @@
 const { NotFoundError, ForbiddenError } = require("../../../errors/error");
 const Request = require("../../../model/Request");
-const recommendationsService = require("../../recommendations/recommendationsService");
 const recommendationsServiceV2 = require("../../recommendations/recommendationsServiceV2");
 const creditService = require("../../market/creditService");
 
@@ -8,14 +7,23 @@ const getRecommendations = async ({ params: { requestId }, query, user }) => {
   const request = await Request.findById(requestId);
   if (!request) throw new NotFoundError("Request not found");
 
-  const page = await recommendationsService.searchRecommendations({
+  const page = await recommendationsServiceV2.paginatedSearch({
     request,
-    authenticatedUser: user,
     showDuplicates: true,
     pageNumber: Number(query?.pageNumber) || 1,
     pageSize: Number(query?.pageSize) || 5,
   });
-  return page;
+
+  await Promise.all(
+    page.results.map(async (recommendation) => recommendation.populate("user"))
+  );
+  return {
+    ...page,
+    results: page.results.map((recommendation) => ({
+      ...recommendation.toJSON(),
+      liked: user && recommendation.isLikedBy(user),
+    })),
+  };
 };
 
 const createRecommendation = async ({ params: { requestId }, body, user }) => {

@@ -11,14 +11,16 @@ const get = async ({ params: { id }, user }) => {
 };
 
 const search = async ({ query, user }) => {
+  if (!Boolean(query.requestType)) throw new Error("requestType is required");
 
+  const page = await recommendationsService.paginatedSearch({
+    requestType: query.requestType,
+    search: query.search,
+    pageNumber: Number(query.pageNumber) || 1,
+    pageSize: Number(query.pageSize) || 5,
+  });
 
-  
-
-
-
-
-
+  return page;
 };
 
 /**
@@ -56,4 +58,5 @@ const create = async ({ body, user }) => {
 module.exports = {
   get,
   create,
+  search,
 };

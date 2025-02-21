@@ -3,7 +3,7 @@ const Recommendation = require("../../../model/Recommendation");
 const recommendationsService = require("../../recommendations/recommendationsServiceV2");
 const creditService = require("../../market/creditService");
 
-const { get, create } = require("./recommendationsApiService");
+const { get, create, search } = require("./recommendationsApiService");
 
 describe("Should validate get", () => {
   let findByIdStub;
@@ -30,6 +30,43 @@ describe("Should validate get", () => {
     findByIdStub.resolves(expected);
 
     const result = await get({ params: { id: "123" } });
+
+    expect(result).toEqual(expected);
+  });
+});
+
+describe("Should validate search", () => {
+  let paginatedSearchStub;
+
+  beforeEach(() => {
+    paginatedSearchStub = sinon.stub(recommendationsService, "paginatedSearch");
+  });
+
+  afterEach(() => {
+    paginatedSearchStub.restore();
+  });
+
+  it("Should throw error on missing requestType", async () => {
+    await expect(
+      search({
+        query: {},
+      })
+    ).rejects.toThrow("requestType is required");
+  });
+
+  it("Should return page", async () => {
+    const expected = sinon.mock();
+
+    paginatedSearchStub.resolves(expected);
+
+    const result = await search({
+      query: {
+        requestType: "SONG",
+        search: "search",
+        pageNumber: 1,
+        pageSize: 5,
+      },
+    });
 
     expect(result).toEqual(expected);
   });
@@ -85,6 +122,5 @@ describe("Should test create recommendation", () => {
 
     sinon.assert.calledOnce(addCreditStub);
     sinon.assert.calledWith(addCreditStub, 1, { _id: "userId" });
-    
   });
 });

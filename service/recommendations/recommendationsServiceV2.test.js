@@ -1,6 +1,6 @@
 const sinon = require("sinon");
 const Recommendation = require("../../model/Recommendation");
-const { create } = require("./recommendationsServiceV2");
+const { create, paginatedSearch } = require("./recommendationsServiceV2");
 
 describe("Should test create recommendation", () => {
   let saveStub;
@@ -45,5 +45,104 @@ describe("Should test create recommendation", () => {
     expect(result.requestType).toBe("SONG");
     // expect(result.user).toEqual({ _id: "userId" });
     // expect(result.request).toEqual({ _id: "requestId" });
+  });
+});
+
+describe("Should test paginated search", () => {
+  let countDocumentsStub;
+  let findStub;
+
+  beforeEach(() => {
+    countDocumentsStub = sinon.stub(Recommendation, "countDocuments");
+    findStub = sinon.stub(Recommendation, "find");
+  });
+
+  afterEach(() => {
+    countDocumentsStub.restore();
+    findStub.restore();
+  });
+
+  it("Should return paginated search based on default values", async () => {
+    findStub.resolves([]);
+    countDocumentsStub.resolves(50);
+
+    const result = await paginatedSearch({
+      requestType: "SONG",
+    });
+
+    expect(result).toBeDefined();
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toBe(1);
+    expect(result.pagination.totalPages).toBe(10);
+    expect(result.pagination.totalResults).toBe(50);
+    expect(result.results).toEqual([]);
+
+    sinon.assert.calledOnce(countDocumentsStub);
+    sinon.assert.calledOnce(findStub);
+    sinon.assert.calledWith(
+      findStub,
+      {
+        duplicate_from: null,
+        $or: [
+          { field1: { $regex: "", $options: "i" } },
+          { field2: { $regex: "", $options: "i" } },
+          { field3: { $regex: "", $options: "i" } },
+        ],
+        requestType: "SONG",
+      },
+      null,
+      {
+        skip: 0,
+        limit: 5,
+        sort: { created_at: -1 },
+      }
+    );
+  });
+
+  it("Should return paginated  search based on values", async () => {
+    const user = sinon.stub();
+    const request = sinon.stub();
+
+    findStub.resolves([]);
+    countDocumentsStub.resolves(50);
+
+    const result = await paginatedSearch({
+      requestType: "SONG",
+      search: "Kendrick Lamar",
+      showDuplicates: true,
+      user,
+      request,
+      pageSize: 10,
+      pageNumber: 2,
+    });
+
+    expect(result).toBeDefined();
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toBe(2);
+    expect(result.pagination.totalPages).toBe(5);
+    expect(result.pagination.totalResults).toBe(50);
+    expect(result.results).toEqual([]);
+
+    sinon.assert.calledOnce(countDocumentsStub);
+    sinon.assert.calledOnce(findStub);
+    sinon.assert.calledWith(
+      findStub,
+      {
+        $or: [
+          { field1: { $regex: "Kendrick Lamar", $options: "i" } },
+          { field2: { $regex: "Kendrick Lamar", $options: "i" } },
+          { field3: { $regex: "Kendrick Lamar", $options: "i" } },
+        ],
+        request,
+        user,
+        requestType: "SONG",
+      },
+      null,
+      {
+        skip: 10,
+        limit: 10,
+        sort: { created_at: -1 },
+      }
+    );
   });
 });

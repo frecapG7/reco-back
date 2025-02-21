@@ -1,5 +1,5 @@
 const Recommendation = require("../../model/Recommendation");
-const { NotFoundError, ForbiddenError } = require("../../errors/error");
+const { ForbiddenError } = require("../../errors/error");
 const { acceptedUrls } = require("../../constants");
 
 /**
@@ -41,6 +41,46 @@ const create = async ({
   return recommendation;
 };
 
+const paginatedSearch = async ({
+  requestType,
+  search = "",
+  showDuplicates = false,
+  user,
+  request,
+  pageSize = 5,
+  pageNumber = 1,
+  sort = { created_at: -1 },
+}) => {
+  const filters = {
+    ...(!showDuplicates && { duplicate_from: null }),
+    $or: [
+      { field1: { $regex: search, $options: "i" } },
+      { field2: { $regex: search, $options: "i" } },
+      { field3: { $regex: search, $options: "i" } },
+    ],
+    ...(request && { request }),
+    ...(user && { user }),
+    ...(requestType && { requestType }),
+  };
+
+  const totalResults = await Recommendation.countDocuments(filters);
+  const page = await Recommendation.find(filters, null, {
+    skip: (pageNumber - 1) * pageSize,
+    limit: pageSize,
+    sort,
+  });
+
+  return {
+    pagination: {
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalResults / pageSize),
+      totalResults,
+    },
+    results: page,
+  };
+};
+
 module.exports = {
   create,
+  paginatedSearch,
 };
