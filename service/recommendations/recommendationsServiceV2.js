@@ -36,6 +36,7 @@ const create = async ({
     provider,
     user,
     request,
+    duplicated_from,
   });
 
   return recommendation;

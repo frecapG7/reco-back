@@ -1,10 +1,6 @@
 const pino = require("pino");
+const { logger } = require("./config");
 
-const logger = pino({
-  //   transport: {
-  //     options: {
-  //       colorize: true,
-  //     },
-  //   },
+module.exports = pino({
+  level: logger.level,
 });
-module.exports = logger;

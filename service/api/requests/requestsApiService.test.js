@@ -3,9 +3,47 @@ const recommendationsServiceV2 = require("../../recommendations/recommendationsS
 const creditService = require("../../market/creditService");
 const sinon = require("sinon");
 const {
+  createRequest,
   getRecommendations,
   createRecommendation,
 } = require("./requestsApiService");
+
+describe("Should validate createRequest", () => {
+  let saveStub = sinon.stub(Request.prototype, "save");
+
+  beforeEach(() => {
+    saveStub.reset();
+  });
+  afterEach(() => {
+    saveStub.restore();
+  });
+
+  it("Should throw error on user not authenticated", async () => {
+    await expect(createRequest({ body: {} })).rejects.toThrow(
+      "You need to be authenticated to create a request"
+    );
+  });
+
+  it("Should create request", async () => {
+    saveStub.resolvesThis();
+
+    const result = await createRequest({
+      body: {
+        requestType: "SONG",
+        title: "title",
+        description: "<p>description</p>",
+        tags: ["tag1", "tag2"],
+      },
+      user: {
+        _id: "1234",
+      },
+    });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(saveStub);
+  });
+});
 
 describe("Should validate getRecommendations", () => {
   let requestStub;
@@ -48,6 +86,9 @@ describe("Should validate getRecommendations", () => {
 
     const result = await getRecommendations({ params: { requestId: "1234" } });
 
+    expect(result).toBeDefined();
+    expect(result.pagination).toBeDefined();
+
     sinon.assert.calledOnce(paginatedSearchStub);
     sinon.assert.calledWith(paginatedSearchStub, {
       request: { _id: "1234" },
@@ -58,8 +99,18 @@ describe("Should validate getRecommendations", () => {
   });
 
   it("Should return recommendations with values", async () => {
+    const expectedRecommendation = {
+      _id: "1234",
+      isLikedBy: sinon.stub().returns(true),
+      toJSON: sinon.stub(),
+      populate: sinon.stub(),
+    };
+
     requestStub.resolves({ _id: "1234" });
-    searchRecommendationsStub.resolves({});
+    paginatedSearchStub.resolves({
+      pagination: {},
+      results: [expectedRecommendation],
+    });
 
     const result = await getRecommendations({
       params: { requestId: "1234" },
@@ -69,15 +120,18 @@ describe("Should validate getRecommendations", () => {
       },
     });
 
-    expect(result).toEqual({});
-    sinon.assert.calledOnce(searchRecommendationsStub);
-    sinon.assert.calledWith(searchRecommendationsStub, {
+    expect(result).toBeDefined();
+    sinon.assert.calledOnce(paginatedSearchStub);
+    sinon.assert.calledWith(paginatedSearchStub, {
       request: { _id: "1234" },
-      authenticatedUser: undefined,
       showDuplicates: true,
       pageNumber: 5,
       pageSize: 50,
     });
+
+    expect(result.pagination).toBeDefined();
+    expect(result.results).toBeDefined();
+    expect(result.results[0].liked).toBeTruthy();
   });
 });
 

@@ -260,7 +260,10 @@ describe("GET /users/:id/recommendations", () => {
   let getRecommendationsStub;
 
   beforeEach(() => {
-    getRecommendationsStub = sinon.stub(userApiService, "getRecommendations");
+    getRecommendationsStub = sinon.stub(
+      usersApiServiceV2,
+      "getRecommendations"
+    );
   });
 
   afterEach(() => {

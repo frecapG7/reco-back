@@ -1,6 +1,6 @@
-const { get } = require("lodash");
+const { iframely } = require("../../config");
 const { InternalServerError } = require("../../errors/error");
-
+const logger = require("../../logger");
 const getProviderIcon = (icons = []) => {
   return icons
     ?.filter((icon) => icon?.type === "image/png")
@@ -11,16 +11,17 @@ const getEmbed = async (url) => {
   if (!Boolean(url))
     throw new InternalServerError("URL argument cannot be empty");
 
+  logger.info(`Fetching iframely embed for ${url}`);
   const params = new URLSearchParams({
     url,
-    api_key: "c66db96b69614d7618a6e8",
+    api_key: iframely.api_key,
     omit_script: true,
     iframe: "card",
     card: "small",
     autoplay: false,
     theme: "light",
   });
-  const response = await fetch(`https://iframe.ly/api/iframely?${params}`, {
+  const response = await fetch(`${iframely.url}?${params}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

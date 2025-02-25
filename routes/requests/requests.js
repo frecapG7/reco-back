@@ -2,7 +2,35 @@ const express = require("express");
 const router = express.Router();
 
 const requestService = require("../../service/request/requestService");
+const requestsApiService = require("../../service/api/requests/requestsApiService");
 const passport = require("passport");
+
+/**
+ * Search requests
+ */
+router.get(
+  "",
+  passport.authenticate(["bearer", "anonymous"], { session: false }),
+  async (req, res, next) => {
+    try {
+      const pageNumber = parseInt(req.query.pageNumber) || 1;
+      const pageSize = parseInt(req.query.pageSize) || 10;
+
+      const results = await requestService.search({
+        filters: {
+          ...(req.query.type && { requestType: req.query.type }),
+          ...(req.query.status && { status: req.query.status }),
+          ...(req.query.me && req.user && { author: req.user._id }),
+        },
+        pageSize,
+        pageNumber,
+      });
+      return res.json(results);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /**
  * GET /requests/:id
@@ -24,7 +52,7 @@ router.post(
   passport.authenticate(["bearer"], { session: false }),
   async (req, res, next) => {
     try {
-      const request = await requestService.createRequest(req.body, req.user);
+      const request = await requestsApiService.createRequest(req);
       res.status(201).json(request);
     } catch (err) {
       next(err);
@@ -62,33 +90,6 @@ router.delete(
     try {
       const request = requestService.deleteRequest(req.params.id, req.user);
       res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-
-/**
- *
- */
-router.get(
-  "",
-  passport.authenticate(["bearer", "anonymous"], { session: false }),
-  async (req, res, next) => {
-    try {
-      const pageNumber = parseInt(req.query.pageNumber) || 1;
-      const pageSize = parseInt(req.query.pageSize) || 10;
-
-      const results = await requestService.search({
-        filters: {
-          ...(req.query.type && { requestType: req.query.type }),
-          ...(req.query.status && { status: req.query.status }),
-          ...(req.query.me && req.user && { author: req.user._id }),
-        },
-        pageSize,
-        pageNumber,
-      });
-      return res.json(results);
     } catch (err) {
       next(err);
     }

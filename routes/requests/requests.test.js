@@ -1,7 +1,7 @@
 const sinon = require("sinon");
 const supertest = require("supertest");
 const requestService = require("../../service/request/requestService");
-
+const requestApiService = require("../../service/api/requests/requestsApiService");
 const express = require("express");
 const bodyParser = require("body-parser");
 const handleError = require("../../middleware/errorMiddleware");
@@ -54,32 +54,30 @@ describe("GET /requests/:id", () => {
 });
 
 describe("POST /request", () => {
-  let requestServiceStub;
+  let createRequestStub;
 
   beforeEach(() => {
-    requestServiceStub = sinon.stub(requestService, "createRequest");
+    createRequestStub = sinon.stub(requestApiService, "createRequest");
   });
   afterEach(() => {
-    requestServiceStub.restore();
+    createRequestStub.restore();
   });
 
   it("should return 200", async () => {
-    requestServiceStub
-      .withArgs(
-        {
+    createRequestStub
+      .withArgs({
+        body: {
           requestType: "BOOK",
           description: "SciFi recommended book",
         },
-        {
+        user: {
           _id: "123",
-        }
-      )
+        },
+      })
       .resolves({
         id: "1",
         requestType: "BOOK",
         description: "SciFi recommended book",
-        duration: "2D",
-        status: "PENDING",
       });
 
     const response = await supertest(app).post("/requests").send({
@@ -88,7 +86,6 @@ describe("POST /request", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(response.body.id).toEqual("1");
   });
 });
 

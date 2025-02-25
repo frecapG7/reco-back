@@ -2,6 +2,34 @@ const { NotFoundError, ForbiddenError } = require("../../../errors/error");
 const Request = require("../../../model/Request");
 const recommendationsServiceV2 = require("../../recommendations/recommendationsServiceV2");
 const creditService = require("../../market/creditService");
+const { sanitize } = require("../../../utils/utils");
+
+const get = async ({ params: { id = "" }, user }) => {
+  const request = await Request.findById(id);
+  if (!request) throw new NotFoundError("Request not found");
+
+  //TODO : populate ?
+
+  return request;
+};
+
+const createRequest = async ({ body, user }) => {
+  if (!user)
+    throw new ForbiddenError(
+      "You need to be authenticated to create a request"
+    );
+
+  const request = new Request({
+    requestType: body.requestType,
+    title: body.title,
+    description: sanitize(body.description),
+    tags: body.tags,
+    author: user,
+  });
+  const saveRequest = await request.save();
+
+  return saveRequest;
+};
 
 const getRecommendations = async ({ params: { requestId }, query, user }) => {
   const request = await Request.findById(requestId);
@@ -21,7 +49,7 @@ const getRecommendations = async ({ params: { requestId }, query, user }) => {
     ...page,
     results: page.results.map((recommendation) => ({
       ...recommendation.toJSON(),
-      liked: user && recommendation.isLikedBy(user),
+      liked: recommendation.isLikedBy(user?.id),
     })),
   };
 };
@@ -51,6 +79,7 @@ const createRecommendation = async ({ params: { requestId }, body, user }) => {
 };
 
 module.exports = {
+  createRequest,
   getRecommendations,
   createRecommendation,
 };
