@@ -1,12 +1,50 @@
 const Request = require("../../../model/Request");
+const Recommendation = require("../../../model/Recommendation");
 const recommendationsServiceV2 = require("../../recommendations/recommendationsServiceV2");
 const creditService = require("../../market/creditService");
 const sinon = require("sinon");
 const {
+  getRequest,
   createRequest,
   getRecommendations,
   createRecommendation,
 } = require("./requestsApiService");
+
+describe("Should validate get", () => {
+  let findByIdStub;
+
+  beforeEach(() => {
+    findByIdStub = sinon.stub(Request, "findById");
+  });
+  afterEach(() => {
+    findByIdStub.restore();
+  });
+
+  it("Should throw error on request not found", async () => {
+    findByIdStub.resolves(null);
+
+    await expect(getRequest({ params: { id: "1234" } })).rejects.toThrow(
+      "Request not found"
+    );
+  });
+
+  it("Should return request", async () => {
+    const request = {
+      _id: "1234",
+      toJSON: sinon.stub().resolvesThis(),
+      populate: sinon.stub().withArgs("author").resolvesThis(),
+    };
+
+    findByIdStub.resolves(request);
+
+    const result = await getRequest({ params: { id: "1234" } });
+
+    expect(result).toBeDefined();
+
+    sinon.assert.calledOnce(request.populate);
+    sinon.assert.calledWith(request.populate, "author");
+  });
+});
 
 describe("Should validate createRequest", () => {
   let saveStub = sinon.stub(Request.prototype, "save");
@@ -137,19 +175,19 @@ describe("Should validate getRecommendations", () => {
 
 describe("Should validate createRecommendation", () => {
   let findByIdStub;
-  let createStub;
   let removeCreditStub;
+  let saveStub;
 
   beforeEach(() => {
     findByIdStub = sinon.stub(Request, "findById");
-    createStub = sinon.stub(recommendationsServiceV2, "create");
     removeCreditStub = sinon.stub(creditService, "removeCredit");
+    saveStub = sinon.stub(Recommendation.prototype, "save");
   });
 
   afterEach(() => {
     findByIdStub.restore();
-    createStub.restore();
     removeCreditStub.restore();
+    saveStub.restore();
   });
 
   it("Should throw error on user not authenticated", async () => {
@@ -177,31 +215,38 @@ describe("Should validate createRecommendation", () => {
 
     await expect(
       createRecommendation({ params: { requestId: "123" }, body: {}, user })
-    ).rejects.toThrow("Should we allow new recommendations creation here ?");
+    ).rejects.toThrow("You need to provide a duplicated_from recommendation");
   });
 
   it("Should create recommendation", async () => {
     const user = sinon.stub();
     const request = sinon.stub();
 
+    request.save = sinon.stub().resolvesThis();
+
     findByIdStub.withArgs("123").resolves(request);
 
-    createStub.resolves({ save: sinon.stub().resolvesThis() });
+    saveStub.resolvesThis();
     removeCreditStub.resolves({});
 
     const result = await createRecommendation({
       params: { requestId: "123" },
-      body: { duplicated_from: "1234" },
+      body: {
+        field1: "field1",
+        field2: "field2",
+        duplicated_from: "1234",
+        requestType: "SONG",
+      },
       user,
     });
 
     expect(result).toBeDefined();
-    sinon.assert.calledOnce(createStub);
-    sinon.assert.calledWith(createStub, {
-      duplicated_from: "1234",
-      request,
-      user,
-    });
+
+    expect(result.field1).toBe("field1");
+    expect(result.field2).toBe("field2");
+    expect(result.requestType).toBe("SONG");
+
+    sinon.assert.calledOnce(saveStub);
 
     sinon.assert.calledOnce(removeCreditStub);
     sinon.assert.calledWith(removeCreditStub, 5, user);

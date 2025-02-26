@@ -3,48 +3,13 @@ const router = express.Router();
 const passport = require("../../auth");
 
 const {
-  likeRecommendation,
-  unlikeRecommendation,
-} = require("../../service/recommendations/recommendationsService");
-const {
   create,
   get,
   getFromEmbed,
   search,
+  like,
+  unlike,
 } = require("../../service/api/recommendations/recommendationsApiService");
-
-// POST like
-router.post(
-  "/:id/like",
-  passport.authenticate("bearer", { session: false }),
-  async (req, res, next) => {
-    try {
-      const recommendation = await likeRecommendation({
-        recommendationId: req.params.id,
-        authenticatedUser: req.user,
-      });
-      res.status(200).json(recommendation);
-    } catch (err) {
-      next(err);
-    }
-  }
-);
-// DELETE like
-router.delete(
-  "/:id/like",
-  passport.authenticate("bearer", { session: false }),
-  async (req, res, next) => {
-    try {
-      const recommendation = await unlikeRecommendation({
-        recommendationId: req.params.id,
-        authenticatedUser: req.user,
-      });
-      res.status(200).json(recommendation);
-    } catch (err) {
-      next(err);
-    }
-  }
-);
 
 /**
  * 20/02/2025
@@ -67,6 +32,9 @@ router.get(
   }
 );
 
+/**
+ * Get recommendation by id
+ */
 router.get("/:id", async (req, res, next) => {
   try {
     const recommendation = await get(req);
@@ -76,6 +44,9 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
+/**
+ * Create a recommendation
+ */
 router.post("", async (req, res, next) => {
   try {
     const recommendation = await create(req);
@@ -85,6 +56,9 @@ router.post("", async (req, res, next) => {
   }
 });
 
+/**
+ * Get recommendation from an url link
+ */
 router.get("/embed", async (req, res, next) => {
   try {
     const recommendation = await getFromEmbed(req);
@@ -93,4 +67,35 @@ router.get("/embed", async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * Like a recommendation
+ */
+router.post(
+  "/:id/like",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const recommendation = await like(req);
+      res.status(200).json(recommendation);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+/**
+ * Unlike a recommendation
+ */
+router.delete(
+  "/:id/like",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const recommendation = await unlike(req);
+      res.status(200).json(recommendation);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 module.exports = router;

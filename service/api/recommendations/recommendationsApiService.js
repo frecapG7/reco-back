@@ -7,7 +7,6 @@ const Recommendation = require("../../../model/Recommendation");
 const recommendationsService = require("../../recommendations/recommendationsServiceV2");
 const creditService = require("../../market/creditService");
 const embedService = require("../../embed/embedService");
-const sanitizeHtml = require("sanitize-html");
 const logger = require("../../../logger");
 
 const get = async ({ params: { id }, user }) => {
@@ -109,9 +108,73 @@ const create = async ({ body, user }) => {
   return await savedRecommendation.save();
 };
 
+/**
+ * Like a recommendation
+ * @param {*} param0
+ */
+const like = async ({ params: { id = "" }, user }) => {
+  if (!user)
+    throw new ForbiddenError(
+      "You need to be authenticated to like a recommendation"
+    );
+  // 1.a Find recommendation
+  const recommendation = await Recommendation.findById(id)
+    .populate("request", "author")
+    .exec();
+  if (!recommendation) throw new NotFoundError("Recommendation not found");
+
+  // 2 Apply like
+  await recommendationsService.like(recommendation, user);
+
+  // 3 - Save an return
+  const savedRecommendation = await recommendation.save();
+  return {
+    ...savedRecommendation.toJSON(),
+    liked: true,
+  };
+};
+
+const unlike = async ({ params: { id = "" }, user }) => {
+  if (!user)
+    throw new ForbiddenError(
+      "You need to be authenticated to unlike a recommendation"
+    );
+  // 1.a Find recommendation
+  const recommendation = await Recommendation.findById(id)
+    .populate("request", "author")
+    .exec();
+  if (!recommendation) throw new NotFoundError("Recommendation not found");
+
+  // 2 Remove like
+  const updatedRecommendation = await recommendationsService.unlike(
+    recommendation,
+    user
+  );
+
+  return {
+    ...updatedRecommendation.toJSON(),
+    liked: false,
+  };
+};
+
+const archive = async ({ params: { id = "" }, user }) => {
+  if (!user)
+    throw new ForbiddenError(
+      "You need to be authenticated to archive a recommendation"
+    );
+
+  // 1.a Find recommendation
+  const recommendation = await Recommendation.findById(id);
+  if (!recommendation) throw new NotFoundError("Recommendation not found");
+
+  // 2 Archive recommendation
+};
+
 module.exports = {
   get,
   getFromEmbed,
   create,
   search,
+  like,
+  unlike,
 };

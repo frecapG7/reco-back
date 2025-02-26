@@ -8,7 +8,10 @@ const {
   getFromEmbed,
   create,
   search,
+  like,
+  unlike,
 } = require("./recommendationsApiService");
+const User = require("../../../model/User");
 
 describe("Should validate get", () => {
   let findByIdStub;
@@ -265,5 +268,140 @@ describe("Should test create recommendation", () => {
     sinon.assert.calledWith(addCreditStub, 1, { _id: "userId" });
 
     sinon.assert.calledOnce(findOneStub);
+  });
+});
+
+describe("Should test like recommendation", () => {
+  let findByIdStub;
+  let likeStub;
+
+  beforeEach(() => {
+    findByIdStub = sinon.stub(Recommendation, "findById");
+    likeStub = sinon.stub(recommendationsService, "like");
+  });
+
+  afterEach(() => {
+    findByIdStub.restore();
+    likeStub.restore();
+  });
+
+  it("Should throw error on unauthenticated", async () => {
+    await expect(
+      like({
+        params: { id: "123" },
+      })
+    ).rejects.toThrow("You need to be authenticated to like a recommendation");
+  });
+
+  it("Should throw error on not found", async () => {
+    findByIdStub.returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(null),
+        }),
+    });
+
+    await expect(
+      like({
+        params: { id: "123" },
+        user: { _id: "userId" },
+      })
+    ).rejects.toThrow("Recommendation not found");
+  });
+
+  it("Should like recommendation", async () => {
+    const recommendation = {
+      save: sinon.stub().resolvesThis(),
+      toJSON: sinon.stub().resolvesThis({}),
+    };
+    const user = sinon.mock(User);
+
+    findByIdStub.returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(recommendation),
+        }),
+    });
+
+    const result = await like({
+      params: { id: "123" },
+      user,
+    });
+
+    expect(result).toBeDefined();
+
+    expect(result.liked).toBeTruthy();
+  });
+});
+
+describe("Should test unlike recommendation", () => {
+  let findByIdStub;
+  let unlikeStub;
+
+  beforeEach(() => {
+    findByIdStub = sinon.stub(Recommendation, "findById");
+    unlikeStub = sinon.stub(recommendationsService, "unlike");
+  });
+
+  afterEach(() => {
+    findByIdStub.restore();
+    unlikeStub.restore();
+  });
+
+  it("Should throw error on unauthenticated", async () => {
+    await expect(
+      unlike({
+        params: { id: "123" },
+      })
+    ).rejects.toThrow(
+      "You need to be authenticated to unlike a recommendation"
+    );
+  });
+
+  it("Should throw error on recommendation not found", async () => {
+    findByIdStub.returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(null),
+        }),
+    });
+
+    await expect(
+      unlike({
+        params: { id: "123" },
+        user: { _id: "userId" },
+      })
+    ).rejects.toThrow("Recommendation not found");
+  });
+
+  it("Should unlike recommendation", async () => {
+    const recommendation = {
+      toJSON: sinon.stub().resolvesThis(),
+    };
+
+    findByIdStub.returns({
+      populate: sinon
+        .stub()
+        .withArgs("request", "author")
+        .returns({
+          exec: sinon.stub().resolves(recommendation),
+        }),
+    });
+
+    unlikeStub.resolves(recommendation);
+
+    const result = await unlike({
+      params: { id: "123" },
+      user: { _id: "userId" },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.liked).toBeFalsy();
   });
 });

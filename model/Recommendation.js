@@ -50,11 +50,9 @@ const RecommendationSchema = new mongoose.Schema({
   provider: {
     name: {
       type: String,
-      required: true,
     },
     icon: {
       type: String,
-      required: false,
     },
   },
   // Use for search

@@ -1,6 +1,8 @@
 const Recommendation = require("../../model/Recommendation");
 const { ForbiddenError } = require("../../errors/error");
 const { acceptedUrls } = require("../../constants");
+const creditService = require("../market/creditService");
+const notificationService = require("../user/notificationService");
 
 /**
  *
@@ -69,7 +71,10 @@ const paginatedSearch = async ({
     skip: (pageNumber - 1) * pageSize,
     limit: pageSize,
     sort,
-  });
+  })
+    .populate("user title avatar name")
+    .populate("duplicated_from html url")
+    .exec();
 
   return {
     pagination: {
@@ -81,7 +86,76 @@ const paginatedSearch = async ({
   };
 };
 
+/**
+ * Function to apply like to a recommendation
+ * Recommendation author will receives credits based on user
+ * @param {Recommendation} recommendation
+ * @param {User} user
+ * @returns {Promise<Void>}
+ */
+const like = async (recommendation, user) => {
+  // 1.a Check if user has already liked the recommendation
+  if (recommendation.isLikedBy(user._id))
+    throw new ForbiddenError("User has already liked this recommendation");
+  // 1.b Check if user is not recommendation's author
+  if (recommendation.user._id.equals(user._id))
+    throw new ForbiddenError("User cannot like his own recommendation");
+  // Check on request existence ?
+
+  // 3. Evaluate credit
+  const credit = getLikeValue(recommendation, user);
+  // 4. Add credit and create notification
+  await Promise.all([
+    creditService.addCredit(Number(credit), recommendation.user),
+    notificationService.createNotification({
+      to: recommendation.user,
+      from: user,
+      type: "like_recommendation",
+    }),
+  ]);
+  // 5. Add like
+  recommendation.likes.push(user._id);
+};
+
+/**
+ * Function to apply unlike to a recommendation
+ * Recommendation author will lose credits
+ * @param {Recommendation} recommendation
+ * @param {User} user
+ * @returns {Promise<Recommendation>}
+ */
+const unlike = async (recommendation, user) => {
+  // 1.b Check if user has already liked the recommendation
+  if (!recommendation.isLikedBy(user._id))
+    throw new ForbiddenError(
+      `User ${user._id} has not liked recommendation ${recommendation._id}`
+    );
+
+  //3. Remove like
+  recommendation.likes = recommendation.likes.filter(
+    (like) => !like.equals(user._id)
+  );
+
+  // 4. Remove credit
+  await recommendation.populate("user");
+  const credit = getLikeValue(recommendation, user);
+  await creditService.removeCredit(
+    credit >= recommendation.user.balance
+      ? recommendation.user.balance
+      : credit,
+    recommendation.user
+  );
+
+  return recommendation.save();
+};
+
+const getLikeValue = (recommendation, user) => {
+  return recommendation.request.author._id.equals(user._id) ? 5 : 1;
+};
+
 module.exports = {
   create,
   paginatedSearch,
+  like,
+  unlike,
 };
