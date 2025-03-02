@@ -31,13 +31,12 @@ router.get(
     }
   }
 );
-
 /**
- * Get recommendation by id
+ * Get recommendation from an url link
  */
-router.get("/:id", async (req, res, next) => {
+router.get("/embed", async (req, res, next) => {
   try {
-    const recommendation = await get(req);
+    const recommendation = await getFromEmbed(req);
     res.status(200).json(recommendation);
   } catch (err) {
     next(err);
@@ -47,21 +46,25 @@ router.get("/:id", async (req, res, next) => {
 /**
  * Create a recommendation
  */
-router.post("", async (req, res, next) => {
-  try {
-    const recommendation = await create(req);
-    res.status(200).json(recommendation);
-  } catch (err) {
-    next(err);
+router.post(
+  "",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const recommendation = await create(req);
+      res.status(200).json(recommendation);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 /**
- * Get recommendation from an url link
+ * Get recommendation by id
  */
-router.get("/embed", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
-    const recommendation = await getFromEmbed(req);
+    const recommendation = await get(req);
     res.status(200).json(recommendation);
   } catch (err) {
     next(err);

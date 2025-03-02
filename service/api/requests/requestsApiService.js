@@ -87,7 +87,7 @@ const createRecommendation = async ({ params: { requestId }, body, user }) => {
   const request = await Request.findById(requestId);
   if (!request) throw new NotFoundError("Request not found");
 
-  if (!body.duplicated_from)
+  if (!body.duplicate_from)
     throw new ForbiddenError(
       "You need to provide a duplicated_from recommendation"
     );
@@ -99,6 +99,7 @@ const createRecommendation = async ({ params: { requestId }, body, user }) => {
     requestType: body.requestType,
     user,
     request,
+    duplicate_from: body.duplicate_from,
   });
   await creditService.removeCredit(5, user);
 

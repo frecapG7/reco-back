@@ -10,7 +10,9 @@ const embedService = require("../../embed/embedService");
 const logger = require("../../../logger");
 
 const get = async ({ params: { id }, user }) => {
-  const recommendation = await Recommendation.findById(id);
+  const recommendation = await Recommendation.findById(id)
+    .populate("user", "title avatar name")
+    .exec();
   if (!recommendation) throw new NotFoundError("Recommendation not found");
 
   return recommendation;
@@ -24,7 +26,7 @@ const getFromEmbed = async ({ query: { url = "" }, user }) => {
   // Search previous recommendation using a "like" filter
   logger.debug(`Searching for existing recommendation with url ${url}`);
   const recommendation = await Recommendation.findOne({
-    url: { $regex: url },
+    url: { $regex: url, $options: "i" },
   });
   if (recommendation) return recommendation;
 

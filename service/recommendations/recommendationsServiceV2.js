@@ -72,8 +72,8 @@ const paginatedSearch = async ({
     limit: pageSize,
     sort,
   })
-    .populate("user title avatar name")
-    .populate("duplicated_from html url")
+    .populate("user", "title avatar name")
+    .populate("duplicate_from", "html url")
     .exec();
 
   return {
