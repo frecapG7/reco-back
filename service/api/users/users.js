@@ -3,7 +3,6 @@ const User = require("../../../model/User");
 
 const userService = require("../../user/userService");
 const requestService = require("../../request/requestService");
-const recommendationsService = require("../../recommendations/recommendationsService");
 const {
   verifySelfOrAdmin,
   verifySelf,
@@ -77,30 +76,6 @@ const getRequests = async ({
   return page;
 };
 
-const getRecommendations = async ({ id, query, authenticatedUser }) => {
-  // 1 - Get user
-  const user = await User.findById(id);
-  if (!user) throw new NotFoundError("User not found");
-
-  if (
-    !user._id.equals(authenticatedUser?._id) &&
-    authenticatedUser?.role !== "ADMIN" &&
-    user.settings.privacy.privateRequests
-  )
-    throw new ForbiddenError("User requests are private");
-
-  // 2 - Get last requests
-  return await recommendationsService.searchRecommendations({
-    requestType: query?.type,
-    search: query?.search,
-    showDuplicates: true,
-    user,
-    pageSize: parseInt(query?.pageSize),
-    pageNumber: parseInt(query?.pageNumber),
-    sort: getSort(query?.sort),
-  });
-};
-
 const getSort = (sort) => {
   if (sort === "likes_asc") return { likes: 1 };
   if (sort === "likes_desc") return { likes: -1 };
@@ -114,5 +89,4 @@ module.exports = {
   updateAvatar,
   updatePassword,
   getRequests,
-  getRecommendations,
 };

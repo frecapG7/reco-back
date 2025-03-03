@@ -27,6 +27,10 @@ const RequestSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  recommendationsCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 RequestSchema.methods.toJSON = function () {
@@ -45,6 +49,7 @@ RequestSchema.methods.toJSON = function () {
         avatar: this.author.avatar,
       }),
     },
+    recommendationsCount: this.recommendationsCount,
   };
 };
 

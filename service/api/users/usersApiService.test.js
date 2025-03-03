@@ -1,9 +1,11 @@
 const tokenValidation = require("../../validation/tokenValidation");
 const tokenService = require("../../token/tokenService");
 const userService = require("../../user/userService");
+const recommendationsServiceV2 = require("../../recommendations/recommendationsServiceV2");
 
 const sinon = require("sinon");
-const { signup, updateUser } = require("./usersApiService");
+const { signup, updateUser, getRecommendations } = require("./usersApiService");
+const User = require("../../../model/User");
 
 describe("Should test signup function", () => {
   let validateTokenStub;
@@ -111,5 +113,120 @@ describe("Should test updateUser function", () => {
     expect(result).toBeDefined();
 
     sinon.assert.calledWith(updateUserStub, mockUser, { name: "John Doe" });
+  });
+});
+
+describe("Should test getRecommendations function", () => {
+  let getUserStub;
+  let paginatedSearchStub;
+
+  beforeEach(() => {
+    getUserStub = sinon.stub(userService, "getUser");
+    paginatedSearchStub = sinon.stub(
+      recommendationsServiceV2,
+      "paginatedSearch"
+    );
+  });
+
+  afterEach(() => {
+    getUserStub.restore();
+    paginatedSearchStub.restore();
+  });
+
+  it("Should throw a forbidden error", async () => {
+    const user = new User({
+      _id: "123",
+      settings: {
+        privacy: {
+          privateRecommendations: true,
+        },
+      },
+    });
+    getUserStub.resolves(user);
+
+    await expect(getRecommendations({ params: { id: "123" } })).rejects.toThrow(
+      "You are not authorized to perform this action"
+    );
+  });
+
+  it("Should return recommendations based on default values", async () => {
+    const user = new User({
+      _id: "123",
+      settings: {
+        privacy: {
+          privateRecommendations: false,
+        },
+      },
+    });
+    getUserStub.resolves(user);
+
+    const expectedRecommendation = {
+      isLikedBy: sinon.stub().returns(false),
+      toJSON: () => ({}),
+    };
+    paginatedSearchStub.resolves({
+      pagination: {},
+      results: [expectedRecommendation],
+    });
+
+    const result = await getRecommendations({
+      params: { id: "123" },
+      query: {},
+    });
+
+    expect(result).toBeDefined();
+    expect(result.results).toHaveLength(1);
+
+    sinon.assert.calledWith(paginatedSearchStub, {
+      requestType: "",
+      search: "",
+      showDuplicates: true,
+      user,
+      pageNumber: 1,
+      pageSize: 5,
+    });
+  });
+
+  it("Should return recommendations based on query values", async () => {
+    const user = new User({
+      _id: "123",
+      settings: {
+        privacy: {
+          privateRecommendations: false,
+        },
+      },
+    });
+    getUserStub.resolves(user);
+
+    const expectedRecommendation = {
+      isLikedBy: sinon.stub().returns(false),
+      toJSON: () => ({}),
+    };
+    paginatedSearchStub.resolves({
+      pagination: {},
+      results: [expectedRecommendation],
+    });
+
+    const result = await getRecommendations({
+      params: { id: "123" },
+      query: {
+        requestType: "SONG",
+        search: "Hello",
+        pageNumber: 2,
+        pageSize: 10,
+      },
+    });
+
+    expect(result).toBeDefined();
+    expect(result.results).toHaveLength(1);
+
+    sinon.assert.calledWith(paginatedSearchStub, {
+      requestType: "SONG",
+      search: "Hello",
+      showDuplicates: true,
+      user,
+      pageNumber: 2,
+      pageSize: 10,
+    });
   });
 });

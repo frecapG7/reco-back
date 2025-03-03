@@ -1,3 +1,4 @@
+const e = require("cors");
 const { times } = require("lodash");
 const mongoose = require("mongoose");
 
@@ -5,7 +6,7 @@ const RecommendationSchema = new mongoose.Schema({
   request: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Request",
-    required: true,
+    required: false,
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -50,24 +51,23 @@ const RecommendationSchema = new mongoose.Schema({
   provider: {
     name: {
       type: String,
-      required: true,
     },
     icon: {
       type: String,
-      required: false,
     },
   },
   // Use for search
   requestType: {
     type: String,
     required: true,
+    enum: ["BOOK", "SONG", "MOVIE"],
   },
 });
 
 RecommendationSchema.methods.toJSON = function () {
   return {
     id: this._id,
-    request: this.request._id,
+    request: this.request?._id,
     user: {
       id: this.user._id,
       name: this.user.name,
@@ -77,9 +77,9 @@ RecommendationSchema.methods.toJSON = function () {
     field1: this.field1,
     field2: this.field2,
     field3: this.field3,
-    html: this.html,
-    url: this.url,
-    type: this.requestType,
+    html: this.duplicate_from?.html || this.html,
+    url: this.duplicate_from?.url || this.url,
+    requestType: this.requestType,
     created_at: this.created_at,
     provider: {
       name: this.provider?.name,

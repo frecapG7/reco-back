@@ -1,4 +1,4 @@
-const { generateRandom, generateJWT, verifyJWT } = require("./utils");
+const { generateRandom, generateJWT, verifyJWT, sanitize } = require("./utils");
 
 describe("Test generateRandom function", () => {
   it("Should test different random size values", async () => {
@@ -27,5 +27,18 @@ describe("Test generateJWT function", () => {
     const result = verifyJWT(token);
 
     expect(result).toEqual("ezaze354");
+  });
+});
+
+describe("Test sanitize function", () => {
+  it("Should sanitize some html", async () => {
+    expect(sanitize("<script>alert('Hello')</script>")).toEqual("");
+    expect(sanitize("<b>Hello</b>")).toEqual("<b>Hello</b>");
+    expect(sanitize("<a href='http://www.google.com'>Google</a>")).toEqual(
+      '<a href="http://www.google.com">Google</a>'
+    );
+    expect(
+      sanitize("<iframe src='http://www.youtube.com'>Youtube</iframe>")
+    ).toEqual("Youtube");
   });
 });

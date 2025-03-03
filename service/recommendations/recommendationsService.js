@@ -53,51 +53,6 @@ const searchRecommendations = async ({
 };
 
 /**
- * Function to apply like a recommendation
- * @param {ObjectId} recommendationId
- * @param {User} authenticatedUser
- * @returns {Promise<Recommendation>}
- */
-const likeRecommendation = async ({ recommendationId, authenticatedUser }) => {
-  // 1.a Check if recommendation exists
-  const recommendation = await Recommendation.findById(recommendationId)
-    .populate("request", "author")
-    .exec();
-  if (!recommendation) throw new NotFoundError("Recommendation not found");
-  // 1.b Check if user has already liked the recommendation
-  if (recommendation.isLikedBy(authenticatedUser._id))
-    throw new ForbiddenError("User has already liked this recommendation");
-  // 1.c Check if user is not recommendation's author
-  if (recommendation.user._id.equals(authenticatedUser._id))
-    throw new ForbiddenError("User cannot like his own recommendation");
-
-  // 2. Find request
-  if (!recommendation.request) throw new NotFoundError("Request not found");
-
-  // 3. Evaluate credit
-  const credit = getValue({ recommendation, authenticatedUser });
-  // 4. Add credit and create notification
-  await Promise.all([
-    creditService.addCredit(Number(credit), recommendation.user),
-    notificationService.createNotification({
-      to: recommendation.user,
-      from: authenticatedUser,
-      type: "like_recommendation",
-    }),
-  ]);
-  // 5. Add like
-  recommendation.likes.push(authenticatedUser._id);
-
-  //6. Return result
-  const savedRecommendation = await recommendation.save();
-
-  return {
-    ...savedRecommendation.toJSON(),
-    liked: true,
-  };
-};
-
-/**
  *
  *  Function to unlike a recommendation
  * @param {ObjectId} recommendationId
@@ -168,6 +123,5 @@ const removeCredit = async ({ recommendation, value }) => {
 
 module.exports = {
   searchRecommendations,
-  likeRecommendation,
   unlikeRecommendation,
 };

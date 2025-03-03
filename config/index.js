@@ -17,6 +17,15 @@ const config = {
     password: process.env.SMTP_PASSWORD,
   },
 
+  iframely: {
+    url: "https://iframe.ly/api/iframely",
+    api_key: process.env.IFRAMELY_API_KEY,
+  },
+
+  logger: {
+    level: process.env.LOGGER_LEVEL || "info",
+  },
+
   server: process.env.SERVER_URL || "http://localhost:3000",
 };
 

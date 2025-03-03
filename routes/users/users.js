@@ -186,11 +186,7 @@ router.get(
   passport.authenticate(["bearer", "anonymous"], { session: false }),
   async (req, res, next) => {
     try {
-      const recommendations = await users.getRecommendations({
-        id: req.params.id,
-        query: req.query,
-        authenticatedUser: req.user,
-      });
+      const recommendations = await userApiService.getRecommendations(req);
       return res.json(recommendations);
     } catch (err) {
       next(err);
