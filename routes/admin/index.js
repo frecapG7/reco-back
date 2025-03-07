@@ -1,24 +1,10 @@
 const express = require("express");
-const users = require("./users");
+const adminProducts = require("./market/adminProducts");
 
-const items = require("./market/items");
-const passport = require("../../auth");
 const router = express.Router({ mergeParams: true });
 
-const adminService = require("../../service/admin/adminService");
+router.use("/users", require("./users/adminUsers"));
 
-router.post("/token", async (req, res, next) => {
-  try {
-    const token = await adminService.createToken(req.body);
-
-    res.status(201).json(token);
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.use("/users", users);
-
-router.use("/market/items", items);
+router.use("/market/products", adminProducts);
 
 module.exports = router;

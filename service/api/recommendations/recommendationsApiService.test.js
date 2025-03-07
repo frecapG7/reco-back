@@ -25,7 +25,11 @@ describe("Should validate get", () => {
   });
 
   it("Should throw NotFoundError", async () => {
-    findByIdStub.resolves(null);
+    findByIdStub.returns({
+      populate: sinon.stub().returns({
+        exec: sinon.stub().resolves(null),
+      }),
+    });
 
     await expect(get({ params: { id: "123" } })).rejects.toThrowError(
       "Recommendation not found"
@@ -34,8 +38,11 @@ describe("Should validate get", () => {
 
   it("Should return recommendation", async () => {
     const expected = sinon.mock(Recommendation);
-
-    findByIdStub.resolves(expected);
+    findByIdStub.returns({
+      populate: sinon.stub().returns({
+        exec: sinon.stub().resolves(expected),
+      }),
+    });
 
     const result = await get({ params: { id: "123" } });
 
@@ -80,7 +87,7 @@ describe("Should validate getFromEmbed", () => {
 
     sinon.assert.calledOnce(findOneStub);
     sinon.assert.calledWith(findOneStub, {
-      url: { $regex: "url" },
+      url: { $regex: "url", $options: "i" },
     });
     sinon.assert.notCalled(getEmbedStub);
   });

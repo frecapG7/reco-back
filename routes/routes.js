@@ -11,8 +11,7 @@ const validation = require("./validation");
 const admin = require("./admin");
 const oauth = require("./oauth2");
 const embed = require("./embed");
-
-const stores = require("./stores");
+const market = require("./market");
 const tokens = require("./tokens");
 const passport = require("../auth");
 
@@ -44,7 +43,7 @@ router.use(
 );
 
 // ********** Stores **********
-router.use("/stores", stores);
+router.use("/market", market);
 
 // ********** Authentication **********
 router.use("/auth", oauth);

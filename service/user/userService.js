@@ -49,8 +49,40 @@ const getUser = async (id) => {
   return user;
 };
 
+const paginatedSearch = async ({
+  search = "",
+  pageSize = 10,
+  pageNumber = 1,
+  sort = "created",
+  order = "asc",
+}) => {
+  const filters = {
+    $or: [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ],
+  };
+
+  const totalResults = await User.countDocuments(filters);
+  const page = await User.find(filters, null, {
+    skip: pageSize * (pageNumber - 1),
+    limit: pageSize,
+    sort: { [sort]: order === "asc" ? 1 : -1 },
+  });
+
+  return {
+    pagination: {
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalResults / pageSize),
+      totalResults,
+    },
+    results: page,
+  };
+};
+
 module.exports = {
   createUser,
   updateUser,
   getUser,
+  paginatedSearch,
 };

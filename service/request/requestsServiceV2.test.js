@@ -75,7 +75,8 @@ describe("Should validate paginatedSerch", () => {
       search: "search",
       pageSize: 50,
       pageNumber: 2,
-      sort: { modified_at: 1 },
+      sort: "modified_at",
+      order: "asc"
     });
 
     expect(result).toBeDefined();

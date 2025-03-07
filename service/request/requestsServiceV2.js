@@ -6,7 +6,8 @@ const paginatedSearch = async ({
   user,
   pageSize = 5,
   pageNumber = 1,
-  sort = { created_at: -1 },
+  sort = "created_at",
+  order = "desc",
 }) => {
   const filters = {
     $or: [
@@ -22,7 +23,7 @@ const paginatedSearch = async ({
   const page = await Request.find(filters, null, {
     skip: (pageNumber - 1) * pageSize,
     limit: pageSize,
-    sort,
+    sort: { [sort]: order === "asc" ? 1 : -1 },
   })
     .populate("author", "avatar name title")
     .exec();

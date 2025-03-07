@@ -10,18 +10,12 @@ const { sanitize } = require("../../../utils/utils");
  * Search requests
  * @param {*} param0
  */
-const search = async ({ query, user }) => {
-  const page = await requestsServiceV2.paginatedSearch({
-    search: query.search,
-    requestType: query.requestType,
-    pageSize: Number(query.pageSize),
-    pageNumber: Number(query.pageNumber),
-  });
-
+const search = async ({ query }) => {
+  const page = await requestsServiceV2.paginatedSearch(query);
   return page;
 };
 
-const getRequest = async ({ params: { id = "" }, user }) => {
+const getRequest = async ({ params: { id = "" } }) => {
   const request = await Request.findById(id);
   if (!request) throw new NotFoundError("Request not found");
 

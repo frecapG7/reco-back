@@ -52,7 +52,8 @@ const paginatedSearch = async ({
   request,
   pageSize = 5,
   pageNumber = 1,
-  sort = { created_at: -1 },
+  sort = "created_at",
+  order = "desc",
 }) => {
   const filters = {
     ...(!showDuplicates && { duplicate_from: null }),
@@ -70,7 +71,7 @@ const paginatedSearch = async ({
   const page = await Recommendation.find(filters, null, {
     skip: (pageNumber - 1) * pageSize,
     limit: pageSize,
-    sort,
+    sort: { [sort]: order === "asc" ? 1 : -1 },
   })
     .populate("user", "title avatar name")
     .populate("duplicate_from", "html url")
