@@ -46,16 +46,16 @@ describe("Should validate get function", () => {
     await expect(get({ params: { id: "123" } })).rejects.toThrow(
       "You are not authorized to perform this action"
     );
+  });
 
-    it("Should return user", async () => {
-      const expected = sinon.mock();
-      getUserStub.returns(expected);
-      const result = await get({
-        params: { id: "123" },
-        user: { id: "123", role: "ADMIN" },
-      });
-
-      expect(result).toBe(expected);
+  it("Should return user", async () => {
+    const expected = sinon.mock();
+    getUserStub.returns(expected);
+    const result = await get({
+      params: { id: "123" },
+      user: { id: "123", role: "ADMIN" },
     });
+
+    expect(result).toBe(expected);
   });
 });

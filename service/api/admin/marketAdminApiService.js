@@ -23,7 +23,12 @@ const get = async ({ params: { id = "" }, user }) => {
   const item = await MarketItem.findById(id).populate("created_by").exec();
   if (!item) throw new NotFoundError("Market item not found");
 
-  return item;
+  return {
+    ...item.toJSON(),
+    created_by: item.created_by.toJSON(),
+    modified_by: item.modified_by?.toJSON(),
+    enabled: item.enabled,
+  };
 };
 
 const create = async ({ body, user }) => {

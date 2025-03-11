@@ -30,18 +30,6 @@ const createUser = async ({
   return user;
 };
 
-/**
- * Merge user data
- * @param {User} user
- * @param {User} data
- */
-const updateUser = async (user, { name, email, avatar }) => {
-  // 1 - Update user
-  user.name = name;
-  user.email = email;
-  user.avatar = avatar;
-};
-
 const getUser = async (id) => {
   // 1 - Get user
   const user = await User.findById(id);
@@ -82,7 +70,6 @@ const paginatedSearch = async ({
 
 module.exports = {
   createUser,
-  updateUser,
   getUser,
   paginatedSearch,
 };

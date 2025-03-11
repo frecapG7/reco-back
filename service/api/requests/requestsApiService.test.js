@@ -63,6 +63,7 @@ describe("Should validate createRequest", () => {
   });
 
   it("Should create request", async () => {
+    const user = sinon.mock();
     saveStub.resolvesThis();
 
     const result = await createRequest({
@@ -72,12 +73,15 @@ describe("Should validate createRequest", () => {
         description: "<p>description</p>",
         tags: ["tag1", "tag2"],
       },
-      user: {
-        _id: "1234",
-      },
+      user,
     });
 
     expect(result).toBeDefined();
+
+    expect(result.requestType).toBe("SONG");
+    expect(result.title).toBe("title");
+    expect(result.description).toBe("<p>description</p>");
+    expect(result.tags).toEqual(["tag1", "tag2"]);
 
     sinon.assert.calledOnce(saveStub);
   });
@@ -234,7 +238,7 @@ describe("Should validate createRecommendation", () => {
       body: {
         field1: "field1",
         field2: "field2",
-        duplicated_from: "1234",
+        duplicate_from: "1234",
         requestType: "SONG",
       },
       user,

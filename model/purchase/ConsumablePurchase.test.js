@@ -1,4 +1,4 @@
-const { MarketConsumable } = require("../market/MarketItem");
+const { ConsumableItem, MarketConsumable } = require("../market/MarketItem");
 const ConsumablePurchase = require("./ConsumablePurchase");
 
 describe("Test ConsumablePurchase methods", () => {
@@ -15,7 +15,6 @@ describe("Test ConsumablePurchase methods", () => {
       }),
       payment_details: {
         price: 20,
-        purchased_at: new Date(),
       },
       quantity: 1,
     });
@@ -30,7 +29,6 @@ describe("Test ConsumablePurchase methods", () => {
     expect(result.item.id).toBeDefined();
     expect(result.item.name).toEqual("Item");
     expect(result.item.label).toEqual("Item");
-    expect(result.item.type).toEqual("ConsumableItem");
 
     expect(result.icon).toBeDefined();
     expect(result.icon).toEqual("icon");

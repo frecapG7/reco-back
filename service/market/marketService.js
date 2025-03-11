@@ -7,10 +7,6 @@ const {
   MarketIcon,
   MarketConsumable,
 } = require("../../model/market/MarketItem");
-const creditService = require("./creditService");
-const IconPurchase = require("../../model/purchase/IconPurchase");
-const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
-const PurchaseItem = require("../../model/purchase/PurchaseItem");
 const { sanitize } = require("../../utils/utils");
 
 const getItem = async ({ id }) => {
@@ -18,48 +14,6 @@ const getItem = async ({ id }) => {
   if (!item) throw new NotFoundError(`Cannot find market item with id ${id}`);
 
   return item;
-};
-
-const buyItem = async ({ marketItem, quantity = 1, user }) => {
-  let purchase = await PurchaseItem.findOne({
-    user: user,
-    item: marketItem,
-  });
-
-  if (!purchase) purchase = await buildPurchaseItem(marketItem, user);
-
-  await creditService.removeCredit(quantity * marketItem.price, user);
-
-  purchase.quantity += quantity;
-
-  const savedPurchase = await purchase.save();
-
-  return savedPurchase;
-};
-
-const buildPurchaseItem = async (marketItem, user) => {
-  const basePurchase = {
-    name: marketItem.name,
-    user: user,
-    item: marketItem,
-    payment_details: {
-      price: marketItem.price,
-    },
-  };
-
-  switch (marketItem.type) {
-    case "IconItem":
-      return new IconPurchase({
-        ...basePurchase,
-        icon: marketItem.url,
-      });
-    case "ConsumableItem":
-      return new ConsumablePurchase(basePurchase);
-    default:
-      throw new UnprocessableEntityError(
-        `Invalid item type ${marketItem.type}`
-      );
-  }
 };
 
 /**
@@ -112,22 +66,22 @@ const createItem = async (data, user) => {
 };
 
 const createIconItem = async (
-  { name, label, description, price, tags, url },
+  { name, label, description, price, tags, icon },
   user
 ) => {
   await verifyUniqueName(name);
-  if (!url)
+  if (!icon)
     throw new UnprocessableEntityError(
-      "Wrong market place item body : missing url"
+      "Wrong market place item body : missing icon"
     );
 
   const marketIcon = new MarketIcon({
     name,
     label,
     description: sanitize(description),
+    icon,
     price,
     tags,
-    url,
     created_by: user,
     modified_by: user,
   });
@@ -178,7 +132,6 @@ const verifyUniqueConsumableType = async (consumableType) => {
 
 module.exports = {
   getItem,
-  buyItem,
   paginatedSearch,
   createItem,
 };

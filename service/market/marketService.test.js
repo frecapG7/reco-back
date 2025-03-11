@@ -1,21 +1,8 @@
 const sinon = require("sinon");
-const {
-  NotFoundError,
-  UnprocessableEntityError,
-} = require("../../errors/error");
+const { NotFoundError } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-const IconPurchase = require("../../model/purchase/IconPurchase");
-const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 
-const {
-  getItem,
-  buyItem,
-  paginatedSearch,
-  createItem,
-} = require("./marketService");
-
-const creditService = require("./creditService");
-const PurchaseItem = require("../../model/purchase/PurchaseItem");
+const { getItem, paginatedSearch, createItem } = require("./marketService");
 
 describe("Should validate getItem", () => {
   let marketItemStub;
@@ -49,130 +36,6 @@ describe("Should validate getItem", () => {
     expect(result).toBeDefined();
 
     expect(result.name).toEqual("name");
-  });
-});
-
-describe("Should validate buyItem", () => {
-  let removeCreditStub;
-  let findOneStub;
-  beforeEach(() => {
-    removeCreditStub = sinon.stub(creditService, "removeCredit");
-    findOneStub = sinon.stub(PurchaseItem, "findOne");
-  });
-
-  afterEach(() => {
-    removeCreditStub.restore();
-    findOneStub.restore();
-  });
-
-  it("Should throw UnprocessableEntityError", async () => {
-    await expect(
-      buyItem({
-        marketItem: {
-          name: "name",
-          type: "UnknownType",
-        },
-      })
-    ).rejects.toThrow(UnprocessableEntityError);
-  });
-
-  it("Should thrown on removeCredit", async () => {
-    removeCreditStub.throws(new Error());
-
-    await expect(
-      buyItem({
-        marketItem: {
-          name: "name",
-          type: "IconItem",
-        },
-      })
-    ).rejects.toThrow(Error);
-  });
-
-  it("Should buy new icon item ", async () => {
-    removeCreditStub.resolves();
-    findOneStub.returns(null);
-
-    sinon.stub(IconPurchase.prototype, "save").returnsThis();
-
-    const result = await buyItem({
-      marketItem: {
-        name: "name",
-        url: "value",
-        price: 10,
-        type: "IconItem",
-      },
-      user: {
-        _id: "23564",
-      },
-    });
-
-    expect(result).toBeDefined();
-    expect(result).toBeInstanceOf(IconPurchase);
-    expect(result.icon).toEqual("value");
-    expect(result.name).toEqual("name");
-    expect(result.payment_details.price).toEqual(10);
-    expect(result.payment_details.purchased_at).toBeDefined();
-
-    sinon.assert.calledWith(removeCreditStub, 10, { _id: "23564" });
-  });
-
-  it("Should buy new consumable item ", async () => {
-    removeCreditStub.resolves();
-
-    findOneStub.returns(null);
-    sinon.stub(ConsumablePurchase.prototype, "save").returnsThis();
-
-    const result = await marketService.buyItem({
-      marketItem: {
-        name: "name",
-        url: "value",
-        price: 10,
-        type: "ConsumableItem",
-      },
-      quantity: 3,
-      user: {
-        _id: "23564",
-      },
-    });
-
-    expect(result).toBeDefined();
-    expect(result).toBeInstanceOf(ConsumablePurchase);
-    expect(result.name).toEqual("name");
-    expect(result.payment_details.price).toEqual(10);
-    expect(result.payment_details.purchased_at).toBeDefined();
-    expect(result.quantity).toEqual(3);
-
-    sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
-  });
-
-  it("Should buy existing consumable item", async () => {
-    removeCreditStub.resolves();
-
-    findOneStub.returns({
-      name: "name",
-      quantity: 2,
-      save: () => sinon.stub().resolvesThis(),
-    });
-
-    const result = await marketService.buyItem({
-      marketItem: {
-        name: "name",
-        url: "value",
-        price: 10,
-        type: "ConsumableItem",
-      },
-      quantity: 3,
-      user: {
-        _id: "23564",
-      },
-    });
-
-    expect(result).toBeDefined();
-    // expect(result.quantity).toEqual(5);
-
-    //Verify transaction
-    sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
   });
 });
 
@@ -302,7 +165,7 @@ describe("Should validate createItem", () => {
     ).rejects.toThrow("Market item name already exists");
   });
 
-  it("Should throw missing url error", async () => {
+  it("Should throw missing icon error", async () => {
     existsStub.withArgs({ name: "Icon" }).resolves(false);
 
     const user = sinon.mock();
@@ -316,7 +179,7 @@ describe("Should validate createItem", () => {
         },
         user
       )
-    ).rejects.toThrow("Wrong market place item body : missing url");
+    ).rejects.toThrow("Wrong market place item body : missing icon");
   });
 
   it("Should create icon item", async () => {
@@ -332,7 +195,7 @@ describe("Should validate createItem", () => {
         description: "<p>Icon</p>",
         price: 10,
         tags: ["tag1", "tag2"],
-        url: "toto.url",
+        icon: "toto.url",
       },
       user
     );
@@ -344,9 +207,7 @@ describe("Should validate createItem", () => {
     expect(result.description).toEqual("<p>Icon</p>");
     expect(result.price).toEqual(10);
     expect(result.tags).toEqual(["tag1", "tag2"]);
-    expect(result.url).toEqual("toto.url");
-    expect(result.created_by).toEqual(user);
-    expect(result.modified_by).toEqual(user);
+    expect(result.icon).toEqual("toto.url");
 
     sinon.assert.calledOnce(saveStub);
   });
@@ -408,8 +269,6 @@ describe("Should validate createItem", () => {
     expect(result.tags).toEqual(["tag1", "tag2"]);
     expect(result.icon).toEqual("toto.url");
     expect(result.consumableType).toEqual("invitation");
-    expect(result.created_by).toEqual(user);
-    expect(result.modified_by).toEqual(user);
 
     sinon.assert.calledOnce(saveStub);
   });

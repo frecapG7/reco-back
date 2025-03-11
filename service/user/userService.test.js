@@ -64,24 +64,7 @@ describe("Test createUser", () => {
   });
 });
 
-describe("Test updateUser", () => {
-  it("Should test happy path", async () => {
-    const user = new User();
-    user.name = "test";
-    user.email = "test";
-    user.avatar = "test";
 
-    await userService.updateUser(user, {
-      name: "test2",
-      email: "test2",
-      avatar: "test2",
-    });
-
-    expect(user.name).toBe("test2");
-    expect(user.email).toBe("test2");
-    expect(user.avatar).toBe("test2");
-  });
-});
 
 describe("Test getUser", () => {
   let findByIdStub;

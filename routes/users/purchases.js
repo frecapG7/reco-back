@@ -1,13 +1,9 @@
 const router = require("express").Router({ mergeParams: true });
-const purchase = require("../../service/api/users/purchases");
+const purchasesApiService = require("../../service/api/users/purchasesApiService");
 
 router.get("", async (req, res, next) => {
   try {
-    const result = await purchase.getPurchases({
-      id: req.params.userId,
-      query: req.query,
-      authenticatedUser: req.user,
-    });
+    const result = await purchasesApiService.getPurchases(req);
     return res.json(result);
   } catch (err) {
     next(err);
@@ -16,12 +12,7 @@ router.get("", async (req, res, next) => {
 
 router.get("/:purchaseId", async (req, res, next) => {
   try {
-    const result = await purchase.getPurchase({
-      id: req.params.userId,
-      purchaseId: req.params.purchaseId,
-      authenticatedUser: req.user,
-    });
-
+    const result = await purchasesApiService.getPurchase(req);
     return res.json(result);
   } catch (err) {
     next(err);
@@ -30,11 +21,7 @@ router.get("/:purchaseId", async (req, res, next) => {
 
 router.post("/:purchaseId/redeem", async (req, res, next) => {
   try {
-    await purchase.redeemPurchase({
-      id: req.params.userId,
-      purchaseId: req.params.purchaseId,
-      authenticatedUser: req.user,
-    });
+    await purchasesApiService.redeemPurchase(req);
     return res.status(204).send();
   } catch (err) {
     next(err);
@@ -43,11 +30,7 @@ router.post("/:purchaseId/redeem", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const result = await purchase.createPurchase({
-      id: req.params.userId,
-      purchase: req.body,
-      authenticatedUser: req.user,
-    });
+    const result = await purchasesApiService.createPurchase(req);
     return res.status(201).json(result);
   } catch (err) {
     next(err);

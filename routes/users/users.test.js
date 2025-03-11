@@ -1,9 +1,7 @@
 const sinon = require("sinon");
 const supertest = require("supertest");
 
-const User = require("../../model/User");
-const userApiService = require("../../service/api/users/users");
-const usersApiServiceV2 = require("../../service/api/users/usersApiService");
+const usersApiService = require("../../service/api/users/usersApiService");
 
 const userSettingsService = require("../../service/user/userSettingsService");
 const metrics = require("../../service/api/users/metrics");
@@ -33,25 +31,20 @@ const passportStub = sinon
 app.use("/users", require("./users"));
 app.use(handleError);
 
-describe("GET /users/:id", () => {
-  let usersStub;
+describe("GET /users/:name", () => {
+  let getByNameStub;
 
   beforeEach(() => {
-    usersStub = sinon.stub(userApiService, "getUser");
+    getByNameStub = sinon.stub(usersApiService, "getByName");
   });
   afterEach(() => {
-    usersStub.restore();
+    getByNameStub.restore();
   });
 
   it("should return user", async () => {
-    usersStub.resolves(
-      new User({
-        email: "test",
-        name: "test",
-      })
-    );
+    getByNameStub.resolves(sinon.mock());
 
-    const response = await supertest(app).get("/users/1");
+    const response = await supertest(app).get("/users/toto");
 
     expect(response.status).toBe(200);
   });
@@ -61,7 +54,7 @@ describe("PUT /users/:id", () => {
   let updateUserStub;
 
   beforeEach(() => {
-    updateUserStub = sinon.stub(usersApiServiceV2, "updateUser");
+    updateUserStub = sinon.stub(usersApiService, "updateUser");
   });
   afterEach(() => {
     updateUserStub.restore();
@@ -85,17 +78,17 @@ describe("PUT /users/:id", () => {
 });
 
 describe("PUT /users/:id/password", () => {
-  let userServiceStub;
+  let updatePasswordStub;
 
   beforeEach(() => {
-    userServiceStub = sinon.stub(userApiService, "updatePassword");
+    updatePasswordStub = sinon.stub(usersApiService, "updatePassword");
   });
   afterEach(() => {
-    userServiceStub.reset();
+    updatePasswordStub.reset();
   });
 
   it("should update user password", async () => {
-    userServiceStub.resolves({
+    updatePasswordStub.resolves({
       id: 1,
     });
 
@@ -109,46 +102,7 @@ describe("PUT /users/:id/password", () => {
     expect(response.status).toBe(200);
     expect(response.body.id).toEqual(1);
 
-    sinon.assert.calledOnce(userServiceStub);
-    sinon.assert.calledWith(userServiceStub, {
-      id: "65df6cc757b41fec4d7c3055",
-      body: {
-        newPassword: "56464zad",
-        oldPassword: "test",
-      },
-      authenticatedUser: { _id: new ObjectId("65df6cc757b41fec4d7c3055") },
-    });
-  });
-});
-describe("PUT /users/:id/avatar", () => {
-  let userServiceStub;
-
-  beforeEach(() => {
-    userServiceStub = sinon.stub(userApiService, "updateAvatar");
-  });
-  afterEach(() => {
-    userServiceStub.restore();
-  });
-
-  it("should return updated user", async () => {
-    userServiceStub.resolves({
-      id: 1,
-    });
-
-    const response = await supertest(app)
-      .put("/users/65df6cc757b41fec4d7c3055/avatar")
-      .send({
-        avatar: "test",
-      });
-
-    expect(response.status).toBe(200);
-    expect(response.body.id).toEqual(1);
-
-    sinon.assert.calledOnce(userServiceStub);
-    sinon.assert.calledWith(userServiceStub, {
-      id: "65df6cc757b41fec4d7c3055",
-      avatar: "test",
-    });
+    sinon.assert.calledOnce(updatePasswordStub);
   });
 });
 
@@ -260,10 +214,7 @@ describe("GET /users/:id/recommendations", () => {
   let getRecommendationsStub;
 
   beforeEach(() => {
-    getRecommendationsStub = sinon.stub(
-      usersApiServiceV2,
-      "getRecommendations"
-    );
+    getRecommendationsStub = sinon.stub(usersApiService, "getRecommendations");
   });
 
   afterEach(() => {

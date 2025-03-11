@@ -31,6 +31,14 @@ const MarketItemSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    /**
+     * @property {String} icon - An link to the icon of the item
+     * @required
+     */
+    icon: {
+      type: String,
+      required: true,
+    },
     price: {
       type: Number,
       required: true,
@@ -86,15 +94,11 @@ MarketItemSchema.methods.toJSON = function () {
     price: this.price,
     tags: this.tags,
     type: this.type,
-    ...(this.type === "IconItem" && {
-      url: this.url,
-      icon: this.url,
-    }),
+    icon: this.icon,
     ...(this.type === "TitleItem" && {
       titleValue: this.titleValue,
     }),
     ...(this.type === "ConsumableItem" && {
-      icon: this.icon,
       consumableType: this.consumableType,
     }),
   };
@@ -104,18 +108,7 @@ const MarketItem = mongoose.model("MarketItem", MarketItemSchema);
 
 const MarketIcon = MarketItem.discriminator(
   "IconItem",
-  new mongoose.Schema({
-    url: {
-      type: String,
-      required: true,
-    },
-    // If the icon is available on signup
-    //@Deprecated
-    freeOnSignup: {
-      type: Boolean,
-      default: false,
-    },
-  }),
+  new mongoose.Schema(),
   options
 );
 const MarketTitle = MarketItem.discriminator(
@@ -129,10 +122,6 @@ const MarketTitle = MarketItem.discriminator(
 const MarketConsumable = MarketItem.discriminator(
   "ConsumableItem",
   new mongoose.Schema({
-    icon: {
-      type: String,
-      required: true,
-    },
     consumableType: {
       type: String,
       required: true,

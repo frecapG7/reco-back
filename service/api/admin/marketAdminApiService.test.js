@@ -76,17 +76,31 @@ describe("Should validate get function", () => {
   });
 
   it("Should throw return market item", async () => {
-    const expect = sinon.mock();
+    const expected = sinon.mock();
+    expected.toJSON = sinon.stub().returns({ id: "123" });
+    expected.created_by = { toJSON: sinon.stub().returns({ id: "123" }) };
+    expected.modified_by = { toJSON: sinon.stub().returns({ id: "123" }) };
+    expected.enabled = true;
+
     findByIdStub.returns({
-      populate: sinon.stub().returns({
-        exec: sinon.stub().returns(expect),
-      }),
+      populate: sinon
+        .stub()
+        .withArgs("created_by")
+        .returns({
+          exec: sinon.stub().returns(expected),
+        }),
     });
 
     const result = await get({
       params: { id: "123" },
       user: { role: "ADMIN" },
     });
+
+    expect(result).toBeDefined();
+    expect(result.id).toBe("123");
+    expect(result.created_by).toEqual({ id: "123" });
+    expect(result.modified_by).toEqual({ id: "123" });
+    expect(result.enabled).toBe(true);
   });
 });
 
@@ -107,6 +121,7 @@ describe("Should validate create function", () => {
 
   it("Should return created item", async () => {
     const expected = sinon.mock();
+    createItemStub.returns(expected);
 
     const result = await create({
       body: {
@@ -165,6 +180,7 @@ describe("Should validate update function", () => {
   it("Should return updated item", async () => {
     const expected = sinon.mock();
     findByIdStub.returns(expected);
+    expected.save = sinon.stub().returns(expected);
 
     const result = await update({
       params: { id: "123" },
@@ -173,6 +189,8 @@ describe("Should validate update function", () => {
     });
 
     expect(result).toEqual(expected);
+
+    expect(result.label).toBe("test");
   });
 });
 
