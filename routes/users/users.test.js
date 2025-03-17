@@ -4,7 +4,6 @@ const supertest = require("supertest");
 const usersApiService = require("../../service/api/users/usersApiService");
 
 const userSettingsService = require("../../service/user/userSettingsService");
-const metrics = require("../../service/api/users/metrics");
 const passport = require("../../auth");
 const ObjectId = require("mongoose").Types.ObjectId;
 
@@ -243,7 +242,7 @@ describe("GET /users/:id/metrics", () => {
   let getMetricsStub;
 
   beforeEach(() => {
-    getMetricsStub = sinon.stub(metrics, "getMetrics");
+    getMetricsStub = sinon.stub(usersApiService, "getMetrics");
   });
 
   afterEach(() => {
@@ -256,30 +255,6 @@ describe("GET /users/:id/metrics", () => {
     });
 
     const response = await supertest(app).get("/users/123456789123/metrics");
-
-    expect(response.status).toBe(200);
-  });
-});
-
-describe("GET /users/:id/balance", () => {
-  let getBalanceStub;
-
-  beforeEach(() => {
-    getBalanceStub = sinon.stub(metrics, "getBalance");
-  });
-
-  afterEach(() => {
-    getBalanceStub.restore();
-  });
-
-  it("Should return balance", async () => {
-    getBalanceStub.resolves({
-      balance: 52,
-    });
-
-    const response = await supertest(app).get(
-      "/users/123456789123/balance?detailled=true"
-    );
 
     expect(response.status).toBe(200);
   });

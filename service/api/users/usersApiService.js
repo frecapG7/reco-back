@@ -3,6 +3,7 @@ const tokenService = require("../../token/tokenService");
 const userService = require("../../user/userService");
 const recommendationsServiceV2 = require("../../recommendations/recommendationsServiceV2");
 const requestsServiceV2 = require("../../request/requestsServiceV2");
+const userMetricsService = require("../../user/userMetricsService");
 
 const { ForbiddenError, NotFoundError } = require("../../../errors/error");
 const {
@@ -66,6 +67,11 @@ const updatePassword = async ({
   dbUser.setPassword(newPassword);
   return await dbUser.save();
 };
+
+const getMe = async ({ user }) => {
+  return user;
+};
+
 const getByName = async ({ params: { name = "" } }) => {
   const user = await User.findOne({
     name,
@@ -81,7 +87,7 @@ const getRecommendations = async ({ params: { id = "" }, query, user }) => {
 
   // 2 - Check privileges
   if (paramUser.settings.privacy.privateRecommendations)
-    throw verifySelfOrAdmin({ userId: id, authenticatedUser: user });
+    verifySelfOrAdmin({ userId: id, authenticatedUser: user });
 
   const page = await recommendationsServiceV2.paginatedSearch({
     ...query,
@@ -117,11 +123,22 @@ const getRequests = async ({ params: { id = "" }, query, user }) => {
   return page;
 };
 
+const getMetrics = async ({ params: { id = "" } }) => {
+  // 1 - Get User
+  const paramUser = await User.findById(id);
+  if (!paramUser) throw new NotFoundError("User not found");
+
+  const metrics = await userMetricsService.getMetrics(paramUser);
+  return metrics;
+};
+
 module.exports = {
   signup,
   updateUser,
   updatePassword,
+  getMe,
   getByName,
   getRecommendations,
   getRequests,
+  getMetrics,
 };

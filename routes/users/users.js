@@ -6,8 +6,6 @@ const tokensApiService = require("../../service/api/tokens/tokensApiService");
 const userSettingsService = require("../../service/user/userSettingsService");
 const { ForbiddenError } = require("../../errors/error");
 
-const metrics = require("../../service/api/users/metrics");
-
 const passport = require("../../auth");
 const {
   resetPassword,
@@ -22,6 +20,22 @@ router.post("", async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * GET connected user info
+ */
+router.get(
+  "/me",
+  passport.authenticate("bearer", { session: false }),
+  async (req, res, next) => {
+    try {
+      const user = await userApiService.getMe(req);
+      return res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /**
  * GET /user to get user by id
@@ -161,37 +175,14 @@ router.get(
   }
 );
 
-router.get(
-  "/:id/metrics",
-  passport.authenticate(["bearer"], { session: false }),
-  async (req, res, next) => {
-    try {
-      const result = await metrics.getMetrics({
-        id: req.params.id,
-        authenticatedUser: req.user,
-      });
-      return res.json(result);
-    } catch (err) {
-      next(err);
-    }
+router.get("/:id/metrics", async (req, res, next) => {
+  try {
+    const result = await userApiService.getMetrics(req);
+    return res.json(result);
+  } catch (err) {
+    next(err);
   }
-);
-router.get(
-  "/:id/balance",
-  passport.authenticate(["bearer"], { session: false }),
-  async (req, res, next) => {
-    try {
-      const result = await metrics.getBalance({
-        id: req.params.id,
-        detailled: req.query?.detailled,
-        authenticatedUser: req.user,
-      });
-      return res.json(result);
-    } catch (err) {
-      next(err);
-    }
-  }
-);
+});
 
 router.get(
   "/:id/tokens",

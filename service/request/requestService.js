@@ -96,39 +96,7 @@ const deleteRequest = async (id, user) => {
   return request;
 };
 
-/**
- * Asynchronous function to search requests.
- * @param {Object} filters
- * @param {Number} pageSize
- * @param {Number} pageNumber
- * @returns
- */
-const search = async ({ filters, pageSize, pageNumber }) => {
-  const totalResults = await Request.countDocuments(filters);
-
-  const results = await Request.find(filters)
-    .skip((pageNumber - 1) * pageSize)
-    .limit(pageSize)
-    .sort({ created_at: -1 })
-    .populate("author")
-    .exec();
-
-  const paginatedResults = await Promise.all(
-    results.map(async (result) => toDTO(result))
-  );
-
-  return {
-    pagination: {
-      currentPage: pageNumber,
-      totalPages: Math.ceil(totalResults / pageSize),
-      totalResults,
-    },
-    results: paginatedResults,
-  };
-};
-
 module.exports = {
-  search,
   getRequest,
   createRequest,
   updateRequest,

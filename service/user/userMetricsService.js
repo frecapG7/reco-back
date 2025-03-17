@@ -115,18 +115,6 @@ const getMetrics = async (user) => {
   };
 };
 
-const getBalance = async (user, detailled) => {
-  return {
-    balance: user?.balance || 0,
-    ...(detailled && {
-      lastFilled: new Date(),
-      lastFilledAmount: 0,
-      nextFill: new Date(),
-    }),
-  };
-};
-
 module.exports = {
   getMetrics,
-  getBalance,
 };

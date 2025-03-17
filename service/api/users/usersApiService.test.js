@@ -5,6 +5,7 @@ const recommendationsServiceV2 = require("../../recommendations/recommendationsS
 const requestsServiceV2 = require("../../request/requestsServiceV2");
 const User = require("../../../model/User");
 const { ObjectId } = require("mongoose").Types;
+const userMetricsService = require("../../user/userMetricsService");
 
 const sinon = require("sinon");
 const {
@@ -14,6 +15,7 @@ const {
   getByName,
   getRecommendations,
   getRequests,
+  getMetrics,
 } = require("./usersApiService");
 
 describe("Should test signup function", () => {
@@ -372,6 +374,44 @@ describe("Should test getRequests function", () => {
       params: { id: "123" },
       query: {},
       user: { role: "ADMIN" },
+    });
+
+    expect(result).toBeDefined();
+    expect(result).toBe(expected);
+  });
+});
+
+describe("Should test getMetrics", () => {
+  let findByIdStub;
+  let getMetricsStub;
+
+  beforeEach(() => {
+    findByIdStub = sinon.stub(User, "findById");
+    getMetricsStub = sinon.stub(userMetricsService, "getMetrics");
+  });
+
+  afterEach(() => {
+    findByIdStub.restore();
+    getMetricsStub.restore();
+  });
+
+  it("Should thrown an error on user not found", async () => {
+    findByIdStub.resolves(null);
+
+    await expect(getMetrics({ params: { id: "123" } })).rejects.toThrow(
+      "User not found"
+    );
+  });
+
+  it("Should return user metrics", async () => {
+    const user = sinon.mock();
+    findByIdStub.resolves(user);
+
+    const expected = sinon.mock();
+    getMetricsStub.resolves(expected);
+
+    const result = await getMetrics({
+      params: { id: "123" },
     });
 
     expect(result).toBeDefined();
