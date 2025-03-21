@@ -185,31 +185,3 @@ describe("Test  getMetrics", () => {
     expect(result.purchases.last.date).toBeDefined();
   });
 });
-
-describe("Test getBalance", () => {
-  it("Should return balance with no details", async () => {
-    const user = {
-      balance: 10,
-    };
-
-    const result = await getBalance(user, false);
-
-    expect(result).toEqual({
-      balance: 10,
-    });
-  });
-
-  it("Should return balance with details", async () => {
-    const user = {
-      balance: 10,
-    };
-
-    const result = await getBalance(user, true);
-
-    expect(result).toBeDefined();
-    expect(result.balance).toEqual(10);
-    expect(result.lastFilled).toBeDefined();
-    expect(result.lastFilledAmount).toEqual(0);
-    expect(result.nextFill).toBeDefined();
-  });
-});

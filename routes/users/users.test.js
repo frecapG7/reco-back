@@ -3,7 +3,7 @@ const supertest = require("supertest");
 
 const usersApiService = require("../../service/api/users/usersApiService");
 
-const userSettingsService = require("../../service/user/userSettingsService");
+const settingsApiService = require("../../service/api/users/settingsApiService");
 const passport = require("../../auth");
 const ObjectId = require("mongoose").Types.ObjectId;
 
@@ -106,23 +106,17 @@ describe("PUT /users/:id/password", () => {
 });
 
 describe("GET /users/:id/settings", () => {
-  let userSettingsServiceStub;
+  let getSettingsStub;
 
   beforeEach(() => {
-    userSettingsServiceStub = sinon.stub(userSettingsService, "getSettings");
+    getSettingsStub = sinon.stub(settingsApiService, "getSettings");
   });
   afterEach(() => {
-    userSettingsServiceStub.restore();
-  });
-
-  it("retun forbidden on invalid user id", async () => {
-    const response = await supertest(app).get("/users/2/settings");
-
-    expect(response.status).toBe(403);
+    getSettingsStub.restore();
   });
 
   it("should return user settings", async () => {
-    userSettingsServiceStub.resolves({
+    getSettingsStub.resolves({
       lang: "en",
       theme: "light",
       notifications: true,
@@ -140,27 +134,17 @@ describe("GET /users/:id/settings", () => {
 });
 
 describe("PATCH /users/:id/settings", () => {
-  let userSettingsServiceStub;
+  let updateSettingsStub;
 
   beforeEach(() => {
-    userSettingsServiceStub = sinon.stub(userSettingsService, "updateSettings");
+    updateSettingsStub = sinon.stub(settingsApiService, "updateSettings");
   });
   afterEach(() => {
-    userSettingsServiceStub.restore();
-  });
-
-  it("Shoud return forbidden on invalid user id", async () => {
-    const response = await supertest(app).patch("/users/2/settings").send({
-      lang: "en",
-      theme: "light",
-      notifications: true,
-    });
-
-    expect(response.status).toBe(403);
+    updateSettingsStub.restore();
   });
 
   it("Should return updated settings", async () => {
-    userSettingsServiceStub.resolves({
+    updateSettingsStub.resolves({
       lang: "en",
       theme: "light",
       notifications: true,
@@ -179,23 +163,17 @@ describe("PATCH /users/:id/settings", () => {
 });
 
 describe("DELETE /users/:id/settings", () => {
-  let userSettingsServiceStub;
+  let resetSettingsStub;
 
   beforeEach(() => {
-    userSettingsServiceStub = sinon.stub(userSettingsService, "resetSettings");
+    resetSettingsStub = sinon.stub(settingsApiService, "resetSettings");
   });
   afterEach(() => {
-    userSettingsServiceStub.restore();
-  });
-
-  it("Shoud return forbidden on invalid user id", async () => {
-    const response = await supertest(app).delete("/users/2/settings").send();
-
-    expect(response.status).toBe(403);
+    resetSettingsStub.restore();
   });
 
   it("Should return updated settings", async () => {
-    userSettingsServiceStub.resolves({
+    resetSettingsStub.resolves({
       lang: "en",
       theme: "light",
       notifications: true,

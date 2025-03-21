@@ -50,8 +50,6 @@ const getFromEmbed = async ({ query: { url = "" }, user }) => {
 };
 
 const search = async ({ query, user }) => {
-  if (!Boolean(query.requestType)) throw new Error("requestType is required");
-
   const page = await recommendationsService.paginatedSearch({
     ...query,
     showDuplicates: false,

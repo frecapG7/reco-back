@@ -164,14 +164,6 @@ describe("Should validate search", () => {
     paginatedSearchStub.restore();
   });
 
-  it("Should throw error on missing requestType", async () => {
-    await expect(
-      search({
-        query: {},
-      })
-    ).rejects.toThrow("requestType is required");
-  });
-
   it("Should return page", async () => {
     const expected = sinon.mock();
 

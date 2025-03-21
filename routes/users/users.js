@@ -3,7 +3,7 @@ const router = express.Router();
 
 const userApiService = require("../../service/api/users/usersApiService");
 const tokensApiService = require("../../service/api/tokens/tokensApiService");
-const userSettingsService = require("../../service/user/userSettingsService");
+const settingsApiService = require("../../service/api/users/settingsApiService");
 const { ForbiddenError } = require("../../errors/error");
 
 const passport = require("../../auth");
@@ -106,9 +106,7 @@ router.get(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      verifyUser(req.params.id, req.user);
-      const settings = await userSettingsService.getSettings(req.params.id);
-
+      const settings = await settingsApiService.getSettings(req);
       return res.json(settings);
     } catch (err) {
       next(err);
@@ -121,12 +119,7 @@ router.patch(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      verifyUser(req.params.id, req.user);
-      const settings = await userSettingsService.updateSettings(
-        req.params.id,
-        req.body
-      );
-
+      const settings = await settingsApiService.updateSettings(req);
       return res.json(settings);
     } catch (err) {
       next(err);
@@ -139,9 +132,7 @@ router.delete(
   passport.authenticate("bearer", { session: false }),
   async (req, res, next) => {
     try {
-      verifyUser(req.params.id, req.user);
-      const settings = await userSettingsService.resetSettings(req.params.id);
-
+      const settings = await settingsApiService.resetSettings(req);
       return res.json(settings);
     } catch (err) {
       next(err);

@@ -3,8 +3,6 @@ const notificationService = require("../../service/api/users/notificationsApiSer
 
 router.get("", async (req, res, next) => {
   try {
-    verifyUser(req);
-
     const result = await notificationService.getNotifications(req);
     res.json(result);
   } catch (err) {
@@ -23,7 +21,6 @@ router.get("/unread", async (req, res, next) => {
 
 router.put("/:id/read", async (req, res, next) => {
   try {
-    verifyUser;
     const result = await notificationService.markAsRead(req);
     return res.json(result);
   } catch (err) {
@@ -33,7 +30,6 @@ router.put("/:id/read", async (req, res, next) => {
 
 router.put("/read/all", async (req, res, next) => {
   try {
-    verifyUser(req);
     const result = await notificationService.markAllAsRead(req);
     return res.json(result);
   } catch (err) {

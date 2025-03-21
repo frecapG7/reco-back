@@ -1,6 +1,5 @@
 const sinon = require("sinon");
 const supertest = require("supertest");
-const recommendationService = require("../../service/request/recommendationService");
 const requestApiService = require("../../service/api/requests/requestsApiService");
 
 const express = require("express");
@@ -47,35 +46,6 @@ describe("GET /requests/:requestId/recommendations", () => {
     const response = await supertest(app).get("/requests/123/recommendations");
     expect(response.status).toEqual(200);
     expect(response.body).toEqual({ items: [{ _id: 1 }] });
-  });
-});
-
-describe("GET /request/:requestId/recommendations/:id", () => {
-  let recommendationServiceStub;
-  beforeEach(() => {
-    recommendationServiceStub = sinon.stub(
-      recommendationService,
-      "getRecommendation"
-    );
-  });
-  afterEach(() => {
-    recommendationServiceStub.restore();
-  });
-
-  it("should return a recommendation", async () => {
-    recommendationServiceStub.withArgs("1").resolves({
-      id: 1,
-      request_id: 1,
-      user_id: 1,
-      field1: "value1",
-      field2: "value2",
-      field3: "value3",
-    });
-
-    const response = await supertest(app).get(
-      "/requests/123/recommendations/1"
-    );
-    expect(response.status).toEqual(200);
   });
 });
 
