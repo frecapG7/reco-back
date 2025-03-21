@@ -1,16 +1,8 @@
 const sinon = require("sinon");
-const {
-  NotFoundError,
-  UnprocessableEntityError,
-} = require("../../errors/error");
+const { NotFoundError } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
-const IconPurchase = require("../../model/purchase/IconPurchase");
-const ConsumablePurchase = require("../../model/purchase/ConsumablePurchase");
 
-const marketService = require("./marketService");
-
-const creditService = require("./creditService");
-const PurchaseItem = require("../../model/purchase/PurchaseItem");
+const { getItem, paginatedSearch, createItem } = require("./marketService");
 
 describe("Should validate getItem", () => {
   let marketItemStub;
@@ -25,12 +17,10 @@ describe("Should validate getItem", () => {
   it("Should thrown NotFoundError", async () => {
     marketItemStub.withArgs("12345").returns(null);
 
-    await expect(marketService.getItem({ id: "12345" })).rejects.toThrow(
-      NotFoundError
-    );
+    await expect(getItem({ id: "12345" })).rejects.toThrow(NotFoundError);
   });
 
-  it("Should test happy path with", async () => {
+  it("Should test happy path", async () => {
     marketItemStub.withArgs("12345").returns({
       name: "name",
       label: "label",
@@ -42,177 +32,244 @@ describe("Should validate getItem", () => {
       created_at: new Date(),
     });
 
-    const result = await marketService.getItem({ id: "12345" });
+    const result = await getItem({ id: "12345" });
     expect(result).toBeDefined();
 
     expect(result.name).toEqual("name");
   });
 });
 
-describe("Should validate searchItems", () => {
-  const countDocumentsStub = sinon.stub(MarketItem, "countDocuments");
-  const findStub = sinon.stub(MarketItem, "find");
+describe("Should validate paginatedSearch", () => {
+  let findStub;
+  let countDocumentsStub;
 
   beforeEach(() => {
-    countDocumentsStub.reset();
-    findStub.reset();
+    findStub = sinon.stub(MarketItem, "find");
+    countDocumentsStub = sinon.stub(MarketItem, "countDocuments");
+  });
+  afterEach(() => {
+    findStub.restore();
+    countDocumentsStub.restore();
   });
 
   it("Should return happy path with default values", async () => {
+    const expected = sinon.mock(MarketItem);
+
     countDocumentsStub.returns(10);
-    findStub.returns({
-      skip: () => ({
-        limit: () => ({
-          exec: () => {
-            return [
-              {
-                name: "name",
-                label: "label",
-                title: "title",
-                description: "description",
-                price: 10,
-                disable: false,
-                created_by: "12345",
-                created_at: new Date(),
-                tags: ["tag1", "tag2"],
-              },
-            ];
-          },
-        }),
-      }),
-    });
+    findStub.returns([expected]);
 
-    const result = await marketService.searchItems({
-      value: "name",
-    });
+    const result = await paginatedSearch({});
 
+    expect(result).toBeDefined();
+
+    expect(result.pagination).toBeDefined();
     expect(result.pagination.currentPage).toEqual(1);
-    expect(result.pagination.totalPages).toEqual(1);
+    expect(result.pagination.totalPages).toEqual(2);
     expect(result.pagination.totalResults).toEqual(10);
-    expect(result.results.length).toEqual(1);
+
+    sinon.assert.calledOnce(countDocumentsStub);
+    sinon.assert.calledOnce(findStub);
+
+    sinon.assert.calledWith(
+      findStub,
+      {
+        $or: [{ name: { $regex: "", $options: "i" } }, { tags: { $in: [""] } }],
+        enabled: true,
+      },
+      null,
+      {
+        skip: 0,
+        limit: 5,
+        sort: { created_at: -1 },
+      }
+    );
+  });
+
+  it("Should return happy path with custom values", async () => {
+    const expected = sinon.mock(MarketItem);
+
+    countDocumentsStub.returns(10);
+    findStub.returns([expected]);
+
+    const result = await paginatedSearch({
+      search: "search",
+      type: "type",
+      enabled: false,
+      pageSize: 3,
+      pageNumber: 1,
+      sort: "modified",
+      order: "asc",
+    });
+
+    expect(result).toBeDefined();
+
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toEqual(1);
+    expect(result.pagination.totalPages).toEqual(4);
+    expect(result.pagination.totalResults).toEqual(10);
+
+    sinon.assert.calledOnce(countDocumentsStub);
+    sinon.assert.calledOnce(findStub);
+
+    sinon.assert.calledWith(
+      findStub,
+      {
+        $or: [
+          { name: { $regex: "search", $options: "i" } },
+          { tags: { $in: ["search"] } },
+        ],
+        type: "type",
+      },
+      null,
+      {
+        skip: 0,
+        limit: 3,
+        sort: { modified: 1 },
+      }
+    );
   });
 });
 
-describe("Should validate buyItem", () => {
-  let removeCreditStub;
-  let findOneStub;
+describe("Should validate createItem", () => {
+  let existsStub;
+  let saveStub;
+
   beforeEach(() => {
-    removeCreditStub = sinon.stub(creditService, "removeCredit");
-    findOneStub = sinon.stub(PurchaseItem, "findOne");
+    existsStub = sinon.stub(MarketItem, "exists");
+    saveStub = sinon.stub(MarketItem.prototype, "save");
   });
 
   afterEach(() => {
-    removeCreditStub.restore();
-    findOneStub.restore();
+    existsStub.restore();
+    saveStub.restore();
   });
 
   it("Should throw UnprocessableEntityError", async () => {
-    await expect(
-      marketService.buyItem({
-        marketItem: {
-          name: "name",
-          type: "UnknownType",
-        },
-      })
-    ).rejects.toThrow(UnprocessableEntityError);
+    await expect(createItem({ type: "UnknownType" })).rejects.toThrow(
+      "Invalid item type"
+    );
   });
 
-  it("Should thrown on removeCredit", async () => {
-    removeCreditStub.throws(new Error());
+  it("Should throw existing name error", async () => {
+    existsStub.withArgs({ name: "Icon" }).resolves(true);
 
+    const user = sinon.mock();
     await expect(
-      marketService.buyItem({
-        marketItem: {
-          name: "name",
+      createItem(
+        {
           type: "IconItem",
+          name: "Icon",
         },
-      })
-    ).rejects.toThrow(Error);
+        user
+      )
+    ).rejects.toThrow("Market item name already exists");
   });
 
-  it("Should buy new icon item ", async () => {
-    removeCreditStub.resolves();
-    findOneStub.returns(null);
+  it("Should throw missing icon error", async () => {
+    existsStub.withArgs({ name: "Icon" }).resolves(false);
 
-    sinon.stub(IconPurchase.prototype, "save").returnsThis();
+    const user = sinon.mock();
+    await expect(
+      createItem(
+        {
+          type: "IconItem",
+          name: "Icon",
+          label: "Icon",
+          description: "<p>Icon</p>",
+        },
+        user
+      )
+    ).rejects.toThrow("Wrong market place item body : missing icon");
+  });
 
-    const result = await marketService.buyItem({
-      marketItem: {
-        name: "name",
-        url: "value",
-        price: 10,
+  it("Should create icon item", async () => {
+    existsStub.withArgs({ name: "Icon" }).resolves(false);
+    saveStub.resolvesThis();
+
+    const user = sinon.mock();
+    const result = await createItem(
+      {
         type: "IconItem",
+        name: "Icon",
+        label: "Icon",
+        description: "<p>Icon</p>",
+        price: 10,
+        tags: ["tag1", "tag2"],
+        icon: "toto.url",
       },
-      user: {
-        _id: "23564",
-      },
-    });
+      user
+    );
 
     expect(result).toBeDefined();
-    expect(result).toBeInstanceOf(IconPurchase);
-    expect(result.icon).toEqual("value");
-    expect(result.name).toEqual("name");
-    expect(result.payment_details.price).toEqual(10);
-    expect(result.payment_details.purchased_at).toBeDefined();
 
-    sinon.assert.calledWith(removeCreditStub, 10, { _id: "23564" });
+    expect(result.name).toEqual("Icon");
+    expect(result.label).toEqual("Icon");
+    expect(result.description).toEqual("<p>Icon</p>");
+    expect(result.price).toEqual(10);
+    expect(result.tags).toEqual(["tag1", "tag2"]);
+    expect(result.icon).toEqual("toto.url");
+
+    sinon.assert.calledOnce(saveStub);
   });
 
-  it("Should buy new consumable item ", async () => {
-    removeCreditStub.resolves();
+  it("Should throw existing consumable type error", async () => {
+    const user = sinon.mock();
 
-    findOneStub.returns(null);
-    sinon.stub(ConsumablePurchase.prototype, "save").returnsThis();
+    existsStub.withArgs({ name: "Consumable" }).resolves(false);
+    existsStub
+      .withArgs({ type: "ConsumableItem", consumableType: "invitation" })
+      .resolves(true);
 
-    const result = await marketService.buyItem({
-      marketItem: {
-        name: "name",
-        url: "value",
-        price: 10,
-        type: "ConsumableItem",
-      },
-      quantity: 3,
-      user: {
-        _id: "23564",
-      },
-    });
-
-    expect(result).toBeDefined();
-    expect(result).toBeInstanceOf(ConsumablePurchase);
-    expect(result.name).toEqual("name");
-    expect(result.payment_details.price).toEqual(10);
-    expect(result.payment_details.purchased_at).toBeDefined();
-    expect(result.quantity).toEqual(3);
-
-    sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
+    await expect(
+      createItem(
+        {
+          type: "ConsumableItem",
+          name: "Consumable",
+          label: "Consumable details",
+          description: "<p>ergergegh</p>",
+          price: 10,
+          tags: ["tag1", "tag2"],
+          icon: "toto.url",
+          consumableType: "invitation",
+        },
+        user
+      )
+    ).rejects.toThrow("Consumable item type already exists");
   });
 
-  it("Should buy existing consumable item", async () => {
-    removeCreditStub.resolves();
+  it("Should create consumable item", async () => {
+    const user = sinon.mock();
 
-    findOneStub.returns({
-      name: "name",
-      quantity: 2,
-      save: () => sinon.stub().resolvesThis(),
-    });
+    existsStub.withArgs({ name: "Consumable" }).resolves(false);
+    existsStub
+      .withArgs({ type: "ConsumableItem", consumableType: "invitation" })
+      .resolves(false);
+    saveStub.resolvesThis();
 
-    const result = await marketService.buyItem({
-      marketItem: {
-        name: "name",
-        url: "value",
-        price: 10,
+    const result = await createItem(
+      {
         type: "ConsumableItem",
+        name: "Consumable",
+        label: "Consumable details",
+        description: "<p>ergergegh</p>",
+        price: 10,
+        tags: ["tag1", "tag2"],
+        icon: "toto.url",
+        consumableType: "invitation",
       },
-      quantity: 3,
-      user: {
-        _id: "23564",
-      },
-    });
+      user
+    );
 
     expect(result).toBeDefined();
-    // expect(result.quantity).toEqual(5);
 
-    //Verify transaction
-    sinon.assert.calledWith(removeCreditStub, 30, { _id: "23564" });
+    expect(result.name).toEqual("Consumable");
+    expect(result.label).toEqual("Consumable details");
+    expect(result.description).toEqual("<p>ergergegh</p>");
+    expect(result.price).toEqual(10);
+    expect(result.tags).toEqual(["tag1", "tag2"]);
+    expect(result.icon).toEqual("toto.url");
+    expect(result.consumableType).toEqual("invitation");
+
+    sinon.assert.calledOnce(saveStub);
   });
 });

@@ -8,7 +8,7 @@ describe("Validate MarketItem methods", () => {
       description: "Test Description",
       price: 100,
       tags: ["Test", "MarketIcon"],
-      url: "http://test.com/test.png",
+      icon: "http://test.com/test.png",
     });
 
     const result = marketIcon.toJSON();
@@ -21,7 +21,7 @@ describe("Validate MarketItem methods", () => {
     expect(result.price).toBe(100);
     expect(result.tags).toEqual(["Test", "MarketIcon"]);
     expect(result.type).toBe("IconItem");
-    expect(result.url).toBe("http://test.com/test.png");
+    expect(result.icon).toBe("http://test.com/test.png");
   });
 
   it("Should return a JSON object with the correct properties for an MarketTitle", async () => {

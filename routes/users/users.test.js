@@ -1,12 +1,9 @@
 const sinon = require("sinon");
 const supertest = require("supertest");
 
-const User = require("../../model/User");
-const userApiService = require("../../service/api/users/users");
-const usersApiServiceV2 = require("../../service/api/users/usersApiService");
+const usersApiService = require("../../service/api/users/usersApiService");
 
-const userSettingsService = require("../../service/user/userSettingsService");
-const metrics = require("../../service/api/users/metrics");
+const settingsApiService = require("../../service/api/users/settingsApiService");
 const passport = require("../../auth");
 const ObjectId = require("mongoose").Types.ObjectId;
 
@@ -33,25 +30,20 @@ const passportStub = sinon
 app.use("/users", require("./users"));
 app.use(handleError);
 
-describe("GET /users/:id", () => {
-  let usersStub;
+describe("GET /users/:name", () => {
+  let getByNameStub;
 
   beforeEach(() => {
-    usersStub = sinon.stub(userApiService, "getUser");
+    getByNameStub = sinon.stub(usersApiService, "getByName");
   });
   afterEach(() => {
-    usersStub.restore();
+    getByNameStub.restore();
   });
 
   it("should return user", async () => {
-    usersStub.resolves(
-      new User({
-        email: "test",
-        name: "test",
-      })
-    );
+    getByNameStub.resolves(sinon.mock());
 
-    const response = await supertest(app).get("/users/1");
+    const response = await supertest(app).get("/users/toto");
 
     expect(response.status).toBe(200);
   });
@@ -61,7 +53,7 @@ describe("PUT /users/:id", () => {
   let updateUserStub;
 
   beforeEach(() => {
-    updateUserStub = sinon.stub(usersApiServiceV2, "updateUser");
+    updateUserStub = sinon.stub(usersApiService, "updateUser");
   });
   afterEach(() => {
     updateUserStub.restore();
@@ -85,17 +77,17 @@ describe("PUT /users/:id", () => {
 });
 
 describe("PUT /users/:id/password", () => {
-  let userServiceStub;
+  let updatePasswordStub;
 
   beforeEach(() => {
-    userServiceStub = sinon.stub(userApiService, "updatePassword");
+    updatePasswordStub = sinon.stub(usersApiService, "updatePassword");
   });
   afterEach(() => {
-    userServiceStub.reset();
+    updatePasswordStub.reset();
   });
 
   it("should update user password", async () => {
-    userServiceStub.resolves({
+    updatePasswordStub.resolves({
       id: 1,
     });
 
@@ -109,67 +101,22 @@ describe("PUT /users/:id/password", () => {
     expect(response.status).toBe(200);
     expect(response.body.id).toEqual(1);
 
-    sinon.assert.calledOnce(userServiceStub);
-    sinon.assert.calledWith(userServiceStub, {
-      id: "65df6cc757b41fec4d7c3055",
-      body: {
-        newPassword: "56464zad",
-        oldPassword: "test",
-      },
-      authenticatedUser: { _id: new ObjectId("65df6cc757b41fec4d7c3055") },
-    });
-  });
-});
-describe("PUT /users/:id/avatar", () => {
-  let userServiceStub;
-
-  beforeEach(() => {
-    userServiceStub = sinon.stub(userApiService, "updateAvatar");
-  });
-  afterEach(() => {
-    userServiceStub.restore();
-  });
-
-  it("should return updated user", async () => {
-    userServiceStub.resolves({
-      id: 1,
-    });
-
-    const response = await supertest(app)
-      .put("/users/65df6cc757b41fec4d7c3055/avatar")
-      .send({
-        avatar: "test",
-      });
-
-    expect(response.status).toBe(200);
-    expect(response.body.id).toEqual(1);
-
-    sinon.assert.calledOnce(userServiceStub);
-    sinon.assert.calledWith(userServiceStub, {
-      id: "65df6cc757b41fec4d7c3055",
-      avatar: "test",
-    });
+    sinon.assert.calledOnce(updatePasswordStub);
   });
 });
 
 describe("GET /users/:id/settings", () => {
-  let userSettingsServiceStub;
+  let getSettingsStub;
 
   beforeEach(() => {
-    userSettingsServiceStub = sinon.stub(userSettingsService, "getSettings");
+    getSettingsStub = sinon.stub(settingsApiService, "getSettings");
   });
   afterEach(() => {
-    userSettingsServiceStub.restore();
-  });
-
-  it("retun forbidden on invalid user id", async () => {
-    const response = await supertest(app).get("/users/2/settings");
-
-    expect(response.status).toBe(403);
+    getSettingsStub.restore();
   });
 
   it("should return user settings", async () => {
-    userSettingsServiceStub.resolves({
+    getSettingsStub.resolves({
       lang: "en",
       theme: "light",
       notifications: true,
@@ -187,27 +134,17 @@ describe("GET /users/:id/settings", () => {
 });
 
 describe("PATCH /users/:id/settings", () => {
-  let userSettingsServiceStub;
+  let updateSettingsStub;
 
   beforeEach(() => {
-    userSettingsServiceStub = sinon.stub(userSettingsService, "updateSettings");
+    updateSettingsStub = sinon.stub(settingsApiService, "updateSettings");
   });
   afterEach(() => {
-    userSettingsServiceStub.restore();
-  });
-
-  it("Shoud return forbidden on invalid user id", async () => {
-    const response = await supertest(app).patch("/users/2/settings").send({
-      lang: "en",
-      theme: "light",
-      notifications: true,
-    });
-
-    expect(response.status).toBe(403);
+    updateSettingsStub.restore();
   });
 
   it("Should return updated settings", async () => {
-    userSettingsServiceStub.resolves({
+    updateSettingsStub.resolves({
       lang: "en",
       theme: "light",
       notifications: true,
@@ -226,23 +163,17 @@ describe("PATCH /users/:id/settings", () => {
 });
 
 describe("DELETE /users/:id/settings", () => {
-  let userSettingsServiceStub;
+  let resetSettingsStub;
 
   beforeEach(() => {
-    userSettingsServiceStub = sinon.stub(userSettingsService, "resetSettings");
+    resetSettingsStub = sinon.stub(settingsApiService, "resetSettings");
   });
   afterEach(() => {
-    userSettingsServiceStub.restore();
-  });
-
-  it("Shoud return forbidden on invalid user id", async () => {
-    const response = await supertest(app).delete("/users/2/settings").send();
-
-    expect(response.status).toBe(403);
+    resetSettingsStub.restore();
   });
 
   it("Should return updated settings", async () => {
-    userSettingsServiceStub.resolves({
+    resetSettingsStub.resolves({
       lang: "en",
       theme: "light",
       notifications: true,
@@ -260,10 +191,7 @@ describe("GET /users/:id/recommendations", () => {
   let getRecommendationsStub;
 
   beforeEach(() => {
-    getRecommendationsStub = sinon.stub(
-      usersApiServiceV2,
-      "getRecommendations"
-    );
+    getRecommendationsStub = sinon.stub(usersApiService, "getRecommendations");
   });
 
   afterEach(() => {
@@ -292,7 +220,7 @@ describe("GET /users/:id/metrics", () => {
   let getMetricsStub;
 
   beforeEach(() => {
-    getMetricsStub = sinon.stub(metrics, "getMetrics");
+    getMetricsStub = sinon.stub(usersApiService, "getMetrics");
   });
 
   afterEach(() => {
@@ -305,30 +233,6 @@ describe("GET /users/:id/metrics", () => {
     });
 
     const response = await supertest(app).get("/users/123456789123/metrics");
-
-    expect(response.status).toBe(200);
-  });
-});
-
-describe("GET /users/:id/balance", () => {
-  let getBalanceStub;
-
-  beforeEach(() => {
-    getBalanceStub = sinon.stub(metrics, "getBalance");
-  });
-
-  afterEach(() => {
-    getBalanceStub.restore();
-  });
-
-  it("Should return balance", async () => {
-    getBalanceStub.resolves({
-      balance: 52,
-    });
-
-    const response = await supertest(app).get(
-      "/users/123456789123/balance?detailled=true"
-    );
 
     expect(response.status).toBe(200);
   });

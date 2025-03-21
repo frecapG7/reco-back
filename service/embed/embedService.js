@@ -1,6 +1,7 @@
 const { iframely } = require("../../config");
 const { InternalServerError } = require("../../errors/error");
 const logger = require("../../logger");
+
 const getProviderIcon = (icons = []) => {
   return icons
     ?.filter((icon) => icon?.type === "image/png")
@@ -45,6 +46,30 @@ const getEmbed = async (url) => {
     url: json.meta.canonical,
   };
 };
+
+const rules = {
+  song: {
+    accepted: ["soundcloud", "deezer", "spotify"],
+    enum: "SONG",
+  },
+  movie: {
+    accepted: ["youtube", "vimeo", "dailymotion"],
+    enum: "MOVIE",
+  },
+  book: {
+    accepted: ["goodreads"],
+    enum: "BOOK",
+  },
+};
+
+
+const getEnum = (url) => {
+  const rule = Object.entries(rules).find(([key, value]) =>
+    value.accepted.some((accepted) => url.includes(accepted))
+  );
+
+  return rule?.[1].enum;
+}
 
 module.exports = {
   getEmbed,

@@ -20,7 +20,7 @@ const verifyJWT = (token) => {
 
 const sanitize = (html) => {
   return sanitizeHtml(html, {
-    allowedTags: ["b", "i", "em", "strong", "a"],
+    allowedTags: ["b", "i", "em", "strong", "a", "p"],
     allowedAttributes: {
       a: ["href"],
     },

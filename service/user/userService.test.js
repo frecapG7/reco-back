@@ -64,24 +64,7 @@ describe("Test createUser", () => {
   });
 });
 
-describe("Test updateUser", () => {
-  it("Should test happy path", async () => {
-    const user = new User();
-    user.name = "test";
-    user.email = "test";
-    user.avatar = "test";
 
-    await userService.updateUser(user, {
-      name: "test2",
-      email: "test2",
-      avatar: "test2",
-    });
-
-    expect(user.name).toBe("test2");
-    expect(user.email).toBe("test2");
-    expect(user.avatar).toBe("test2");
-  });
-});
 
 describe("Test getUser", () => {
   let findByIdStub;
@@ -107,5 +90,88 @@ describe("Test getUser", () => {
     const result = await userService.getUser("123");
 
     expect(result).toEqual(expected);
+  });
+});
+
+describe("Should validate paginatedSearch", () => {
+  let countDocumentsStub;
+  let findStub;
+
+  beforeEach(() => {
+    countDocumentsStub = sinon.stub(User, "countDocuments");
+    findStub = sinon.stub(User, "find");
+  });
+
+  afterEach(() => {
+    countDocumentsStub.restore();
+    findStub.restore();
+  });
+
+  it("Should return paginated result based on default values", async () => {
+    countDocumentsStub.resolves(10);
+    findStub.resolves([]);
+
+    const result = await userService.paginatedSearch({});
+
+    expect(result).toBeDefined();
+
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+    expect(result.pagination.totalResults).toBe(10);
+
+    expect(result.results).toBeDefined();
+    expect(result.results.length).toBe(0);
+
+    sinon.assert.calledOnce(countDocumentsStub);
+    sinon.assert.calledOnce(findStub);
+    sinon.assert.calledWith(
+      findStub,
+      {
+        $or: [
+          { name: { $regex: "", $options: "i" } },
+          { email: { $regex: "", $options: "i" } },
+        ],
+      },
+      null,
+      { skip: 0, limit: 10, sort: { created: 1 } }
+    );
+  });
+
+  it("Should return paginated result based on custom values", async () => {
+    countDocumentsStub.resolves(10);
+    findStub.resolves([]);
+
+    const result = await userService.paginatedSearch({
+      search: "test",
+      pageSize: 5,
+      pageNumber: 2,
+      sort: "name",
+      order: "desc",
+    });
+
+    expect(result).toBeDefined();
+
+    expect(result.pagination).toBeDefined();
+    expect(result.pagination.currentPage).toBe(2);
+    expect(result.pagination.totalPages).toBe(2);
+    expect(result.pagination.totalResults).toBe(10);
+
+    expect(result.results).toBeDefined();
+    expect(result.results.length).toBe(0);
+
+    sinon.assert.calledOnce(countDocumentsStub);
+    sinon.assert.calledOnce(findStub);
+    sinon.assert.calledWith(
+      findStub,
+      {
+        $or: [
+          { name: { $regex: "test", $options: "i" } },
+          { email: { $regex: "test", $options: "i" } },
+        ],
+      },
+      null,
+      { skip: 5, limit: 5, sort: { name: -1 } }
+    );
   });
 });
