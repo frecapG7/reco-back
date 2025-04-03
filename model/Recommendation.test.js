@@ -1,7 +1,7 @@
 const Recommendation = require("./Recommendation");
 const ObjectId = require("mongoose").Types.ObjectId;
 describe("Recommendation method.toJSON", () => {
-  it("should return a JSON object", () => {
+  it("should return a JSON object with deprecated fields", () => {
     const recommendation = new Recommendation({
       _id: "64f6db09096d83b20116e62f",
       request: "64f6db09096d83b20116e62f",
@@ -20,16 +20,41 @@ describe("Recommendation method.toJSON", () => {
     const recommendationJSON = recommendation.toJSON();
 
     expect(recommendationJSON.id).toBeDefined();
-    // expect(recommendationJSON.user.id).toEqual('64f6db09096d83b20116e62f');
-    // expect(recommendationJSON.request).toEqual('64f6db09096d83b20116e62f');
-    expect(recommendationJSON.field1).toEqual("field1");
-    expect(recommendationJSON.field2).toEqual("field2");
-    expect(recommendationJSON.field3).toEqual("field3");
+    expect(recommendationJSON.title).toEqual("field1");
+    expect(recommendationJSON.author).toEqual("field2");
     expect(recommendationJSON.created_at).toBeDefined();
 
     expect(recommendationJSON.user).toBeDefined();
     expect(recommendationJSON.user.id).toBeDefined();
-    // expect(recommendationJSON.user.name).toEqual("name");
+
+    expect(recommendationJSON.html).toEqual("<p>html</p>");
+    expect(recommendationJSON.url).toEqual("url");
+  });
+  it("should return a JSON object with new fields", () => {
+    const recommendation = new Recommendation({
+      _id: "64f6db09096d83b20116e62f",
+      request: "64f6db09096d83b20116e62f",
+      user: {
+        _id: "64f6db09096d83b20116e62f",
+        name: "test",
+      },
+      title: "This is title",
+      author: "This is author",
+      field3: "field3",
+      html: "<p>html</p>",
+      url: "url",
+      created_at: new Date(),
+    });
+
+    const recommendationJSON = recommendation.toJSON();
+
+    expect(recommendationJSON.id).toBeDefined();
+    expect(recommendationJSON.title).toEqual("This is title");
+    expect(recommendationJSON.author).toEqual("This is author");
+    expect(recommendationJSON.created_at).toBeDefined();
+
+    expect(recommendationJSON.user).toBeDefined();
+    expect(recommendationJSON.user.id).toBeDefined();
 
     expect(recommendationJSON.html).toEqual("<p>html</p>");
     expect(recommendationJSON.url).toEqual("url");

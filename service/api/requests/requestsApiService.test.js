@@ -113,34 +113,6 @@ describe("Should validate getRecommendations", () => {
     ).rejects.toThrow("Request not found");
   });
 
-  it("Should return recommendations with default values", async () => {
-    const expectedRecommendation = {
-      _id: "1234",
-      isLikedBy: sinon.stub(),
-      toJSON: sinon.stub(),
-      populate: sinon.stub(),
-    };
-
-    requestStub.resolves({ _id: "1234" });
-    paginatedSearchStub.resolves({
-      pagination: { pageNumber: 1, pageSize: 5 },
-      results: [expectedRecommendation],
-    });
-
-    const result = await getRecommendations({ params: { requestId: "1234" } });
-
-    expect(result).toBeDefined();
-    expect(result.pagination).toBeDefined();
-
-    sinon.assert.calledOnce(paginatedSearchStub);
-    sinon.assert.calledWith(paginatedSearchStub, {
-      request: { _id: "1234" },
-      showDuplicates: true,
-      pageNumber: 1,
-      pageSize: 5,
-    });
-  });
-
   it("Should return recommendations with values", async () => {
     const expectedRecommendation = {
       _id: "1234",
@@ -167,7 +139,6 @@ describe("Should validate getRecommendations", () => {
     sinon.assert.calledOnce(paginatedSearchStub);
     sinon.assert.calledWith(paginatedSearchStub, {
       request: { _id: "1234" },
-      showDuplicates: true,
       pageNumber: 5,
       pageSize: 50,
     });
@@ -212,20 +183,10 @@ describe("Should validate createRecommendation", () => {
     ).rejects.toThrow("Request not found");
   });
 
-  it("Should throw error on duplicated_from not provided", async () => {
-    const user = sinon.stub();
-    const request = sinon.stub();
-
-    findByIdStub.withArgs("123").resolves(request);
-
-    await expect(
-      createRecommendation({ params: { requestId: "123" }, body: {}, user })
-    ).rejects.toThrow("You need to provide a duplicated_from recommendation");
-  });
-
   it("Should create recommendation", async () => {
     const user = sinon.stub();
     const request = sinon.stub();
+    request.requestType = "SONG";
 
     request.save = sinon.stub().resolvesThis();
 
@@ -237,9 +198,9 @@ describe("Should validate createRecommendation", () => {
     const result = await createRecommendation({
       params: { requestId: "123" },
       body: {
-        field1: "field1",
-        field2: "field2",
-        duplicate_from: "1234",
+        title: "Title",
+        author: "author",
+        note: "this is my favorite book",
         requestType: "SONG",
       },
       user,
@@ -247,9 +208,10 @@ describe("Should validate createRecommendation", () => {
 
     expect(result).toBeDefined();
 
-    expect(result.field1).toBe("field1");
-    expect(result.field2).toBe("field2");
+    expect(result.title).toBe("Title");
+    expect(result.author).toBe("author");
     expect(result.requestType).toBe("SONG");
+    expect(result.note).toBe("this is my favorite book");
 
     sinon.assert.calledOnce(saveStub);
 

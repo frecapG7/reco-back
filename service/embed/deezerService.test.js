@@ -1,13 +1,10 @@
-const { getOEmbed } = require("./deezerService");
+const { search } = require("./deezerService");
 
-describe("Should return oEmbed from deezer", () => {
-  it("Should return oEmbed from deezer", async () => {
-    // const url = "https://deezer.page.link/pXakgne5zwQPBT596";
-    // const oEmbed = await getOEmbed(url);
-    // expect(oEmbed).toBeDefined();
-    // expect(oEmbed).toHaveProperty("url");
-    // expect(oEmbed).toHaveProperty("title");
-    // expect(oEmbed).toHaveProperty("description");
-    // expect(oEmbed).toHaveProperty("thumbnail_url");
+describe("Should validate search from deezer", () => {
+  it.skip("Should return search from deezer", async () => {
+    const result = await search("gauche droite", 10);
+    expect(result).toBeDefined();
+
+    console.log(JSON.stringify(result, null, 2));
   });
 });

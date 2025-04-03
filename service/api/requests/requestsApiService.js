@@ -47,9 +47,7 @@ const getRecommendations = async ({ params: { requestId }, query, user }) => {
 
   const page = await recommendationsServiceV2.paginatedSearch({
     request,
-    showDuplicates: true,
-    pageNumber: Number(query?.pageNumber) || 1,
-    pageSize: Number(query?.pageSize) || 5,
+    ...query,
   });
 
   await Promise.all(
@@ -66,8 +64,6 @@ const getRecommendations = async ({ params: { requestId }, query, user }) => {
 
 /**
  * Create a new recommendation for this request
- * Recommendation must be based on an existing one via duplicated_from
- * we will not copy html and url
  * @param {ObjectId} id
  * @param {Recommendation} body
  * @returns
@@ -81,19 +77,11 @@ const createRecommendation = async ({ params: { requestId }, body, user }) => {
   const request = await Request.findById(requestId);
   if (!request) throw new NotFoundError("Request not found");
 
-  if (!body.duplicate_from)
-    throw new ForbiddenError(
-      "You need to provide a duplicated_from recommendation"
-    );
-
   const recommendation = new Recommendation({
-    field1: body.field1,
-    field2: body.field2,
-    field3: body.field3,
-    requestType: body.requestType,
+    ...body,
+    requestType: request.requestType,
     user,
     request,
-    duplicate_from: body.duplicate_from,
   });
   await creditService.removeCredit(5, user);
 

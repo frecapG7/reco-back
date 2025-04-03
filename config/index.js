@@ -22,6 +22,19 @@ const config = {
     api_key: process.env.IFRAMELY_API_KEY,
   },
 
+  soundcloud: {
+    auth: "https://secure.soundcloud.com/oauth/token",
+    url: "https://api.soundcloud.com",
+    clientId: process.env.SOUNDCLOUD_CLIENT_ID,
+    clientSecret: process.env.SOUNDCLOUD_CLIENT_SECRET,
+  },
+
+  google: {
+    books: {
+      apiKey: process.env.GOOGLE_BOOKS_API_KEY,
+    },
+  },
+
   logger: {
     level: process.env.LOGGER_LEVEL || "info",
   },

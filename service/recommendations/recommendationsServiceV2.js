@@ -47,7 +47,6 @@ const create = async ({
 const paginatedSearch = async ({
   requestType,
   search = "",
-  showDuplicates = false,
   user,
   request,
   pageSize = 5,
@@ -56,11 +55,9 @@ const paginatedSearch = async ({
   order = "desc",
 }) => {
   const filters = {
-    ...(!showDuplicates && { duplicate_from: null }),
     $or: [
-      { field1: { $regex: search, $options: "i" } },
-      { field2: { $regex: search, $options: "i" } },
-      { field3: { $regex: search, $options: "i" } },
+      { title: { $regex: search, $options: "i" } },
+      { author: { $regex: search, $options: "i" } },
     ],
     ...(request && { request }),
     ...(user && { user }),
@@ -74,7 +71,6 @@ const paginatedSearch = async ({
     sort: { [sort]: order === "asc" ? 1 : -1 },
   })
     .populate("user", "title avatar name")
-    .populate("duplicate_from", "html url")
     .exec();
 
   return {
@@ -116,6 +112,7 @@ const like = async (recommendation, user) => {
   ]);
   // 5. Add like
   recommendation.likes.push(user._id);
+  recommendation.likesCount = recommendation.likes.length;
 };
 
 /**
@@ -132,11 +129,6 @@ const unlike = async (recommendation, user) => {
       `User ${user._id} has not liked recommendation ${recommendation._id}`
     );
 
-  //3. Remove like
-  recommendation.likes = recommendation.likes.filter(
-    (like) => !like.equals(user._id)
-  );
-
   // 4. Remove credit
   await recommendation.populate("user");
   const credit = getLikeValue(recommendation, user);
@@ -146,6 +138,12 @@ const unlike = async (recommendation, user) => {
       : credit,
     recommendation.user
   );
+
+  //3. Remove like
+  recommendation.likes = recommendation.likes.filter(
+    (like) => !like.equals(user._id)
+  );
+  recommendation.likesCount = recommendation.likes.length;
 
   return recommendation.save();
 };
