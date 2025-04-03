@@ -5,6 +5,7 @@ const {
   paginatedSearch,
   redeem,
   getPurchaseItemFromMarketItem,
+  checkPurchaseAvailability,
 } = require("./purchaseService");
 const ObjectId = require("mongoose").Types.ObjectId;
 
@@ -113,7 +114,6 @@ describe("Validate redeem", () => {
     const user = sinon.mock();
     purchase.user = user;
     user.save = sinon.stub().returnsThis();
-    
 
     const result = await redeem(purchase);
 
@@ -204,6 +204,51 @@ describe("Valide getPurchaseItemFromMarketItem", () => {
 
     sinon.assert.calledWith(findOneStub, {
       item: "123",
+      user,
+    });
+  });
+});
+
+describe("Validate checkPurchaseAvailability", () => {
+  let findOneStub;
+
+  beforeEach(() => {
+    findOneStub = sinon.stub(PurchaseItem, "exists");
+  });
+  afterEach(() => {
+    findOneStub.restore();
+  });
+
+  it("Should return false if user is not provided", async () => {
+    const result = await checkPurchaseAvailability("test", "test");
+    expect(result).toBe(false);
+  });
+  it("Should return false if purchase does not exist", async () => {
+    const user = sinon.mock();
+
+    findOneStub.resolves(false);
+
+    const result = await checkPurchaseAvailability("test", "test", user);
+    expect(result).toBe(false);
+
+    sinon.assert.calledWith(findOneStub, {
+      name: "test",
+      type: "test",
+      user,
+    });
+  });
+
+  it("Should return true if purchase exists", async () => {
+    const user = sinon.mock();
+
+    findOneStub.resolves(true);
+
+    const result = await checkPurchaseAvailability("test", "test", user);
+    expect(result).toBe(true);
+
+    sinon.assert.calledWith(findOneStub, {
+      name: "test",
+      type: "test",
       user,
     });
   });

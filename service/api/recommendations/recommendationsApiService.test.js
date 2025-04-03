@@ -1,8 +1,13 @@
 const sinon = require("sinon");
 const Recommendation = require("../../../model/Recommendation");
 const recommendationsService = require("../../recommendations/recommendationsServiceV2");
-const creditService = require("../../market/creditService");
+const purchaseService = require("../../market/purchaseService");
 const embedService = require("../../embed/embedService");
+
+const openlibraryService = require("../../recommendations/openlibraryService");
+const soundcloudService = require("../../embed/soundcloudService");
+const deezerService = require("../../embed/deezerService");
+
 const {
   get,
   getFromEmbed,
@@ -10,6 +15,7 @@ const {
   search,
   like,
   unlike,
+  getProviders,
 } = require("./recommendationsApiService");
 const User = require("../../../model/User");
 
@@ -154,119 +160,147 @@ describe("Should validate getFromEmbed", () => {
 });
 
 describe("Should validate search", () => {
-  let paginatedSearchStub;
+  let openlibraryServiceStub;
+  let soundcloudServiceStub;
+  let deezerServiceStub;
 
   beforeEach(() => {
-    paginatedSearchStub = sinon.stub(recommendationsService, "paginatedSearch");
+    openlibraryServiceStub = sinon.stub(openlibraryService, "search");
+    soundcloudServiceStub = sinon.stub(soundcloudService, "search");
+    deezerServiceStub = sinon.stub(deezerService, "search");
   });
 
   afterEach(() => {
-    paginatedSearchStub.restore();
+    openlibraryServiceStub.restore();
+    soundcloudServiceStub.restore();
+    deezerServiceStub.restore();
   });
 
-  it("Should return page", async () => {
+  it("Should return books recommendations from open library", async () => {
     const expected = sinon.mock();
 
-    paginatedSearchStub.resolves(expected);
+    openlibraryServiceStub.resolves(expected);
 
     const result = await search({
       query: {
-        requestType: "SONG",
+        requestType: "BOOK",
         search: "search",
-        pageNumber: 1,
         pageSize: 5,
       },
     });
 
     expect(result).toEqual(expected);
+
+    sinon.assert.calledOnce(openlibraryServiceStub);
+    sinon.assert.calledWith(openlibraryServiceStub, "search", 5);
+  });
+
+  it("Should return song recommendations from deezer", async () => {
+    const expected = sinon.mock();
+
+    deezerServiceStub.resolves(expected);
+
+    const result = await search({
+      query: {
+        requestType: "SONG",
+        search: "search",
+        pageSize: 5,
+      },
+    });
+
+    expect(result).toEqual(expected);
+
+    sinon.assert.calledOnce(deezerServiceStub);
+    sinon.assert.calledWith(deezerServiceStub, "search", 5);
+  });
+
+  it("Should return song recommendations from soundcloud", async () => {
+    const expected = sinon.mock();
+
+    soundcloudServiceStub.resolves(expected);
+
+    const result = await search({
+      query: {
+        requestType: "SONG",
+        provider: "SOUNDCLOUD",
+        search: "search",
+        pageSize: 5,
+      },
+    });
+
+    expect(result).toEqual(expected);
+
+    sinon.assert.calledOnce(soundcloudServiceStub);
+    sinon.assert.calledWith(soundcloudServiceStub, "search", 5);
   });
 });
 
-describe("Should test create recommendation", () => {
-  let addCreditStub;
-  let createStub;
-  let findOneStub;
-
+describe("Should validate getProviders", () => {
+  let checkPurchaseAvailabilityStub;
   beforeEach(() => {
-    addCreditStub = sinon.stub(creditService, "addCredit");
-    createStub = sinon.stub(recommendationsService, "create");
-    findOneStub = sinon.stub(Recommendation, "findOne");
-  });
-
-  afterEach(() => {
-    addCreditStub.restore();
-    createStub.restore();
-    findOneStub.restore();
-  });
-
-  it("Should throw error on unauthenticated", async () => {
-    await expect(
-      create({
-        body: {},
-      })
-    ).rejects.toThrow(
-      "You need to be authenticated to create a recommendation"
+    checkPurchaseAvailabilityStub = sinon.stub(
+      purchaseService,
+      "checkPurchaseAvailability"
     );
   });
 
-  it("Should throw error on existing recommendation", async () => {
-    findOneStub.resolves(sinon.mock(Recommendation));
-
-    await expect(
-      create({
-        body: {
-          field1: "PLK",
-          field2: "Faut pas",
-          url: "url",
-        },
-        user: { _id: "userId" },
-      })
-    ).rejects.toThrow("Recommendation already exists");
-
-    sinon.assert.calledWith(findOneStub, {
-      $or: [
-        {
-          $and: [
-            { field1: { $regex: "PLK", $options: "i" } },
-            { field2: { $regex: "Faut pas", $options: "i" } },
-          ],
-        },
-        {
-          url: { $regex: "url", $options: "i" },
-        },
-      ],
-    });
+  afterEach(() => {
+    checkPurchaseAvailabilityStub.restore();
   });
 
-  it("Should create recommendation", async () => {
-    findOneStub.resolves(null);
-    const expected = {
-      save: sinon.stub().resolvesThis(),
-    };
+  it("Should throw error on missing requestType", async () => {
+    await expect(
+      getProviders({
+        query: {},
+      })
+    ).rejects.toThrow("Request type not supported");
+  });
 
-    createStub.resolves(expected);
-    addCreditStub.resolvesThis();
+  it("Should return song providers with only default", async () => {
+    checkPurchaseAvailabilityStub.resolves(false);
+    const results = await getProviders({ query: { requestType: "SONG" } });
 
-    const result = await create({
-      body: {
-        field1: "field1",
-        field2: "field2",
-        field3: "field3",
-        html: "html",
-        url: "https://www.youtube.com",
-        requestType: "SONG",
-        provider: "provider",
-      },
-      user: { _id: "userId" },
-    });
+    expect(results).toBeDefined();
+    expect(results.length).toBe(2);
 
-    expect(result).toBeDefined();
-    expect(result).toEqual(expected);
+    expect(results[0].name).toBe("DEEZER");
+    expect(results[0].default).toBe(true);
+    expect(results[0].available).toBe(true);
 
-    sinon.assert.calledOnce(addCreditStub);
-    sinon.assert.calledWith(addCreditStub, 1, { _id: "userId" });
+    expect(results[1].name).toBe("SOUNDCLOUD");
+    expect(results[1].default).toBe(false);
+    expect(results[1].available).toBe(false);
+  });
 
-    sinon.assert.calledOnce(findOneStub);
+  it("Should return song providers with default and available", async () => {
+    checkPurchaseAvailabilityStub.resolves(true);
+    const results = await getProviders({ query: { requestType: "SONG" } });
+
+    expect(results).toBeDefined();
+    expect(results.length).toBe(2);
+
+    expect(results[0].name).toBe("DEEZER");
+    expect(results[0].default).toBe(true);
+    expect(results[0].available).toBe(true);
+
+    expect(results[1].name).toBe("SOUNDCLOUD");
+    expect(results[1].default).toBe(false);
+    expect(results[1].available).toBe(true);
+  });
+  it("Should return book providers with only default", async () => {
+    checkPurchaseAvailabilityStub.resolves(false);
+    const results = await getProviders({ query: { requestType: "BOOK" } });
+
+    expect(results).toBeDefined();
+    expect(results.length).toBe(2);
+
+    expect(results[0].name).toBe("OPENLIBRARY");
+    expect(results[0].default).toBe(true);
+    expect(results[0].available).toBe(true);
+
+    expect(results[1].name).toBe("GOOGLEBOOKS");
+    expect(results[1].default).toBe(false);
+    expect(results[1].available).toBe(false);
   });
 });
 

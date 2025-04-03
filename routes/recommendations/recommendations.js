@@ -9,6 +9,7 @@ const {
   search,
   like,
   unlike,
+  getProviders,
 } = require("../../service/api/recommendations/recommendationsApiService");
 
 /**
@@ -31,6 +32,15 @@ router.get(
     }
   }
 );
+
+router.get("/providers", async (req, res, next) => {
+  try {
+    const providers = await getProviders(req);
+    return res.status(200).json(providers);
+  } catch (err) {
+    next(err);
+  }
+});
 /**
  * Get recommendation from an url link
  */
@@ -42,22 +52,6 @@ router.get("/embed", async (req, res, next) => {
     next(err);
   }
 });
-
-/**
- * Create a recommendation
- */
-router.post(
-  "",
-  passport.authenticate("bearer", { session: false }),
-  async (req, res, next) => {
-    try {
-      const recommendation = await create(req);
-      res.status(200).json(recommendation);
-    } catch (err) {
-      next(err);
-    }
-  }
-);
 
 /**
  * Get recommendation by id

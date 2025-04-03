@@ -92,8 +92,19 @@ const getPurchaseItemFromMarketItem = async (
   }
 };
 
+const checkPurchaseAvailability = async (name, type, user) => {
+  if (!user) return false;
+
+  return await PurchaseItem.exists({
+    name,
+    type,
+    user: user,
+  });
+};
+
 module.exports = {
   paginatedSearch,
   redeem,
   getPurchaseItemFromMarketItem,
+  checkPurchaseAvailability,
 };

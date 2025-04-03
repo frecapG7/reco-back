@@ -5,9 +5,15 @@ const {
 } = require("../../../errors/error");
 const Recommendation = require("../../../model/Recommendation");
 const recommendationsService = require("../../recommendations/recommendationsServiceV2");
-const creditService = require("../../market/creditService");
+const purchaseService = require("../../market/purchaseService");
 const embedService = require("../../embed/embedService");
+const openlibraryService = require("../../recommendations/openlibraryService");
+const googleBookService = require("../../embed/googleBookService");
+const soundcloudService = require("../../embed/soundcloudService");
+const deezerService = require("../../embed/deezerService");
 const logger = require("../../../logger");
+const ProviderPuchase = require("../../../model/purchase/ProviderPurchase");
+const { providers } = require("../../../constants");
 
 const get = async ({ params: { id }, user }) => {
   const recommendation = await Recommendation.findById(id)
@@ -18,6 +24,7 @@ const get = async ({ params: { id }, user }) => {
   return recommendation;
 };
 
+// Deprecated
 const getFromEmbed = async ({ query: { url = "" }, user }) => {
   if (!Boolean(url)) throw new UnprocessableEntityError("Url is required");
 
@@ -49,61 +56,48 @@ const getFromEmbed = async ({ query: { url = "" }, user }) => {
   };
 };
 
-const search = async ({ query, user }) => {
-  const page = await recommendationsService.paginatedSearch({
-    ...query,
-    showDuplicates: false,
-  });
-
-  return page;
+const search = async ({
+  query: { search = "", pageSize = 10, provider = "", requestType = "" },
+  user,
+}) => {
+  switch (requestType) {
+    case "BOOK":
+      if (provider === "GOOGLEBOOKS")
+        return await googleBookService.search(search, pageSize);
+      return await openlibraryService.search(search, pageSize);
+    case "SONG":
+      if (provider === "SOUNDCLOUD") {
+        // TODO: verify user has acquired soundcloud access
+        return await soundcloudService.search(search, pageSize);
+      }
+      return deezerService.search(search, pageSize);
+    default:
+      throw new UnprocessableEntityError("Request type not supported");
+  }
 };
 
-/**
- * Create a recommendation
- * These recommendation will not be linked to request and serve as library of content
- * These way we can prevent duplicate recommendations and restrain iframely api usages
- * Written on 20/02/2025 by @frecap, trying to write cleaner code
- */
-const create = async ({ body, user }) => {
-  if (!user)
-    throw new ForbiddenError(
-      "You need to be authenticated to create a recommendation"
-    );
+const getProviders = async ({ query: { requestType = "", user } }) => {
+  if (!providers[requestType])
+    throw new UnprocessableEntityError("Request type not supported");
 
-  // Search for existing
-  const existingRecommendation = await Recommendation.findOne({
-    $or: [
-      {
-        $and: [
-          { field1: { $regex: body.field1, $options: "i" } },
-          { field2: { $regex: body.field2, $options: "i" } },
-        ],
-      },
-      {
-        url: { $regex: body.url, $options: "i" },
-      },
-    ],
-  });
-  if (existingRecommendation)
-    throw new UnprocessableEntityError("Recommendation already exists");
-
-  // Create independant recommendation
-  const savedRecommendation = await recommendationsService.create({
-    field1: body.field1,
-    field2: body.field2,
-    field3: body.field3,
-    html: body.html,
-    url: body.url,
-    requestType: body.requestType,
-    provider: body.provider,
-    user,
-  });
-
-  // Credit user for creating recommendation
-  await creditService.addCredit(1, user);
-
-  // History ?
-  return await savedRecommendation.save();
+  return await Promise.all(
+    providers[requestType]?.map(async (provider) => {
+      const available =
+        provider.default ||
+        (await purchaseService.checkPurchaseAvailability(
+          provider.name,
+          "ProviderPurchase",
+          user
+        ));
+      return {
+        name: provider.name,
+        icon: provider.icon,
+        uri: provider.uri,
+        default: Boolean(provider.default),
+        available,
+      };
+    })
+  );
 };
 
 /**
@@ -171,8 +165,8 @@ const archive = async ({ params: { id = "" }, user }) => {
 module.exports = {
   get,
   getFromEmbed,
-  create,
   search,
+  getProviders,
   like,
   unlike,
 };

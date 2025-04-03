@@ -13,17 +13,26 @@ const RecommendationSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  field1: {
+  provider: {
+    name: {
+      type: String,
+    },
+    icon: {
+      type: String,
+    },
+  },
+  requestType: {
+    type: String,
+    required: true,
+    enum: ["BOOK", "SONG", "MOVIE"],
+  },
+  title: {
     type: String,
     required: true,
   },
-  field2: {
+  author: {
     type: String,
-    required: false,
-  },
-  field3: {
-    type: String,
-    required: false,
+    required: true,
   },
   html: {
     type: String,
@@ -32,6 +41,11 @@ const RecommendationSchema = new mongoose.Schema({
   url: {
     type: String,
     required: false,
+  },
+  note: {
+    type: String,
+    required: false,
+    maxlength: 255,
   },
   created_at: {
     type: Date,
@@ -43,24 +57,28 @@ const RecommendationSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  likesCount: {
+    type: Number,
+    default: 0,
+    index: true,
+  },
+  field1: {
+    type: String,
+    deprecated: true,
+  },
+  field2: {
+    type: String,
+    deprecated: true,
+  },
+  field3: {
+    type: String,
+    deprecated: true,
+  },
+
   duplicate_from: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Recommendation",
-    required: false,
-  },
-  provider: {
-    name: {
-      type: String,
-    },
-    icon: {
-      type: String,
-    },
-  },
-  // Use for search
-  requestType: {
-    type: String,
-    required: true,
-    enum: ["BOOK", "SONG", "MOVIE"],
+    deprecated: true,
   },
 });
 
@@ -74,11 +92,11 @@ RecommendationSchema.methods.toJSON = function () {
       title: this.user.title,
       avatar: this.user.avatar,
     },
-    field1: this.field1,
-    field2: this.field2,
-    field3: this.field3,
-    html: this.duplicate_from?.html || this.html,
-    url: this.duplicate_from?.url || this.url,
+    title: this.title || this.field1,
+    author: this.author || this.field2,
+    url: this.url,
+    html: this.html,
+    note: this.note,
     requestType: this.requestType,
     created_at: this.created_at,
     provider: {

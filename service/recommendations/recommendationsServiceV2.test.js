@@ -77,12 +77,7 @@ describe("Should test paginated search", () => {
         .stub()
         .withArgs("user title avatar name")
         .returns({
-          populate: sinon
-            .stub()
-            .withArgs("duplicated_from html url")
-            .returns({
-              exec: sinon.stub().resolves([]),
-            }),
+          exec: sinon.stub().resolves([]),
         }),
     });
     countDocumentsStub.resolves(50);
@@ -103,11 +98,9 @@ describe("Should test paginated search", () => {
     sinon.assert.calledWith(
       findStub,
       {
-        duplicate_from: null,
         $or: [
-          { field1: { $regex: "", $options: "i" } },
-          { field2: { $regex: "", $options: "i" } },
-          { field3: { $regex: "", $options: "i" } },
+          { title: { $regex: "", $options: "i" } },
+          { author: { $regex: "", $options: "i" } },
         ],
         requestType: "SONG",
       },
@@ -129,12 +122,7 @@ describe("Should test paginated search", () => {
         .stub()
         .withArgs("user title avatar name")
         .returns({
-          populate: sinon
-            .stub()
-            .withArgs("duplicated_from html url")
-            .returns({
-              exec: sinon.stub().resolves([]),
-            }),
+          exec: sinon.stub().resolves([]),
         }),
     });
     countDocumentsStub.resolves(50);
@@ -142,7 +130,6 @@ describe("Should test paginated search", () => {
     const result = await paginatedSearch({
       requestType: "SONG",
       search: "Kendrick Lamar",
-      showDuplicates: true,
       user,
       request,
       pageSize: 10,
@@ -162,9 +149,8 @@ describe("Should test paginated search", () => {
       findStub,
       {
         $or: [
-          { field1: { $regex: "Kendrick Lamar", $options: "i" } },
-          { field2: { $regex: "Kendrick Lamar", $options: "i" } },
-          { field3: { $regex: "Kendrick Lamar", $options: "i" } },
+          { title: { $regex: "Kendrick Lamar", $options: "i" } },
+          { author: { $regex: "Kendrick Lamar", $options: "i" } },
         ],
         request,
         user,
