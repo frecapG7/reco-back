@@ -3,6 +3,7 @@ const { NotFoundError } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 
 const { getItem, paginatedSearch, createItem } = require("./marketService");
+const { request } = require("express");
 
 describe("Should validate getItem", () => {
   let marketItemStub;
@@ -269,6 +270,44 @@ describe("Should validate createItem", () => {
     expect(result.tags).toEqual(["tag1", "tag2"]);
     expect(result.icon).toEqual("toto.url");
     expect(result.consumableType).toEqual("invitation");
+
+    sinon.assert.calledOnce(saveStub);
+  });
+
+  it("Should create provider item", async () => {
+    const user = sinon.mock();
+
+    existsStub.withArgs({ name: "Provider" }).resolves(false);
+    existsStub
+      .withArgs({ type: "ConsumableItem", consumableType: "invitation" })
+      .resolves(false);
+    saveStub.resolvesThis();
+
+    const result = await createItem(
+      {
+        type: "ProviderItem",
+        name: "Provider",
+        label: "Consumable details",
+        description: {
+          en: "<p>ergergegh</p>",
+          fr: "<p>ergergegh</p>",
+        },
+        price: 10,
+        icon: "toto.url",
+        requestType: "BOOK",
+      },
+      user
+    );
+
+    expect(result).toBeDefined();
+
+    expect(result.name).toEqual("Provider");
+    expect(result.label).toEqual("Consumable details");
+    expect(result.i18nDescription.en).toEqual("<p>ergergegh</p>");
+    expect(result.i18nDescription.fr).toEqual("<p>ergergegh</p>");
+    expect(result.price).toEqual(10);
+    expect(result.icon).toEqual("toto.url");
+    expect(result.requestType).toEqual("BOOK");
 
     sinon.assert.calledOnce(saveStub);
   });

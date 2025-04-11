@@ -49,7 +49,10 @@ const update = async ({
   if (!item) throw new NotFoundError("Market item not found");
 
   item.label = label;
-  item.description = sanitize(description);
+  item.i18nDescription = {
+    en: sanitize(description?.en),
+    fr: sanitize(description?.fr),
+  };
   item.price = price;
   item.enabled = enabled;
   item.tags = tags;

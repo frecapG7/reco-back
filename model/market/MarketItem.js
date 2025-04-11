@@ -31,6 +31,16 @@ const MarketItemSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    i18nDescription: {
+      en: {
+        type: String,
+        required: false,
+      },
+      fr: {
+        type: String,
+        required: false,
+      },
+    },
     /**
      * @property {String} icon - An link to the icon of the item
      * @required
@@ -90,7 +100,10 @@ MarketItemSchema.methods.toJSON = function () {
     id: this._id,
     name: this.name,
     label: this.label,
-    description: this.description,
+    description: {
+      en: this.i18nDescription.en || this.description,
+      fr: this.i18nDescription.fr,
+    },
     price: this.price,
     tags: this.tags,
     type: this.type,
@@ -101,6 +114,20 @@ MarketItemSchema.methods.toJSON = function () {
     ...(this.type === "ConsumableItem" && {
       consumableType: this.consumableType,
     }),
+    ...(this.type === "ProviderItem" && {
+      requestType: this.requestType,
+    }),
+
+    created: this.created_at,
+    created_by: {
+      id: this.created_by,
+      ...(this.populated("created_by") && {
+        name: this.created_by.name,
+        title: this.created_by.title,
+        avatar: this.created_by.avatar,
+      }),
+    },
+    modified: this.modified_at,
   };
 };
 
@@ -131,9 +158,22 @@ const MarketConsumable = MarketItem.discriminator(
   options
 );
 
+const MarketProvider = MarketItem.discriminator(
+  "ProviderItem",
+  new mongoose.Schema({
+    requestType: {
+      type: String,
+      required: true,
+      enum: ["BOOK", "SONG", "MOVIE"],
+    },
+  }),
+  options
+);
+
 module.exports = {
   MarketItem,
   MarketIcon,
   MarketTitle,
   MarketConsumable,
+  MarketProvider,
 };

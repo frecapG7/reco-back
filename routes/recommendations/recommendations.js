@@ -41,17 +41,6 @@ router.get("/providers", async (req, res, next) => {
     next(err);
   }
 });
-/**
- * Get recommendation from an url link
- */
-router.get("/embed", async (req, res, next) => {
-  try {
-    const recommendation = await getFromEmbed(req);
-    res.status(200).json(recommendation);
-  } catch (err) {
-    next(err);
-  }
-});
 
 /**
  * Get recommendation by id
