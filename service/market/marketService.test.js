@@ -3,6 +3,7 @@ const { NotFoundError } = require("../../errors/error");
 const { MarketItem } = require("../../model/market/MarketItem");
 
 const { getItem, paginatedSearch, createItem } = require("./marketService");
+const { request } = require("express");
 
 describe("Should validate getItem", () => {
   let marketItemStub;
@@ -293,6 +294,7 @@ describe("Should validate createItem", () => {
         },
         price: 10,
         icon: "toto.url",
+        requestType: "BOOK",
       },
       user
     );
@@ -305,6 +307,7 @@ describe("Should validate createItem", () => {
     expect(result.i18nDescription.fr).toEqual("<p>ergergegh</p>");
     expect(result.price).toEqual(10);
     expect(result.icon).toEqual("toto.url");
+    expect(result.requestType).toEqual("BOOK");
 
     sinon.assert.calledOnce(saveStub);
   });

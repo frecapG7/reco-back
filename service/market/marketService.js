@@ -114,7 +114,7 @@ const createConsumableItem = async (
 };
 
 const createProviderItem = async (
-  { name, label, description, price, icon },
+  { name, label, description, price, icon, requestType },
   user
 ) => {
   await verifyUniqueName(name);
@@ -128,6 +128,7 @@ const createProviderItem = async (
     },
     icon,
     price,
+    requestType,
     created_by: user,
     modified_by: user,
   });

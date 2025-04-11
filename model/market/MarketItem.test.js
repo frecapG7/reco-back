@@ -106,6 +106,7 @@ describe("Validate MarketItem methods", () => {
       price: 100,
       tags: ["Test", "MarketConsumable"],
       icon: "http://test.com/test.png",
+      requestType: "BOOK",
     });
 
     const result = marketConsumable.toJSON();
@@ -121,5 +122,6 @@ describe("Validate MarketItem methods", () => {
     expect(result.tags).toEqual(["Test", "MarketConsumable"]);
     expect(result.type).toBe("ProviderItem");
     expect(result.icon).toBe("http://test.com/test.png");
+    expect(result.requestType).toBe("BOOK");
   });
 });

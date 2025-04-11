@@ -114,6 +114,20 @@ MarketItemSchema.methods.toJSON = function () {
     ...(this.type === "ConsumableItem" && {
       consumableType: this.consumableType,
     }),
+    ...(this.type === "ProviderItem" && {
+      requestType: this.requestType,
+    }),
+
+    created: this.created_at,
+    created_by: {
+      id: this.created_by,
+      ...(this.populated("created_by") && {
+        name: this.created_by.name,
+        title: this.created_by.title,
+        avatar: this.created_by.avatar,
+      }),
+    },
+    modified: this.modified_at,
   };
 };
 
@@ -146,7 +160,13 @@ const MarketConsumable = MarketItem.discriminator(
 
 const MarketProvider = MarketItem.discriminator(
   "ProviderItem",
-  new mongoose.Schema(),
+  new mongoose.Schema({
+    requestType: {
+      type: String,
+      required: true,
+      enum: ["BOOK", "SONG", "MOVIE"],
+    },
+  }),
   options
 );
 
