@@ -2,7 +2,6 @@ const sinon = require("sinon");
 const Recommendation = require("../../../model/Recommendation");
 const recommendationsService = require("../../recommendations/recommendationsServiceV2");
 const purchaseService = require("../../market/purchaseService");
-const embedService = require("../../embed/embedService");
 
 const openlibraryService = require("../../recommendations/openlibraryService");
 const soundcloudService = require("../../embed/soundcloudService");
@@ -10,8 +9,6 @@ const deezerService = require("../../embed/deezerService");
 
 const {
   get,
-  getFromEmbed,
-  create,
   search,
   like,
   unlike,
@@ -56,108 +53,6 @@ describe("Should validate get", () => {
   });
 });
 
-describe("Should validate getFromEmbed", () => {
-  let findOneStub;
-  let getEmbedStub;
-
-  beforeEach(() => {
-    findOneStub = sinon.stub(Recommendation, "findOne");
-    getEmbedStub = sinon.stub(embedService, "getEmbed");
-  });
-
-  afterEach(() => {
-    findOneStub.restore();
-    getEmbedStub.restore();
-  });
-
-  it("Should throw error on missing url", async () => {
-    await expect(
-      getFromEmbed({
-        query: {},
-      })
-    ).rejects.toThrow("Url is required");
-  });
-
-  it("Should return from url", async () => {
-    const expected = sinon.mock();
-
-    findOneStub.resolves(expected);
-
-    const result = await getFromEmbed({
-      query: {
-        url: "url",
-      },
-    });
-
-    expect(result).toEqual(expected);
-
-    sinon.assert.calledOnce(findOneStub);
-    sinon.assert.calledWith(findOneStub, {
-      url: { $regex: "url", $options: "i" },
-    });
-    sinon.assert.notCalled(getEmbedStub);
-  });
-
-  it("Should return duplicated from embed", async () => {
-    findOneStub.withArgs({ url: "url" }).resolves(null);
-
-    getEmbedStub.resolves({
-      title: "GNX",
-      author: "Kendrick Lamar",
-    });
-
-    const duplicatedRecommendation = sinon.mock();
-    findOneStub
-      .withArgs({ $and: [{ field1: "GNX" }, { field2: "Kendrick Lamar" }] })
-      .resolves(duplicatedRecommendation);
-
-    const result = await getFromEmbed({
-      query: {
-        url: "url",
-      },
-    });
-
-    expect(result).toBeDefined();
-    expect(result).toEqual(duplicatedRecommendation);
-  });
-
-  it("Should return original from embed", async () => {
-    findOneStub.withArgs({ url: "url" }).resolves(null);
-
-    getEmbedStub.resolves({
-      title: "GNX",
-      author: "Kendrick Lamar",
-      description: "Good song",
-      provider: {
-        name: "Youtube",
-        icon: "icon",
-      },
-      html: "html",
-      url: "url",
-    });
-
-    findOneStub
-      .withArgs({ $and: [{ field1: "GNX" }, { field2: "Kendrick Lamar" }] })
-      .resolves(null);
-
-    const result = await getFromEmbed({
-      query: {
-        url: "url",
-      },
-    });
-
-    expect(result).toBeDefined();
-    expect(result.field1).toEqual("GNX");
-    expect(result.field2).toEqual("Kendrick Lamar");
-    expect(result.field3).toEqual("Good song");
-    expect(result.provider).toEqual({
-      name: "Youtube",
-      icon: "icon",
-    });
-    expect(result.html).toEqual("html");
-    expect(result.url).toEqual("url");
-  });
-});
 
 describe("Should validate search", () => {
   let openlibraryServiceStub;

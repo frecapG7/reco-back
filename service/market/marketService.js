@@ -6,6 +6,7 @@ const {
   MarketItem,
   MarketIcon,
   MarketConsumable,
+  MarketProvider,
 } = require("../../model/market/MarketItem");
 const { sanitize } = require("../../utils/utils");
 
@@ -60,6 +61,8 @@ const createItem = async (data, user) => {
       return await createIconItem(data, user);
     case "ConsumableItem":
       return await createConsumableItem(data, user);
+    case "ProviderItem":
+      return await createProviderItem(data, user);
     default:
       throw new UnprocessableEntityError("Invalid item type");
   }
@@ -108,6 +111,27 @@ const createConsumableItem = async (
   });
 
   return await marketConsumable.save();
+};
+
+const createProviderItem = async (
+  { name, label, description, price, icon },
+  user
+) => {
+  await verifyUniqueName(name);
+
+  const marketIcon = new MarketProvider({
+    name,
+    label,
+    i18nDescription: {
+      en: sanitize(description?.en),
+      fr: sanitize(description?.fr),
+    },
+    icon,
+    price,
+    created_by: user,
+    modified_by: user,
+  });
+  return await marketIcon.save();
 };
 
 const verifyUniqueName = async (name, id) => {

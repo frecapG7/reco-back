@@ -31,6 +31,16 @@ const MarketItemSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    i18nDescription: {
+      en: {
+        type: String,
+        required: false,
+      },
+      fr: {
+        type: String,
+        required: false,
+      },
+    },
     /**
      * @property {String} icon - An link to the icon of the item
      * @required
@@ -90,7 +100,10 @@ MarketItemSchema.methods.toJSON = function () {
     id: this._id,
     name: this.name,
     label: this.label,
-    description: this.description,
+    description: {
+      en: this.i18nDescription.en || this.description,
+      fr: this.i18nDescription.fr,
+    },
     price: this.price,
     tags: this.tags,
     type: this.type,
@@ -131,9 +144,16 @@ const MarketConsumable = MarketItem.discriminator(
   options
 );
 
+const MarketProvider = MarketItem.discriminator(
+  "ProviderItem",
+  new mongoose.Schema(),
+  options
+);
+
 module.exports = {
   MarketItem,
   MarketIcon,
   MarketTitle,
   MarketConsumable,
+  MarketProvider,
 };

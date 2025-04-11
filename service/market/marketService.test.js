@@ -272,4 +272,40 @@ describe("Should validate createItem", () => {
 
     sinon.assert.calledOnce(saveStub);
   });
+
+  it("Should create provider item", async () => {
+    const user = sinon.mock();
+
+    existsStub.withArgs({ name: "Provider" }).resolves(false);
+    existsStub
+      .withArgs({ type: "ConsumableItem", consumableType: "invitation" })
+      .resolves(false);
+    saveStub.resolvesThis();
+
+    const result = await createItem(
+      {
+        type: "ProviderItem",
+        name: "Provider",
+        label: "Consumable details",
+        description: {
+          en: "<p>ergergegh</p>",
+          fr: "<p>ergergegh</p>",
+        },
+        price: 10,
+        icon: "toto.url",
+      },
+      user
+    );
+
+    expect(result).toBeDefined();
+
+    expect(result.name).toEqual("Provider");
+    expect(result.label).toEqual("Consumable details");
+    expect(result.i18nDescription.en).toEqual("<p>ergergegh</p>");
+    expect(result.i18nDescription.fr).toEqual("<p>ergergegh</p>");
+    expect(result.price).toEqual(10);
+    expect(result.icon).toEqual("toto.url");
+
+    sinon.assert.calledOnce(saveStub);
+  });
 });

@@ -6,13 +6,10 @@ const {
 const Recommendation = require("../../../model/Recommendation");
 const recommendationsService = require("../../recommendations/recommendationsServiceV2");
 const purchaseService = require("../../market/purchaseService");
-const embedService = require("../../embed/embedService");
 const openlibraryService = require("../../recommendations/openlibraryService");
 const googleBookService = require("../../embed/googleBookService");
 const soundcloudService = require("../../embed/soundcloudService");
 const deezerService = require("../../embed/deezerService");
-const logger = require("../../../logger");
-const ProviderPuchase = require("../../../model/purchase/ProviderPurchase");
 const { providers } = require("../../../constants");
 
 const get = async ({ params: { id }, user }) => {
@@ -22,38 +19,6 @@ const get = async ({ params: { id }, user }) => {
   if (!recommendation) throw new NotFoundError("Recommendation not found");
 
   return recommendation;
-};
-
-// Deprecated
-const getFromEmbed = async ({ query: { url = "" }, user }) => {
-  if (!Boolean(url)) throw new UnprocessableEntityError("Url is required");
-
-  // Check accepted urls ?
-
-  // Search previous recommendation using a "like" filter
-  logger.debug(`Searching for existing recommendation with url ${url}`);
-  const recommendation = await Recommendation.findOne({
-    url: { $regex: url, $options: "i" },
-  });
-  if (recommendation) return recommendation;
-
-  const embed = await embedService.getEmbed(url);
-
-  // Search duplicate recommendation
-  logger.debug(`Searching for duplicate recommendation for ${embed.title}`);
-  const duplicate = await Recommendation.findOne({
-    $and: [{ field1: embed.title }, { field2: embed.author }],
-  });
-  if (duplicate) return duplicate;
-
-  return {
-    field1: embed.title,
-    field2: embed.author,
-    field3: embed.description,
-    provider: embed.provider,
-    html: embed.html,
-    url: embed.url,
-  };
 };
 
 const search = async ({
@@ -66,10 +31,8 @@ const search = async ({
         return await googleBookService.search(search, pageSize);
       return await openlibraryService.search(search, pageSize);
     case "SONG":
-      if (provider === "SOUNDCLOUD") {
-        // TODO: verify user has acquired soundcloud access
+      if (provider === "SOUNDCLOUD")
         return await soundcloudService.search(search, pageSize);
-      }
       return deezerService.search(search, pageSize);
     default:
       throw new UnprocessableEntityError("Request type not supported");
@@ -164,7 +127,6 @@ const archive = async ({ params: { id = "" }, user }) => {
 
 module.exports = {
   get,
-  getFromEmbed,
   search,
   getProviders,
   like,
