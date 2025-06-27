@@ -10,7 +10,6 @@ const cart = require("./cart");
 const validation = require("./validation");
 const admin = require("./admin");
 const oauth = require("./oauth2");
-const embed = require("./embed");
 const market = require("./market");
 const tokens = require("./tokens");
 const passport = require("../auth");
@@ -31,9 +30,6 @@ router.use(
 );
 
 router.use("/validate", validation);
-
-// ********** Embed **********
-router.use("/embed", embed);
 
 // ********** Admin **********
 router.use(

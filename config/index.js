@@ -17,11 +17,6 @@ const config = {
     password: process.env.SMTP_PASSWORD,
   },
 
-  iframely: {
-    url: "https://iframe.ly/api/iframely",
-    api_key: process.env.IFRAMELY_API_KEY,
-  },
-
   soundcloud: {
     auth: "https://secure.soundcloud.com/oauth/token",
     url: "https://api.soundcloud.com",
